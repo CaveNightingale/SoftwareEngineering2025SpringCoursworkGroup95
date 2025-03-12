@@ -1,0 +1,44 @@
+.hello-world {
+    -fx-font-size: 20;
+    -fx-font-weight: bold;
+    -fx-text-fill: #000000;
+}
+
+.transaction-item {
+    -fx-padding: 0.5em;
+}
+
+.transaction-item-content {
+    -fx-border-color: #ff0000;
+    -fx-border-width: 1px;
+    -fx-border-radius: 5px;
+    -fx-alignment: center;
+    -fx-pref-height: 6em;
+    -fx-padding: 0.5em;
+}
+
+.transaction-item-1st-row {
+    -fx-font-size: 1.5em;
+    -fx-font-weight: bold;
+}
+
+.transaction-item-tag {
+    -fx-end-margin: 1em;
+}
+
+.add-transaction, .add-entity {
+    -fx-padding: 1.5em;
+}
+
+.add-transaction-row, .add-entity-row {
+    -fx-padding: 0.5em;
+}
+
+.add-transaction-field, .add-entity-field {
+    -fx-pref-width: 30em;
+}
+
+.add-transaction-message, .add-entity-message {
+    -fx-font-weight: bold;
+    -fx-text-fill: #ff0000;
+}

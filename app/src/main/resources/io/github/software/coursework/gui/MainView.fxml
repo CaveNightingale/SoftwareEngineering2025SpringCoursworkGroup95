@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import io.github.software.coursework.gui.MainView?>
+<?import io.github.software.coursework.gui.TransactionList?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import java.net.URL?>
+<fx:root
+        type="io.github.software.coursework.gui.MainView"
+        xmlns="http://javafx.com/javafx"
+        xmlns:fx="http://javafx.com/fxml"
+        prefHeight="600"
+        prefWidth="800"
+>
+    <stylesheets>
+        <URL value="@_style.css"/>
+    </stylesheets>
+    <TabPane
+            fx:id="tabPane"
+            AnchorPane.bottomAnchor="0.0"
+            AnchorPane.leftAnchor="0.0"
+            AnchorPane.rightAnchor="0.0"
+            AnchorPane.topAnchor="0.0"
+    >
+        <Tab closable="false" text="Home">
+            <VBox>
+                <ToolBar>
+                    <Button text="Add Transaction" onMouseClicked="#handleAddTransaction"/>
+                    <Button text="Add Entity" onMouseClicked="#handleAddEntity"/>
+                </ToolBar>
+                <ScrollPane fitToWidth="true" fitToHeight="true" VBox.vgrow="ALWAYS">
+                    <TransactionList fx:id="transactionList" styleClass="transaction-list"/>
+                </ScrollPane>
+            </VBox>
+        </Tab>
+    </TabPane>
+</fx:root>

@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import io.github.software.coursework.gui.AddEntity?>
+<?import javafx.collections.FXCollections?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Text?>
+<?import java.lang.*?>
+<fx:root
+        xmlns="http://javafx.com/javafx"
+        xmlns:fx="http://javafx.com/fxml"
+        type="io.github.software.coursework.gui.AddEntity"
+        styleClass="add-entity"
+>
+    <HBox styleClass="add-entity-row">
+        <Label text="Name"/>
+        <Region HBox.hgrow="ALWAYS"/>
+        <TextField styleClass="add-entity-field" fx:id="name"/>
+    </HBox>
+    <HBox styleClass="add-entity-row">
+        <Label text="Telephone"/>
+        <Region HBox.hgrow="ALWAYS"/>
+        <TextField styleClass="add-entity-field" fx:id="telephone"/>
+    </HBox>
+    <HBox styleClass="add-entity-row">
+        <Label text="Email"/>
+        <Region HBox.hgrow="ALWAYS"/>
+        <TextField styleClass="add-entity-field" fx:id="email"/>
+    </HBox>
+    <HBox styleClass="add-entity-row">
+        <Label text="Address"/>
+        <Region HBox.hgrow="ALWAYS"/>
+        <TextField styleClass="add-entity-field" fx:id="address"/>
+    </HBox>
+    <HBox styleClass="add-entity-row">
+        <Label text="Website"/>
+        <Region HBox.hgrow="ALWAYS"/>
+        <TextField styleClass="add-entity-field" fx:id="website"/>
+    </HBox>
+    <HBox styleClass="add-entity-row">
+        <Label text="Type"/>
+        <Region HBox.hgrow="ALWAYS"/>
+        <ComboBox styleClass="add-entity-field" fx:id="type" value="">
+            <items>
+                <FXCollections fx:factory="observableArrayList">
+                    <String fx:value=""/>
+                    <String fx:value="Individual"/>
+                    <String fx:value="Education"/>
+                    <String fx:value="Government" />
+                    <String fx:value="Commercial"/>
+                    <String fx:value="Non-profit"/>
+                </FXCollections>
+            </items>
+        </ComboBox>
+    </HBox>
+    <HBox styleClass="add-entity-row">
+        <Button text="Add" onMouseClicked="#handleMouseClick"/>
+        <Text styleClass="add-entity-message" fx:id="message"/>
+    </HBox>
+</fx:root>
