@@ -7,6 +7,7 @@ import javafx.beans.property.SimpleObjectProperty;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.VBox;
@@ -36,6 +37,9 @@ public class AddEntity extends VBox {
 
     @FXML
     private Text message;
+
+    @FXML
+    private Button submit;
 
     private final ObjectProperty<EventHandler<SubmitEvent>> onSubmit = new SimpleObjectProperty<>();
 
@@ -113,6 +117,7 @@ public class AddEntity extends VBox {
             case COMMERCIAL -> "Commercial";
             case NONPROFIT -> "Non-profit";
         });
+        submit.setText("Update");
     }
 
     public void handleMouseClick() {
@@ -120,7 +125,7 @@ public class AddEntity extends VBox {
             message.setText("Name is required");
             return;
         }
-        fireEvent(new SubmitEvent(this, this, SubmitEvent.SUBMIT));
+        fireEvent(new SubmitEvent(this, this, false));
     }
 
 }

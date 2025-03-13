@@ -5,6 +5,7 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <?import java.net.URL?>
+<?import io.github.software.coursework.gui.EntityList?>
 <fx:root
         type="io.github.software.coursework.gui.MainView"
         xmlns="http://javafx.com/javafx"
@@ -22,16 +23,29 @@
             AnchorPane.rightAnchor="0.0"
             AnchorPane.topAnchor="0.0"
     >
-        <Tab closable="false" text="Home">
+        <Tab closable="false" text="Transactions" fx:id="transactionTab">
             <VBox>
                 <ToolBar>
+                    <Button text="Add" onMouseClicked="#handleAddTransaction"/>
+                    <Region HBox.hgrow="ALWAYS"/>
                     <Button text="Import" onMouseClicked="#handleImport"/>
                     <Button text="Export" onMouseClicked="#handleExport"/>
-                    <Button text="Add Transaction" onMouseClicked="#handleAddTransaction"/>
-                    <Button text="Add Entity" onMouseClicked="#handleAddEntity"/>
                 </ToolBar>
                 <ScrollPane fitToWidth="true" fitToHeight="true" VBox.vgrow="ALWAYS">
                     <TransactionList fx:id="transactionList" styleClass="transaction-list"/>
+                </ScrollPane>
+            </VBox>
+        </Tab>
+        <Tab closable="false" text="Entities" fx:id="entityTab">
+            <VBox>
+                <ToolBar>
+                    <Button text="Add" onMouseClicked="#handleAddEntity"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <Button text="Import" onMouseClicked="#handleImport"/>
+                    <Button text="Export" onMouseClicked="#handleExport"/>
+                </ToolBar>
+                <ScrollPane fitToWidth="true" fitToHeight="true" VBox.vgrow="ALWAYS">
+                    <EntityList fx:id="entityList" styleClass="entity-list"/>
                 </ScrollPane>
             </VBox>
         </Tab>

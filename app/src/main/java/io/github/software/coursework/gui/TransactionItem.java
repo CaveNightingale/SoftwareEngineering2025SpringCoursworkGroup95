@@ -12,6 +12,7 @@ import javafx.scene.text.Text;
 import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.Date;
+import java.util.Objects;
 
 public class TransactionItem extends AnchorPane {
     private static final DecimalFormat AMOUNT_FORMAT = new DecimalFormat("+0.00;-0.00");
@@ -57,7 +58,7 @@ public class TransactionItem extends AnchorPane {
     }
 
     public void setTransaction(Reference<Transaction> transaction) {
-        if (this.transaction == transaction) {
+        if (Objects.equals(this.transaction, transaction)) {
             return;
         }
         this.transaction = transaction;

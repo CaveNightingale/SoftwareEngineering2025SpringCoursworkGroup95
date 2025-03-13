@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import io.github.software.coursework.gui.TransactionItem?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+<fx:root
+        xmlns="http://javafx.com/javafx"
+        xmlns:fx="http://javafx.com/fxml"
+        type="io.github.software.coursework.gui.EntityItem"
+>
+    <AnchorPane
+            styleClass="entity-item"
+            AnchorPane.leftAnchor="0.0"
+            AnchorPane.rightAnchor="0.0"
+    >
+        <VBox
+                styleClass="entity-item-content"
+                AnchorPane.leftAnchor="0.0"
+                AnchorPane.rightAnchor="0.0"
+        >
+            <HBox styleClass="entity-item-1st-row">
+                <Text fx:id="name" text="Jia Peidong"/>
+            </HBox>
+            <HBox styleClass="entity-item-2nd-row">
+                <Text fx:id="contact" text="BUPT"/>
+            </HBox>
+        </VBox>
+    </AnchorPane>
+</fx:root>

@@ -6,16 +6,19 @@ import javafx.event.EventType;
 
 public class SubmitEvent extends Event {
     public static final EventType<SubmitEvent> SUBMIT = new EventType<>(Event.ANY, "SUBMIT");
+    private final boolean delete;
 
-    public SubmitEvent() {
+    public SubmitEvent(boolean delete) {
         super(SUBMIT);
+        this.delete = delete;
     }
 
-    public SubmitEvent(Object source, EventTarget target) {
+    public SubmitEvent(Object source, EventTarget target, boolean delete) {
         super(source, target, SUBMIT);
+        this.delete = delete;
     }
 
-    public SubmitEvent(Object source, EventTarget target, EventType<? extends Event> eventType) {
-        super(source, target, eventType);
+    public boolean isDelete() {
+        return delete;
     }
 }

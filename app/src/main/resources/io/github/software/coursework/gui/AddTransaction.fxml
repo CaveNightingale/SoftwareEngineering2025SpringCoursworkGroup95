@@ -46,7 +46,8 @@
         <TextArea styleClass="add-transaction-field" fx:id="description"/>
     </HBox>
     <HBox styleClass="add-transaction-row">
-        <Button text="Add" onMouseClicked="#handleMouseClick"/>
+        <Button text="Add" onMouseClicked="#handleMouseClick" fx:id="submit"/>
+        <Button text="Delete" onMouseClicked="#handleDelete" visible="false" fx:id="delete"/>
         <Text styleClass="add-transaction-message" fx:id="message"/>
     </HBox>
 </fx:root>

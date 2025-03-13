@@ -54,7 +54,7 @@
         </ComboBox>
     </HBox>
     <HBox styleClass="add-entity-row">
-        <Button text="Add" onMouseClicked="#handleMouseClick"/>
+        <Button text="Add" onMouseClicked="#handleMouseClick" fx:id="submit"/>
         <Text styleClass="add-entity-message" fx:id="message"/>
     </HBox>
 </fx:root>

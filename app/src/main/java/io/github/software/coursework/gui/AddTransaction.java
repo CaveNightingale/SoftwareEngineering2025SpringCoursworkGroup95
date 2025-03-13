@@ -45,6 +45,12 @@ public class AddTransaction extends VBox {
     @FXML
     private Text message;
 
+    @FXML
+    private Button submit;
+
+    @FXML
+    private Button delete;
+
     private Storage storage;
 
     private final ObjectProperty<EventHandler<SubmitEvent>> onSubmit = new SimpleObjectProperty<>();
@@ -140,11 +146,13 @@ public class AddTransaction extends VBox {
     public void setTransaction(Transaction transaction) {
         title.setText(transaction.title());
         description.setText(transaction.description());
-        time.setValue(LocalDate.ofEpochDay(transaction.time()));
+        time.setValue(LocalDate.ofEpochDay(transaction.time() / 86400000));
         amount.setText(transaction.amount() / 100.0 + "");
         entity.setValue(new Option(transaction.entity(), storage.getEntity(transaction.entity()).name()));
         category.setText(transaction.category());
         tags.setText(String.join(" ", transaction.tags()));
+        submit.setText("Update");
+        delete.setVisible(true);
     }
 
     public void handleMouseClick() {
@@ -171,6 +179,10 @@ public class AddTransaction extends VBox {
             message.setText("Time is required");
             return;
         }
-        fireEvent(new SubmitEvent(this, this, SubmitEvent.SUBMIT));
+        fireEvent(new SubmitEvent(this, this, false));
+    }
+
+    public void handleDelete() {
+        fireEvent(new SubmitEvent(this, this, true));
     }
 }
