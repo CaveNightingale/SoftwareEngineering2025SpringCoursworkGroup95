@@ -99,6 +99,22 @@ public class AddEntity extends VBox {
         );
     }
 
+    public void setEntity(Entity entity) {
+        name.setText(entity.name());
+        telephone.setText(entity.telephone());
+        email.setText(entity.email());
+        address.setText(entity.address());
+        website.setText(entity.website());
+        type.setValue(switch (entity.type()) {
+            case UNKNOWN -> "";
+            case INDIVIDUAL -> "Individual";
+            case EDUCATION -> "Education";
+            case GOVERNMENT -> "Government";
+            case COMMERCIAL -> "Commercial";
+            case NONPROFIT -> "Non-profit";
+        });
+    }
+
     public void handleMouseClick() {
         if (name.getText().isBlank()) {
             message.setText("Name is required");

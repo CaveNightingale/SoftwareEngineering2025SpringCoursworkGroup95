@@ -33,7 +33,7 @@ public record Entity(
     }
 
     public static Entity deserialize(Document.Reader reader) {
-        return new Entity(
+        Entity rval = new Entity(
                 reader.readString("name"),
                 reader.readString("telephone"),
                 reader.readString("email"),
@@ -41,6 +41,8 @@ public record Entity(
                 reader.readString("website"),
                 Type.valueOf(reader.readString("type").toUpperCase())
         );
+        reader.readEnd();
+        return rval;
     }
 
     public Entity withName(String name) {

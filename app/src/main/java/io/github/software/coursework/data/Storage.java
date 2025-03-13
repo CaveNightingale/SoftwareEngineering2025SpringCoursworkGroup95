@@ -3,6 +3,7 @@ package io.github.software.coursework.data;
 import io.github.software.coursework.data.schema.Entity;
 import io.github.software.coursework.data.schema.Transaction;
 
+import java.io.IOException;
 import java.util.SequencedCollection;
 
 public interface Storage extends AutoCloseable {
@@ -16,6 +17,9 @@ public interface Storage extends AutoCloseable {
     void removeTransaction(Reference<Transaction> reference) throws NoSuchDocumentException;
     SequencedCollection<Reference<Transaction>> getTransactions() throws NoSuchDocumentException;
 
-    default void close() {
+    default void close() throws IOException {
+        flush();
+    }
+    default void flush() throws IOException {
     }
 }

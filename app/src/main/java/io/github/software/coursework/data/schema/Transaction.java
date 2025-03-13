@@ -35,7 +35,7 @@ public record Transaction(
 
     @SuppressWarnings("unchecked")
     public static Transaction deserialize(Document.Reader reader) {
-        return new Transaction(
+        Transaction rval = new Transaction(
                 reader.readString("title"),
                 reader.readString("description"),
                 reader.readInteger("time"),
@@ -52,6 +52,8 @@ public record Transaction(
                     return tags.build();
                 }).get()
         );
+        reader.readEnd();
+        return rval;
     }
 
     public Transaction withTitle(String title) {

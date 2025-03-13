@@ -10,15 +10,13 @@ import javafx.beans.property.SimpleObjectProperty;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.DatePicker;
-import javafx.scene.control.ListCell;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 public class AddTransaction extends VBox {
     private record Option(Reference<Entity> ref, String value) {}
@@ -27,7 +25,7 @@ public class AddTransaction extends VBox {
     private TextField title;
 
     @FXML
-    private TextField description;
+    private TextArea description;
 
     @FXML
     private DatePicker time;
@@ -139,16 +137,22 @@ public class AddTransaction extends VBox {
         );
     }
 
+    public void setTransaction(Transaction transaction) {
+        title.setText(transaction.title());
+        description.setText(transaction.description());
+        time.setValue(LocalDate.ofEpochDay(transaction.time()));
+        amount.setText(transaction.amount() / 100.0 + "");
+        entity.setValue(new Option(transaction.entity(), storage.getEntity(transaction.entity()).name()));
+        category.setText(transaction.category());
+        tags.setText(String.join(" ", transaction.tags()));
+    }
+
     public void handleMouseClick() {
         if (storage == null) {
             return;
         }
         if (title.getText().isEmpty()) {
             message.setText("Title is required");
-            return;
-        }
-        if (time.getValue() == null) {
-            message.setText("Time is required");
             return;
         }
         if (amount.getText().isEmpty()) {
@@ -163,6 +167,10 @@ public class AddTransaction extends VBox {
             message.setText("Entity is required");
             return;
         }
-    fireEvent(new SubmitEvent(this, this, SubmitEvent.SUBMIT));
+        if (time.getValue() == null) {
+            message.setText("Time is required");
+            return;
+        }
+        fireEvent(new SubmitEvent(this, this, SubmitEvent.SUBMIT));
     }
 }

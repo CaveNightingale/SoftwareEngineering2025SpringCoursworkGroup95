@@ -25,6 +25,8 @@
         <Tab closable="false" text="Home">
             <VBox>
                 <ToolBar>
+                    <Button text="Import" onMouseClicked="#handleImport"/>
+                    <Button text="Export" onMouseClicked="#handleExport"/>
                     <Button text="Add Transaction" onMouseClicked="#handleAddTransaction"/>
                     <Button text="Add Entity" onMouseClicked="#handleAddEntity"/>
                 </ToolBar>

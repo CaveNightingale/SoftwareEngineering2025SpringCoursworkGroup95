@@ -31,11 +31,6 @@
         <DatePicker styleClass="add-transaction-field" fx:id="time"/>
     </HBox>
     <HBox styleClass="add-transaction-row">
-        <Label text="Description"/>
-        <Region HBox.hgrow="ALWAYS"/>
-        <TextField styleClass="add-transaction-field" fx:id="description"/>
-    </HBox>
-    <HBox styleClass="add-transaction-row">
         <Label text="Category"/>
         <Region HBox.hgrow="ALWAYS"/>
         <TextField styleClass="add-transaction-field" fx:id="category"/>
@@ -44,6 +39,11 @@
         <Label text="Tags"/>
         <Region HBox.hgrow="ALWAYS"/>
         <TextField styleClass="add-transaction-field" fx:id="tags"/>
+    </HBox>
+    <HBox styleClass="add-transaction-row">
+        <Label text="Description"/>
+        <Region HBox.hgrow="ALWAYS"/>
+        <TextArea styleClass="add-transaction-field" fx:id="description"/>
     </HBox>
     <HBox styleClass="add-transaction-row">
         <Button text="Add" onMouseClicked="#handleMouseClick"/>
