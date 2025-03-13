@@ -15,7 +15,6 @@ public class App extends Application {
         Scene scene = new Scene(new MainView(), 800, 600);
         stage.setScene(scene);
         stage.setTitle("Financial Management System");
-        stage.setResizable(false);
         stage.show();
     }
 }
