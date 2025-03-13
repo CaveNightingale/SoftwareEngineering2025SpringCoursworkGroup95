@@ -143,11 +143,12 @@ public class AddTransaction extends VBox {
         );
     }
 
+    @SuppressWarnings("BigDecimalMethodWithoutRoundingCalled")
     public void setTransaction(Transaction transaction) {
         title.setText(transaction.title());
         description.setText(transaction.description());
         time.setValue(LocalDate.ofEpochDay(transaction.time() / 86400000));
-        amount.setText(transaction.amount() / 100.0 + "");
+        amount.setText(BigDecimal.valueOf(transaction.amount()).divide(BigDecimal.valueOf(100)).toString());
         entity.setValue(new Option(transaction.entity(), storage.getEntity(transaction.entity()).name()));
         category.setText(transaction.category());
         tags.setText(String.join(" ", transaction.tags()));

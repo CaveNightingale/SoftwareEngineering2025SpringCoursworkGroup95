@@ -1,7 +1,7 @@
 package io.github.software.coursework.gui;
 
 import io.github.software.coursework.data.Reference;
-import io.github.software.coursework.data.Storage;
+import io.github.software.coursework.data.csv.CSVFormat;
 import io.github.software.coursework.data.memory.MemoryStorage;
 import io.github.software.coursework.data.schema.Entity;
 import io.github.software.coursework.data.schema.Transaction;
@@ -138,6 +138,9 @@ public class MainView extends AnchorPane {
         if (addEntity != null) {
             addEntity.load();
         }
+        for (AddEntity editEntity : editEntities.values()) {
+            editEntity.load();
+        }
     }
 
     @FXML
@@ -224,6 +227,25 @@ public class MainView extends AnchorPane {
         }
         try {
             TextFormat.exportTo(storage, file, false);
+        } catch (IOException | RuntimeException e) {
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Error");
+            alert.setHeaderText("Failed to export");
+            alert.setContentText(e.getMessage());
+            alert.show();
+        }
+    }
+
+    @FXML
+    private void handleExportCSV() {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Export");
+        File file = fileChooser.showSaveDialog(this.getScene().getWindow());
+        if (file == null) {
+            return;
+        }
+        try {
+            CSVFormat.exportTo(storage, file);
         } catch (IOException | RuntimeException e) {
             Alert alert = new Alert(Alert.AlertType.ERROR);
             alert.setTitle("Error");

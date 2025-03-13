@@ -10,6 +10,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.text.Text;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.util.Date;
 import java.util.Objects;
@@ -65,13 +66,14 @@ public class TransactionItem extends AnchorPane {
         load();
     }
 
+    @SuppressWarnings("BigDecimalMethodWithoutRoundingCalled")
     public void load() {
         if (storage == null || transaction == null) {
             return;
         }
         Transaction transaction = storage.getTransaction(this.transaction);
         title.setText(transaction.title());
-        amount.setText(AMOUNT_FORMAT.format(transaction.amount() / 100.0));
+        amount.setText(AMOUNT_FORMAT.format(BigDecimal.valueOf(transaction.amount()).divide(BigDecimal.valueOf(100))));
         time.setText(new Date(transaction.time()).toString());
         entity.setText(storage.getEntity(transaction.entity()).name());
         category.setText(transaction.category());

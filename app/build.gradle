@@ -21,6 +21,10 @@ dependencies {
     implementation "org.openjfx:javafx-graphics:21:${osName}"
     implementation "org.openjfx:javafx-fxml:21:${osName}"
 
+    // Commons
+    implementation 'org.apache.commons:commons-csv:1.13.0'
+    implementation 'org.apache.commons:commons-lang3:3.17.0'
+
     // JUnit Jupiter
     testImplementation 'org.junit.jupiter:junit-jupiter:5.11.3'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'

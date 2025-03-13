@@ -27,6 +27,7 @@
             <VBox>
                 <ToolBar>
                     <Button text="Add" onMouseClicked="#handleAddTransaction"/>
+                    <Button text="CSV" onMouseClicked="#handleExportCSV"/>
                     <Region HBox.hgrow="ALWAYS"/>
                     <Button text="Import" onMouseClicked="#handleImport"/>
                     <Button text="Export" onMouseClicked="#handleExport"/>
