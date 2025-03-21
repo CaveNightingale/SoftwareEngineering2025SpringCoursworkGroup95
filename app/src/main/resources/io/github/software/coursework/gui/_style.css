@@ -51,3 +51,13 @@
     -fx-font-weight: bold;
     -fx-text-fill: #ff0000;
 }
+
+.model-row {
+    -fx-padding: 1em;
+}
+
+.model-title {
+    -fx-font-weight: bold;
+    -fx-font-size: 2em;
+    -fx-padding: 1em;
+}

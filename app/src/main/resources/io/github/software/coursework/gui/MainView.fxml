@@ -6,6 +6,7 @@
 <?import javafx.scene.layout.*?>
 <?import java.net.URL?>
 <?import io.github.software.coursework.gui.EntityList?>
+<?import javafx.scene.text.Text?>
 <fx:root
         type="io.github.software.coursework.gui.MainView"
         xmlns="http://javafx.com/javafx"
@@ -23,6 +24,34 @@
             AnchorPane.rightAnchor="0.0"
             AnchorPane.topAnchor="0.0"
     >
+        <Tab closable="false" text="Model">
+            <ScrollPane fitToWidth="true" fitToHeight="true">
+                <VBox>
+                    <HBox styleClass="model-title">
+                        <Label text="Budget"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Text text="\$1000000000000000000.00 used"/>
+                    </HBox>
+                    <HBox>
+                        <!-- Budget Sequential prediction -->
+                    </HBox>
+                    <HBox>
+                        <!-- Budget Usage heatmap -->
+                    </HBox>
+                    <HBox styleClass="model-title">
+                        <Label text="Saving"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Text text="\$1000000000000000000.00 saved"/>
+                    </HBox>
+                    <HBox>
+                        <!-- Saving Sequential prediction -->
+                    </HBox>
+                    <HBox>
+                        <!-- Saving Income heatmap -->
+                    </HBox>
+                </VBox>
+            </ScrollPane>
+        </Tab>
         <Tab closable="false" text="Transactions" fx:id="transactionTab">
             <VBox>
                 <ToolBar>
