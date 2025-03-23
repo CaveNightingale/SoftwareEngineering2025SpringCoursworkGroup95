@@ -29,3 +29,6 @@ The built artifacts will be in the `app/build` directory. If you want to distrib
 ```bash
 ./gradlew test
 ```
+
+## Task Assignment
+- [Demo 1 Tasks](https://github.com/CaveNightingale/SoftwareEngineering2025SpringCoursworkGroup95/issues/1)
