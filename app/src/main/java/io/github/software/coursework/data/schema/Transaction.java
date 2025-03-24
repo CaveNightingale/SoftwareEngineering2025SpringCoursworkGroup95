@@ -5,6 +5,7 @@ import io.github.software.coursework.data.Document;
 import io.github.software.coursework.data.Item;
 import io.github.software.coursework.data.Reference;
 
+import java.io.IOException;
 import java.util.function.Supplier;
 
 public record Transaction(
@@ -18,7 +19,7 @@ public record Transaction(
 ) implements Item<Transaction> {
 
     @Override
-    public void serialize(Document.Writer writer) {
+    public void serialize(Document.Writer writer) throws IOException{
         writer.writeString("title", title);
         writer.writeString("description", description);
         writer.writeInteger("time", time);
@@ -34,7 +35,7 @@ public record Transaction(
     }
 
     @SuppressWarnings("unchecked")
-    public static Transaction deserialize(Document.Reader reader) {
+    public static Transaction deserialize(Document.Reader reader) throws IOException {
         Transaction rval = new Transaction(
                 reader.readString("title"),
                 reader.readString("description"),
@@ -42,18 +43,16 @@ public record Transaction(
                 reader.readInteger("amount"),
                 reader.readString("category"),
                 (Reference<Entity>) reader.readReference("entity"),
-                ((Supplier<ImmutableList<String>>) () -> {
-                    ImmutableList.Builder<String> tags = ImmutableList.builder();
-                    Document.Reader tagsReader = reader.readCompound("tags");
-                    for (int i = 0; !tagsReader.isEnd(); i++) {
-                        tags.add(tagsReader.readString(i));
-                    }
-                    tagsReader.readEnd();
-                    return tags.build();
-                }).get()
+                null
         );
+        ImmutableList.Builder<String> tags1 = ImmutableList.builder();
+        Document.Reader tagsReader = reader.readCompound("tags");
+        for (int i = 0; !tagsReader.isEnd(); i++) {
+            tags1.add(tagsReader.readString(i));
+        }
+        tagsReader.readEnd();
         reader.readEnd();
-        return rval;
+        return rval.withTags(tags1.build());
     }
 
     public Transaction withTitle(String title) {

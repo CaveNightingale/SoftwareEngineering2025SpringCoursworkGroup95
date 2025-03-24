@@ -2,7 +2,13 @@ package io.github.software.coursework.data.text;
 
 import io.github.software.coursework.data.Document;
 import io.github.software.coursework.data.Reference;
+import io.github.software.coursework.data.SyntaxException;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
+import javax.annotation.ParametersAreNonnullByDefault;
+import java.io.IOException;
+
+@ParametersAreNonnullByDefault
 public class TextDocument implements Document {
     private final boolean pretty;
     private final StringBuilder text;
@@ -54,28 +60,28 @@ public class TextDocument implements Document {
             }
         }
 
-        public void readKey(String key) {
+        public void readKey(String key) throws IOException {
             if (!pretty) {
                 return;
             }
             for (int i = 0; i < indent; i++) {
                 if (text.charAt(cursor.index) != '\t') {
-                    throw new IllegalStateException("Invalid indentation");
+                    throw new SyntaxException("Invalid indentation");
                 }
                 cursor.index++;
             }
             if (!text.substring(cursor.index, cursor.index + key.length()).equals(key)) {
-                throw new IllegalStateException("Invalid key");
+                throw new SyntaxException("Invalid key");
             }
             cursor.index += key.length();
             if (text.charAt(cursor.index) != ':') {
-                throw new IllegalStateException("Invalid key-value separator");
+                throw new SyntaxException("Invalid key-value separator");
             }
             cursor.index++;
             skipWhitespace();
         }
 
-        public String readTokenValue() {
+        public String readTokenValue() throws IOException {
             int start = cursor.index;
             while (cursor.index < text.length() && !Character.isWhitespace(text.charAt(cursor.index))) {
                 cursor.index++;
@@ -85,7 +91,7 @@ public class TextDocument implements Document {
             return result;
         }
 
-        public String readQuotedString() {
+        public String readQuotedString() throws IOException {
             if (text.charAt(cursor.index) != '"') {
                 return readTokenValue();
             }
@@ -95,7 +101,7 @@ public class TextDocument implements Document {
                 if (text.charAt(cursor.index) == '\\') {
                     cursor.index++;
                     if (cursor.index == text.length()) {
-                        throw new IllegalStateException("Invalid escape sequence");
+                        throw new SyntaxException("Invalid escape sequence");
                     }
                     result.append(switch (text.charAt(cursor.index)) {
                         case 'n' -> '\n';
@@ -108,13 +114,18 @@ public class TextDocument implements Document {
                         case '\\' -> '\\';
                         case 'u' -> {
                             if (cursor.index + 4 >= text.length()) {
-                                throw new IllegalStateException("Invalid escape sequence");
+                                throw new SyntaxException("Invalid escape sequence");
                             }
-                            int code = Integer.parseInt(text.substring(cursor.index + 1, cursor.index + 5), 16);
+                            int code;
+                            try {
+                                code = Integer.parseInt(text.substring(cursor.index + 1, cursor.index + 5), 16);
+                            } catch (NumberFormatException ex) {
+                                throw new SyntaxException("Invalid escape sequence");
+                            }
                             cursor.index += 4;
                             yield (char) code;
                         }
-                        default -> throw new IllegalStateException("Invalid escape sequence");
+                        default -> throw new SyntaxException("Invalid escape sequence");
                     });
                 } else {
                     result.append(text.charAt(cursor.index));
@@ -122,7 +133,7 @@ public class TextDocument implements Document {
                 cursor.index++;
             }
             if (cursor.index == text.length()) {
-                throw new IllegalStateException("Invalid string");
+                throw new SyntaxException("Invalid string");
             }
             cursor.index++;
             skipWhitespace();
@@ -130,35 +141,47 @@ public class TextDocument implements Document {
         }
 
         @Override
-        public long readInteger(String key) {
+        public long readInteger(String key) throws IOException {
             readKey(key);
-            return Long.parseLong(readTokenValue());
+            try {
+                return Long.parseLong(readTokenValue());
+            } catch (NumberFormatException ex) {
+                throw new SyntaxException("Invalid integer", ex);
+            }
         }
 
         @Override
-        public double readFloat(String key) {
+        public double readFloat(String key) throws IOException {
             readKey(key);
-            return Double.parseDouble(readTokenValue());
+            try {
+                return Double.parseDouble(readTokenValue());
+            } catch (NumberFormatException ex) {
+                throw new SyntaxException("Invalid float", ex);
+            }
         }
 
         @Override
-        public String readString(String key) {
+        public String readString(String key) throws IOException {
             readKey(key);
             return readQuotedString();
         }
 
         @Override
-        public Reference<?> readReference(String key) {
+        public Reference<?> readReference(String key) throws IOException {
             readKey(key);
             String token = readTokenValue();
             if (token.equals("/")) { // null reference
                 return null;
             }
-            return new Reference<>(Long.parseUnsignedLong(token, 16));
+            try {
+                return new Reference<>(Long.parseUnsignedLong(token, 16));
+            } catch (NumberFormatException ex) {
+                throw new SyntaxException("Invalid reference", ex);
+            }
         }
 
         @Override
-        public Reader readCompound(String key) {
+        public Reader readCompound(String key) throws IOException {
             readKey(key);
             return new TextReader(indent + 1, cursor);
         }
@@ -173,17 +196,17 @@ public class TextDocument implements Document {
         }
 
         @Override
-        public void readEnd() {
+        public void readEnd() throws IOException {
             if (pretty) {
                 for (int i = 0; i < indent; i++) {
                     if (text.charAt(cursor.index) != '\t') {
-                        throw new IllegalStateException("Invalid indentation");
+                        throw new SyntaxException("Invalid indentation");
                     }
                     cursor.index++;
                 }
             }
             if (!isEnd()) {
-                throw new IllegalStateException("Invalid end of compound");
+                throw new SyntaxException("Invalid end of compound");
             }
             readTokenValue();
         }
@@ -261,12 +284,12 @@ public class TextDocument implements Document {
         }
 
         @Override
-        public void writeReference(String key, Reference<?> value) {
+        public void writeReference(String key, @Nullable Reference<?> value) {
             writeKey(key);
             if (value == null) {
                 text.append("/");
             } else {
-                text.append(Long.toHexString(value.id()));
+                text.append(Long.toUnsignedString(value.id(), 16));
             }
             writeEndOfMember();
         }

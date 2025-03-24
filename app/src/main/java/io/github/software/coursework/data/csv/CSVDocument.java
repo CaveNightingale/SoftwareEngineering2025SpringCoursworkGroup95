@@ -3,10 +3,12 @@ package io.github.software.coursework.data.csv;
 import io.github.software.coursework.data.Document;
 import io.github.software.coursework.data.Reference;
 import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
+import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.ArrayList;
-import java.util.HashMap;
 
+@ParametersAreNonnullByDefault
 public class CSVDocument implements Document {
     final ArrayList<ImmutablePair<String, String>> data = new ArrayList<>();
     final ArrayList<ImmutablePair<String, Reference<?>>> refs = new ArrayList<>();
@@ -43,10 +45,10 @@ public class CSVDocument implements Document {
         }
 
         @Override
-        public void writeReference(String key, Reference<?> value) {
+        public void writeReference(String key, @Nullable Reference<?> value) {
             if (value != null) {
                 refs.add(ImmutablePair.of(path + "." + key, value));
-                data.add(ImmutablePair.of(path + "." + key, Long.toHexString(value.id())));
+                data.add(ImmutablePair.of(path + "." + key, Long.toString(value.id(), 16)));
             } else {
                 data.add(ImmutablePair.of(path + "." + key, ""));
             }
