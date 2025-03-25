@@ -88,6 +88,7 @@ public class JsonWriter implements Document.Writer {
         if (jsonGenerator != null) { // Root writer
             serialize(jsonGenerator, this);
         }
+        this.ended = true;
     }
 
     @Override
