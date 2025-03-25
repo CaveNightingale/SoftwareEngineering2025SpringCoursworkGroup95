@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import io.github.software.coursework.gui.MainView?>
+<?import io.github.software.coursework.gui.TransactionList?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import java.net.URL?>
+<?import io.github.software.coursework.gui.EntityList?>
+<?import javafx.scene.text.Text?>
+<fx:root
+        type="io.github.software.coursework.gui.DecryptionView"
+        xmlns="http://javafx.com/javafx"
+        xmlns:fx="http://javafx.com/fxml"
+        prefHeight="300"
+        prefWidth="400"
+>
+    <stylesheets>
+        <URL value="@_style.css"/>
+    </stylesheets>
+    <StackPane
+            styleClass="decryption-vbox"
+            AnchorPane.bottomAnchor="0.0"
+            AnchorPane.leftAnchor="0.0"
+            AnchorPane.rightAnchor="0.0"
+            AnchorPane.topAnchor="0.0"
+    >
+        <VBox fx:id="decryptPage">
+            <HBox styleClass="decryption-hbox">
+                <Label text="Account" styleClass="decryption-account-label"/>
+            </HBox>
+            <HBox styleClass="decryption-hbox">
+                <ComboBox fx:id="account" styleClass="decryption-account-combobox" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+            </HBox>
+            <HBox styleClass="decryption-hbox">
+                <Label text="Password" styleClass="decryption-account-label"/>
+            </HBox>
+            <HBox styleClass="decryption-hbox">
+                <PasswordField fx:id="password" styleClass="decryption-account-password" HBox.hgrow="ALWAYS"/>
+            </HBox>
+            <HBox styleClass="decryption-hbox">
+                <Button text="Decrypt" onMouseClicked="#handleDecrypt" styleClass="decryption-account-decrypt" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+            </HBox>
+            <HBox styleClass="decryption-hbox">
+                <Hyperlink onMouseClicked="#handleImportPage" text="Not listed? Import your own data."/>
+            </HBox>
+            <HBox styleClass="decryption-hbox">
+                <Hyperlink onMouseClicked="#handleCreatePage" text="No account? Create a new account."/>
+            </HBox>
+        </VBox>
+        <VBox fx:id="createPage" visible="false">
+            <HBox styleClass="decryption-hbox">
+                <Label text="Account" styleClass="decryption-account-label"/>
+            </HBox>
+            <HBox styleClass="decryption-hbox">
+                <TextField fx:id="accountCreate" styleClass="decryption-account-password" HBox.hgrow="ALWAYS"/>
+            </HBox>
+            <HBox styleClass="decryption-hbox">
+                <Label text="Password" styleClass="decryption-account-label"/>
+            </HBox>
+            <HBox styleClass="decryption-hbox">
+                <PasswordField fx:id="passwordCreate" styleClass="decryption-account-password" HBox.hgrow="ALWAYS"/>
+            </HBox>
+            <HBox styleClass="decryption-hbox">
+                <Button text="Create" onMouseClicked="#handleCreate" styleClass="decryption-account-decrypt" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+            </HBox>
+            <HBox styleClass="decryption-hbox">
+                <Hyperlink text="Already have an account? Log in." onMouseClicked="#handleDecryptPage"/>
+            </HBox>
+        </VBox>
+        <VBox fx:id="importPage" visible="false">
+            <HBox styleClass="decryption-hbox">
+                <Label text="File Path" styleClass="decryption-account-label"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Button onMouseClicked="#handleImportPathSelect" text="Select"/>
+            </HBox>
+            <HBox styleClass="decryption-hbox">
+                <TextField fx:id="path" styleClass="decryption-account-import-field" HBox.hgrow="ALWAYS"/>
+            </HBox>
+            <HBox styleClass="decryption-hbox">
+                <Label text="Secret Key" styleClass="decryption-account-label"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Button onMouseClicked="#handleImportKeySelect" text="Select"/>
+            </HBox>
+            <HBox styleClass="decryption-hbox">
+                <TextField fx:id="key" styleClass="decryption-account-import-field" HBox.hgrow="ALWAYS"/>
+            </HBox>
+            <HBox styleClass="decryption-hbox">
+                <Button text="Next" onMouseClicked="#handleImportNext" styleClass="decryption-account-decrypt" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+            </HBox>
+            <HBox styleClass="decryption-hbox">
+                <Hyperlink text="Back" onMouseClicked="#handleDecryptPage"/>
+            </HBox>
+        </VBox>
+        <VBox fx:id="importNext" visible="false">
+            <HBox styleClass="decryption-hbox">
+                <Label text="Name" styleClass="decryption-account-label"/>
+            </HBox>
+            <HBox styleClass="decryption-hbox">
+                <TextField fx:id="accountImport" styleClass="decryption-account-import-field" HBox.hgrow="ALWAYS"/>
+            </HBox>
+            <HBox styleClass="decryption-hbox">
+                <Label text="Password" styleClass="decryption-account-label"/>
+            </HBox>
+            <HBox styleClass="decryption-hbox">
+                <PasswordField fx:id="passwordImport" styleClass="decryption-account-import-field" HBox.hgrow="ALWAYS"/>
+            </HBox>
+            <HBox styleClass="decryption-hbox">
+                <Button text="Import" onMouseClicked="#handleImport" styleClass="decryption-account-decrypt" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+            </HBox>
+            <HBox styleClass="decryption-hbox">
+                <Hyperlink text="Back" onMouseClicked="#handleImportPage"/>
+            </HBox>
+        </VBox>
+    </StackPane>
+</fx:root>

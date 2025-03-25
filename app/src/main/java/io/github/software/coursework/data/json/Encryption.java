@@ -7,12 +7,19 @@ import javax.crypto.*;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.lang.reflect.Array;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.Random;
 
@@ -75,8 +82,12 @@ public final class Encryption {
         }
     }
 
-    public static String writeKeyFile(String password, byte[] key) {
+    public static String writeKeyFile(String password, byte @Nullable[] key) {
         Random random = new SecureRandom();
+        if (key == null) {
+            key = new byte[KEY_LENGTH / 8];
+            random.nextBytes(key);
+        }
         try {
             byte[] encrypted = encrypt(password, key, random);
             String encoded = Base64.getEncoder().encodeToString(encrypted);
@@ -97,6 +108,22 @@ public final class Encryption {
         } catch (NoSuchPaddingException | InvalidKeyException | NoSuchAlgorithmException |
                  InvalidAlgorithmParameterException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    public static boolean lookLikeKey(File file) {
+        if (!Files.isRegularFile(file.toPath())) {
+            return false;
+        }
+        try {
+            long size = Files.size(file.toPath());
+            if (size > 4096) {
+                return false;
+            }
+            String fileData = Files.readString(file.toPath(), StandardCharsets.UTF_8);
+            return fileData.startsWith(KEY_START) && fileData.endsWith(KEY_END);
+        } catch (IOException e) {
+            return false;
         }
     }
 }

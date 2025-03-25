@@ -61,3 +61,45 @@
     -fx-font-size: 2em;
     -fx-padding: 1em;
 }
+
+.decryption-vbox {
+    -fx-padding: 1em;
+    -fx-border-color: #00ff00;
+    -fx-border-width: 1px;
+}
+
+.decryption-hbox {
+    -fx-padding: 0.25em;
+}
+
+.decryption-account-label {
+    -fx-font-weight: bold;
+    -fx-text-fill: #000000;
+    -fx-font-size: 1.5em;
+}
+
+.decryption-account-combobox {
+}
+
+.decryption-view {
+    -fx-border-color: #00ff00;
+    -fx-border-width: 1px;
+}
+
+.decryption-account-password {
+}
+
+.decryption-account-decrypt {
+    -fx-font-size: 1.5em;
+    -fx-font-weight: bold;
+    -fx-padding: 0;
+}
+
+.decryption-account-import-field {
+}
+
+.decryption-account-import-button {
+    -fx-font-size: 1.5em;
+    -fx-font-weight: bold;
+    -fx-padding: 0;
+}
