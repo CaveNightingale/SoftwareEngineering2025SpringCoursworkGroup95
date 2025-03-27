@@ -1,12 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import io.github.software.coursework.gui.MainView?>
-<?import io.github.software.coursework.gui.TransactionList?>
+<?import io.github.software.coursework.gui.DecryptionView?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <?import java.net.URL?>
-<?import io.github.software.coursework.gui.EntityList?>
-<?import javafx.scene.text.Text?>
 <fx:root
         type="io.github.software.coursework.gui.DecryptionView"
         xmlns="http://javafx.com/javafx"
@@ -31,8 +28,10 @@
             <HBox styleClass="decryption-hbox">
                 <ComboBox fx:id="account" styleClass="decryption-account-combobox" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
             </HBox>
-            <HBox styleClass="decryption-hbox">
+            <HBox styleClass="decryption-hbox" alignment="BOTTOM_CENTER">
                 <Label text="Password" styleClass="decryption-account-label"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Label fx:id="passwordIncorrect" text="Unable decrypt your data. Try again." styleClass="incorrect-password" visible="false"/>
             </HBox>
             <HBox styleClass="decryption-hbox">
                 <PasswordField fx:id="password" styleClass="decryption-account-password" HBox.hgrow="ALWAYS"/>
@@ -98,8 +97,10 @@
             <HBox styleClass="decryption-hbox">
                 <TextField fx:id="accountImport" styleClass="decryption-account-import-field" HBox.hgrow="ALWAYS"/>
             </HBox>
-            <HBox styleClass="decryption-hbox">
+            <HBox styleClass="decryption-hbox" alignment="BOTTOM_CENTER">
                 <Label text="Password" styleClass="decryption-account-label"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Label fx:id="passwordIncorrectImport" text="Unable to decrypt your data. Try again." styleClass="incorrect-password" visible="false"/>
             </HBox>
             <HBox styleClass="decryption-hbox">
                 <PasswordField fx:id="passwordImport" styleClass="decryption-account-import-field" HBox.hgrow="ALWAYS"/>

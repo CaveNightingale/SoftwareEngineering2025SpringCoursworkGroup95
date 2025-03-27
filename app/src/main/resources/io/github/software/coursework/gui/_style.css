@@ -8,21 +8,31 @@
     -fx-padding: 0.5em;
 }
 
+.entity-item {
+    -fx-pref-width: 20em;
+    -fx-max-width: 20em;
+}
+
+.transaction-item {
+    -fx-border-style: dashed;
+    -fx-border-width: 0 0 2px 0;
+    -fx-border-color: #777777;
+}
+
+.transaction-item:hover, .entity-item:hover {
+    -fx-background-color: #d0d0d0;
+}
+
 .transaction-item-content {
-    -fx-border-color: #ff0000;
-    -fx-border-width: 1px;
-    -fx-border-radius: 5px;
     -fx-alignment: center;
     -fx-pref-height: 6em;
     -fx-padding: 0.5em;
 }
 
 .entity-item-content {
-    -fx-border-color: #00ff00;
-    -fx-border-width: 1px;
-    -fx-border-radius: 5px;
+    -fx-font-size: 1.5em;
     -fx-alignment: center;
-    -fx-pref-height: 3em;
+    -fx-pref-height: 2em;
     -fx-padding: 0.5em;
 }
 
@@ -64,8 +74,6 @@
 
 .decryption-vbox {
     -fx-padding: 1em;
-    -fx-border-color: #00ff00;
-    -fx-border-width: 1px;
 }
 
 .decryption-hbox {
@@ -79,11 +87,6 @@
 }
 
 .decryption-account-combobox {
-}
-
-.decryption-view {
-    -fx-border-color: #00ff00;
-    -fx-border-width: 1px;
 }
 
 .decryption-account-password {
@@ -102,4 +105,19 @@
     -fx-font-size: 1.5em;
     -fx-font-weight: bold;
     -fx-padding: 0;
+}
+
+.incorrect-password {
+    -fx-text-fill: #ff0000;
+}
+
+.pagination {
+    -fx-page-information-visible: false;
+    -fx-max-height: 1em;
+    -fx-pref-height: 1em;
+}
+
+.space {
+    -fx-pref-height: 1em;
+    -fx-pref-width: 1em;
 }

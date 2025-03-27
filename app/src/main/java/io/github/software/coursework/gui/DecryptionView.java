@@ -9,10 +9,7 @@ import javafx.event.EventHandler;
 import javafx.event.EventType;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.ListCell;
-import javafx.scene.control.PasswordField;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.DirectoryChooser;
@@ -58,6 +55,12 @@ public class DecryptionView extends AnchorPane {
     @FXML
     private PasswordField passwordCreate;
 
+    @FXML
+    private Label passwordIncorrect;
+
+    @FXML
+    private Label passwordIncorrectImport;
+
     private final ObjectProperty<EventHandler<DecryptionSubmitEvent>> onDecryptionSubmit = new SimpleObjectProperty<>();
 
     public ObjectProperty<EventHandler<DecryptionSubmitEvent>> onDecryptionSubmitProperty() {
@@ -84,6 +87,11 @@ public class DecryptionView extends AnchorPane {
                 setText(item.name());
             }
         }
+    }
+
+    public void reportPasswordIncorrect() {
+        passwordIncorrect.setVisible(true);
+        passwordIncorrectImport.setVisible(true);
     }
 
     public DecryptionView() {
@@ -116,7 +124,7 @@ public class DecryptionView extends AnchorPane {
     public void handleDecrypt() {
         accountManager.setDefaultAccount(account.getValue());
         accountManager.saveAccounts();
-        Event.fireEvent(this, new DecryptionSubmitEvent(DecryptionSubmitEvent.DECRYPTION_SUBMIT, new AccountManager.Account("", "", ""), ""));
+        Event.fireEvent(this, new DecryptionSubmitEvent(DecryptionSubmitEvent.DECRYPTION_SUBMIT, account.getValue(), password.getText()));
     }
 
     public void handleCreate() {

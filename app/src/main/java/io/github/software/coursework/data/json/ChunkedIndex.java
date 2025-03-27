@@ -7,6 +7,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
 
+/**
+ * A set, stored in chunks, that supports adding, removing, and querying elements.
+ * @param <T>
+ */
 public class ChunkedIndex<T extends Item<T>> implements AutoCloseable {
     private int splitThreshold = 512;
     private int mergeThreshold = 186;
@@ -116,7 +120,7 @@ public class ChunkedIndex<T extends Item<T>> implements AutoCloseable {
                 directory.put(nextChunkDescription.reference, null);
                 chunkDescriptions.remove(chunkIndex + 1);
                 chunkDescriptions.set(chunkIndex, new ChunkDescription<>(chunk.items.size(), chunk.items.getFirst(), chunk.items.getLast(), chunkDescription.reference));
-            } else if (chunkIndex == chunkDescriptions.size() - 1) {
+            } else {
                 assert prevChunkDescription != null;
                 Chunk<T> prevChunk = directory.get(prevChunkDescription.reference(), reader -> Chunk.deserialize(reader, deserializationConstructor));
                 if (prevChunk == null) {
@@ -208,23 +212,31 @@ public class ChunkedIndex<T extends Item<T>> implements AutoCloseable {
 
         @Override
         public void serialize(Document.Writer writer) throws IOException {
+            writer.writeInteger("schema", 1);
+            Document.Writer chunkDescriptionsWriter = writer.writeCompound("chunkDescriptions");
             for (int i = 0; i < chunkDescriptions.size(); i++) {
                 ChunkDescription<T> chunkDescription = chunkDescriptions.get(i);
-                Document.Writer chunkWriter = writer.writeCompound(i);
+                Document.Writer chunkWriter = chunkDescriptionsWriter.writeCompound(i);
                 chunkWriter.writeInteger("count", chunkDescription.count);
                 chunkDescription.min.serialize(chunkWriter.writeCompound("min"));
                 chunkDescription.max.serialize(chunkWriter.writeCompound("max"));
                 chunkWriter.writeReference("reference", chunkDescription.reference);
                 chunkWriter.writeEnd();
             }
+            chunkDescriptionsWriter.writeEnd();
             writer.writeEnd();
         }
 
         @SuppressWarnings("unchecked")
         public static <T extends Item<T>> ChunkIndexWrapper<T> deserialize(Document.Reader reader, DeserializationConstructor<T> constructor) throws IOException {
             ArrayList<ChunkDescription<T>> chunkDescriptions = new ArrayList<>();
-            for (int i = 0; !reader.isEnd(); i++) {
-                Document.Reader chunkReader = reader.readCompound(i);
+            long schema = reader.readInteger("schema");
+            if (schema != 1) {
+                throw new IOException("Unsupported schema version: " + schema);
+            }
+            Document.Reader chunkDescriptionsReader = reader.readCompound("chunkDescriptions");
+            for (int i = 0; !chunkDescriptionsReader.isEnd(); i++) {
+                Document.Reader chunkReader = chunkDescriptionsReader.readCompound(i);
                 int count = (int) chunkReader.readInteger("count");
                 T min = constructor.deserialize(chunkReader.readCompound("min"));
                 T max = constructor.deserialize(chunkReader.readCompound("max"));
@@ -232,6 +244,7 @@ public class ChunkedIndex<T extends Item<T>> implements AutoCloseable {
                 chunkDescriptions.add(new ChunkDescription<>(count, min, max, reference));
                 chunkReader.readEnd();
             }
+            chunkDescriptionsReader.readEnd();
             reader.readEnd();
             return new ChunkIndexWrapper<>(chunkDescriptions);
         }

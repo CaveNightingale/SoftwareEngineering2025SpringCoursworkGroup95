@@ -1,6 +1,5 @@
 package io.github.software.coursework.gui;
 
-import io.github.software.coursework.data.Storage;
 import io.github.software.coursework.data.schema.Entity;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
@@ -9,6 +8,7 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
+import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
@@ -36,7 +36,7 @@ public class AddEntity extends VBox {
     private ComboBox<String> type;
 
     @FXML
-    private Text message;
+    private Label message;
 
     @FXML
     private Button submit;
@@ -54,8 +54,6 @@ public class AddEntity extends VBox {
     public final void setOnSubmit(EventHandler<SubmitEvent> value) {
         onSubmitProperty().set(value);
     }
-
-    private Storage storage;
 
     public AddEntity() {
         FXMLLoader fxmlLoader = new FXMLLoader(MainView.class.getResource("AddEntity.fxml"));
@@ -75,20 +73,6 @@ public class AddEntity extends VBox {
                 this.addEventHandler(SubmitEvent.SUBMIT, newValue);
             }
         });
-    }
-
-    public void setStorage(Storage storage) {
-        if (this.storage == storage) {
-            return;
-        }
-        this.storage = storage;
-        load();
-    }
-
-    public void load() {
-        if (storage == null) {
-            return;
-        }
     }
 
     public Entity getEntity() {
@@ -125,6 +109,7 @@ public class AddEntity extends VBox {
             message.setText("Name is required");
             return;
         }
+        submit.setDisable(true);
         fireEvent(new SubmitEvent(this, this, false));
     }
 

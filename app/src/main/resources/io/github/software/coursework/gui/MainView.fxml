@@ -58,8 +58,8 @@
                     <Button text="Add" onMouseClicked="#handleAddTransaction"/>
                     <Button text="CSV" onMouseClicked="#handleExportCSV"/>
                     <Region HBox.hgrow="ALWAYS"/>
-                    <Button text="Import" onMouseClicked="#handleImport"/>
-                    <Button text="Export" onMouseClicked="#handleExport"/>
+                    <!-- is "save" button needed? -->
+                    <Pagination fx:id="pagination"/>
                 </ToolBar>
                 <ScrollPane fitToWidth="true" fitToHeight="true" VBox.vgrow="ALWAYS">
                     <TransactionList fx:id="transactionList" styleClass="transaction-list"/>
@@ -71,8 +71,7 @@
                 <ToolBar>
                     <Button text="Add" onMouseClicked="#handleAddEntity"/>
                     <Region HBox.hgrow="ALWAYS"/>
-                    <Button text="Import" onMouseClicked="#handleImport"/>
-                    <Button text="Export" onMouseClicked="#handleExport"/>
+                    <!-- is "save" button needed? -->
                 </ToolBar>
                 <ScrollPane fitToWidth="true" fitToHeight="true" VBox.vgrow="ALWAYS">
                     <EntityList fx:id="entityList" styleClass="entity-list"/>

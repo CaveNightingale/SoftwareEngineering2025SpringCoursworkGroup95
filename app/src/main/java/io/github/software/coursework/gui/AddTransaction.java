@@ -1,26 +1,24 @@
 package io.github.software.coursework.gui;
 
 import com.google.common.collect.ImmutableList;
-import io.github.software.coursework.data.Reference;
-import io.github.software.coursework.data.Storage;
+import io.github.software.coursework.data.ReferenceItemPair;
 import io.github.software.coursework.data.schema.Entity;
 import io.github.software.coursework.data.schema.Transaction;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.collections.ObservableList;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
-import javafx.scene.text.Text;
+import org.apache.commons.lang3.tuple.ImmutablePair;
 
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
 public class AddTransaction extends VBox {
-    private record Option(Reference<Entity> ref, String value) {}
-
     @FXML
     private TextField title;
 
@@ -34,7 +32,7 @@ public class AddTransaction extends VBox {
     private TextField amount;
 
     @FXML
-    private ComboBox<Option> entity;
+    private ComboBox<ReferenceItemPair<Entity>> entity;
 
     @FXML
     private TextField category;
@@ -43,15 +41,13 @@ public class AddTransaction extends VBox {
     private TextField tags;
 
     @FXML
-    private Text message;
+    private Label message;
 
     @FXML
     private Button submit;
 
     @FXML
     private Button delete;
-
-    private Storage storage;
 
     private final ObjectProperty<EventHandler<SubmitEvent>> onSubmit = new SimpleObjectProperty<>();
 
@@ -67,6 +63,18 @@ public class AddTransaction extends VBox {
         onSubmitProperty().set(value);
     }
 
+    public final ObjectProperty<ObservableList<ReferenceItemPair<Entity>>> entityItemsProperty() {
+        return entity.itemsProperty();
+    }
+
+    public final ObservableList<ReferenceItemPair<Entity>> getEntityItems() {
+        return entityItemsProperty().get();
+    }
+
+    public final void setEntityItems(ObservableList<ReferenceItemPair<Entity>> value) {
+        entityItemsProperty().set(value);
+    }
+
     public AddTransaction() {
         FXMLLoader fxmlLoader = new FXMLLoader(MainView.class.getResource("AddTransaction.fxml"));
         fxmlLoader.setRoot(this);
@@ -79,24 +87,24 @@ public class AddTransaction extends VBox {
 
         entity.setCellFactory(param -> new ListCell<>() {
             @Override
-            protected void updateItem(Option item, boolean empty) {
+            protected void updateItem(ReferenceItemPair<Entity> item, boolean empty) {
                 super.updateItem(item, empty);
                 if (empty || item == null) {
                     setText(null);
                 } else {
-                    setText(item.value());
+                    setText(item.item().name());
                 }
             }
         });
 
         entity.setButtonCell(new ListCell<>() {
             @Override
-            protected void updateItem(Option item, boolean empty) {
+            protected void updateItem(ReferenceItemPair<Entity> item, boolean empty) {
                 super.updateItem(item, empty);
                 if (empty || item == null) {
                     setText(null);
                 } else {
-                    setText(item.value());
+                    setText(item.item().name());
                 }
             }
         });
@@ -109,26 +117,6 @@ public class AddTransaction extends VBox {
                 this.addEventHandler(SubmitEvent.SUBMIT, newValue);
             }
         });
-
-        load();
-    }
-
-    public void setStorage(Storage storage) {
-        if (this.storage == storage) {
-            return;
-        }
-        this.storage = storage;
-        load();
-    }
-
-    public void load() {
-        entity.getItems().clear();
-        if (storage == null) {
-            return;
-        }
-        for (Reference<Entity> reference : storage.getEntities()) {
-            entity.getItems().add(new Option(reference, storage.getEntity(reference).name()));
-        }
     }
 
     public Transaction getTransaction() {
@@ -138,28 +126,25 @@ public class AddTransaction extends VBox {
                 time.getValue().toEpochDay() * 86400000,
                 new BigDecimal(amount.getText()).multiply(BigDecimal.valueOf(100)).longValue(),
                 category.getText(),
-                entity.getValue().ref(),
+                entity.getValue().reference(),
                 ImmutableList.copyOf(tags.getText().split("\\s+"))
         );
     }
 
     @SuppressWarnings("BigDecimalMethodWithoutRoundingCalled")
-    public void setTransaction(Transaction transaction) {
-        title.setText(transaction.title());
-        description.setText(transaction.description());
-        time.setValue(LocalDate.ofEpochDay(transaction.time() / 86400000));
-        amount.setText(BigDecimal.valueOf(transaction.amount()).divide(BigDecimal.valueOf(100)).toString());
-        entity.setValue(new Option(transaction.entity(), storage.getEntity(transaction.entity()).name()));
-        category.setText(transaction.category());
-        tags.setText(String.join(" ", transaction.tags()));
+    public void setTransaction(ImmutablePair<Transaction, Entity> transaction) {
+        title.setText(transaction.getLeft().title());
+        description.setText(transaction.getLeft().description());
+        time.setValue(LocalDate.ofEpochDay(transaction.getLeft().time() / 86400000));
+        amount.setText(BigDecimal.valueOf(transaction.getLeft().amount()).divide(BigDecimal.valueOf(100)).toString());
+        entity.setValue(new ReferenceItemPair<>(transaction.getLeft().entity(), transaction.getRight()));
+        category.setText(transaction.getLeft().category());
+        tags.setText(String.join(" ", transaction.getLeft().tags()));
         submit.setText("Update");
         delete.setVisible(true);
     }
 
     public void handleMouseClick() {
-        if (storage == null) {
-            return;
-        }
         if (title.getText().isEmpty()) {
             message.setText("Title is required");
             return;

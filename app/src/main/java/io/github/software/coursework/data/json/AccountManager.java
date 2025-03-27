@@ -20,6 +20,7 @@ public final class AccountManager {
 
         @Override
         public void serialize(Document.Writer writer) throws IOException {
+            writer.writeInteger("schema", 1);
             writer.writeString("name", name);
             writer.writeString("path", path);
             writer.writeString("key", key);
@@ -27,6 +28,10 @@ public final class AccountManager {
         }
 
         public static Account deserialize(Document.Reader reader) throws IOException {
+            long schema = reader.readInteger("schema");
+            if (schema != 1) {
+                throw new IOException("Unsupported schema version: " + schema);
+            }
             Account account = new Account(
                     reader.readString("name"),
                     reader.readString("path"),

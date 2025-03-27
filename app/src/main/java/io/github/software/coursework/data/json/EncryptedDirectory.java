@@ -121,6 +121,6 @@ public class EncryptedDirectory implements Directory {
 
     @Override
     public Directory withNamespace(String namespace) {
-        return new EncryptedDirectory(directory, key, namespace, obfuscateNamespace);
+        return new EncryptedDirectory(directory, key, this.namespace + "/" + namespace, obfuscateNamespace);
     }
 }

@@ -4,7 +4,6 @@
 <?import javafx.collections.FXCollections?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<?import javafx.scene.text.Text?>
 <?import java.lang.*?>
 <fx:root
         xmlns="http://javafx.com/javafx"
@@ -54,7 +53,9 @@
         </ComboBox>
     </HBox>
     <HBox styleClass="add-entity-row">
+        <Region HBox.hgrow="ALWAYS"/>
+        <Label styleClass="add-entity-message" fx:id="message"/>
+        <Region styleClass="space"/>
         <Button text="Add" onMouseClicked="#handleMouseClick" fx:id="submit"/>
-        <Text styleClass="add-entity-message" fx:id="message"/>
     </HBox>
 </fx:root>

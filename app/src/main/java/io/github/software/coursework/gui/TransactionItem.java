@@ -1,19 +1,19 @@
 package io.github.software.coursework.gui;
 
-import io.github.software.coursework.data.Reference;
-import io.github.software.coursework.data.Storage;
 import io.github.software.coursework.data.schema.Transaction;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.text.Text;
+import org.apache.commons.lang3.tuple.ImmutablePair;
 
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.util.Date;
-import java.util.Objects;
 
 public class TransactionItem extends AnchorPane {
     private static final DecimalFormat AMOUNT_FORMAT = new DecimalFormat("+0.00;-0.00");
@@ -36,8 +36,19 @@ public class TransactionItem extends AnchorPane {
     @FXML
     private HBox tags;
 
-    private Storage storage;
-    private Reference<Transaction> transaction;
+    private final ObjectProperty<ImmutablePair<Transaction, String>> transaction = new SimpleObjectProperty<>(this, "transaction");
+
+    public final ObjectProperty<ImmutablePair<Transaction, String>> transactionProperty() {
+        return transaction;
+    }
+
+    public final ImmutablePair<Transaction, String> getTransaction() {
+        return transactionProperty().get();
+    }
+
+    public final void setTransaction(ImmutablePair<Transaction, String> transaction) {
+        transactionProperty().set(transaction);
+    }
 
     public TransactionItem() {
         FXMLLoader fxmlLoader = new FXMLLoader(MainView.class.getResource("TransactionItem.fxml"));
@@ -48,40 +59,18 @@ public class TransactionItem extends AnchorPane {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    public void setStorage(Storage storage) {
-        if (this.storage == storage) {
-            return;
-        }
-        this.storage = storage;
-        load();
-    }
-
-    public void setTransaction(Reference<Transaction> transaction) {
-        if (Objects.equals(this.transaction, transaction)) {
-            return;
-        }
-        this.transaction = transaction;
-        load();
-    }
-
-    @SuppressWarnings("BigDecimalMethodWithoutRoundingCalled")
-    public void load() {
-        if (storage == null || transaction == null) {
-            return;
-        }
-        Transaction transaction = storage.getTransaction(this.transaction);
-        title.setText(transaction.title());
-        amount.setText(AMOUNT_FORMAT.format(BigDecimal.valueOf(transaction.amount()).divide(BigDecimal.valueOf(100))));
-        time.setText(new Date(transaction.time()).toString());
-        entity.setText(storage.getEntity(transaction.entity()).name());
-        category.setText(transaction.category());
-        tags.getChildren().clear();
-        for (String tag : transaction.tags()) {
-            Text text = new Text(tag);
-            text.getStyleClass().add("transaction-item-tag");
-            tags.getChildren().add(text);
-        }
+        transaction.addListener((observable, oldValue, newValue) -> {
+            title.setText(newValue.getLeft().title());
+            amount.setText(AMOUNT_FORMAT.format(BigDecimal.valueOf(newValue.getLeft().amount()).divide(BigDecimal.valueOf(100))));
+            time.setText(new Date(newValue.getLeft().time()).toString());
+            entity.setText(newValue.getRight());
+            category.setText(newValue.getLeft().category());
+            tags.getChildren().clear();
+            for (String tag : newValue.getLeft().tags()) {
+                Text text = new Text(tag);
+                text.getStyleClass().add("transaction-item-tag");
+                tags.getChildren().add(text);
+            }
+        });
     }
 }
