@@ -108,9 +108,14 @@ public class DecryptionView extends AnchorPane {
         account.getItems().addAll(accountManager.getAccounts());
         account.setCellFactory(param -> new AccountCell());
         account.setButtonCell(new AccountCell());
+        if (accountManager.getDefaultAccount() != null) {
+            account.setValue(accountManager.getDefaultAccount());
+        }
     }
 
     public void handleDecrypt() {
+        accountManager.setDefaultAccount(account.getValue());
+        accountManager.saveAccounts();
         Event.fireEvent(this, new DecryptionSubmitEvent(DecryptionSubmitEvent.DECRYPTION_SUBMIT, new AccountManager.Account("", "", ""), ""));
     }
 
@@ -118,6 +123,7 @@ public class DecryptionView extends AnchorPane {
         AccountManager.Account account1 = accountManager.makeAccount(accountCreate.getText(), passwordCreate.getText());
         if (account1 != null) {
             accountManager.addAccount(account1);
+            accountManager.setDefaultAccount(account1);
             accountManager.saveAccounts();
             Event.fireEvent(this, new DecryptionSubmitEvent(DecryptionSubmitEvent.DECRYPTION_SUBMIT, account1, passwordCreate.getText()));
         }
@@ -126,6 +132,7 @@ public class DecryptionView extends AnchorPane {
     public void handleImport() {
         AccountManager.Account account1 = new AccountManager.Account(accountImport.getText(), path.getText(), key.getText());
         accountManager.addAccount(account1);
+        accountManager.setDefaultAccount(account1);
         accountManager.saveAccounts();
         Event.fireEvent(this, new DecryptionSubmitEvent(DecryptionSubmitEvent.DECRYPTION_SUBMIT, account1, passwordImport.getText()));
     }
@@ -189,8 +196,8 @@ public class DecryptionView extends AnchorPane {
 
     public static class DecryptionSubmitEvent extends Event {
         public static final EventType<DecryptionSubmitEvent> DECRYPTION_SUBMIT = new EventType<>(Event.ANY, "DECRYPTION_SUBMIT");
-        private AccountManager.Account account;
-        private String password;
+        private final AccountManager.Account account;
+        private final String password;
 
         public AccountManager.Account getAccount() {
             return account;
@@ -202,6 +209,8 @@ public class DecryptionView extends AnchorPane {
 
         public DecryptionSubmitEvent(EventType<? extends Event> eventType, AccountManager.Account account, String password) {
             super(eventType);
+            this.account = account;
+            this.password = password;
         }
     }
 }

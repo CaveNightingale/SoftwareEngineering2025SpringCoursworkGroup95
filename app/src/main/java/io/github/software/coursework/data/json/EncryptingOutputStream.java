@@ -22,7 +22,7 @@ public class EncryptingOutputStream extends OutputStream {
     private int base64Value = 0;
     private int base64Ungrouped = 0;
 
-    public EncryptingOutputStream(OutputStream backing, byte[] key) throws IOException, InvalidKeyException {
+    public EncryptingOutputStream(OutputStream backing, byte[] key) throws IOException {
         this.backing = backing;
         byte[] iv = new byte[16];
         new SecureRandom().nextBytes(iv);
@@ -32,6 +32,8 @@ public class EncryptingOutputStream extends OutputStream {
             this.cipher.init(Cipher.ENCRYPT_MODE, secretKeySpec, new IvParameterSpec(iv));
         } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidAlgorithmParameterException e) {
             throw new RuntimeException(e);
+        } catch (InvalidKeyException e) {
+            throw new IOException(e);
         }
         backing.write(Encryption.DATA_START.getBytes(StandardCharsets.UTF_8));
         base64Write(iv);
