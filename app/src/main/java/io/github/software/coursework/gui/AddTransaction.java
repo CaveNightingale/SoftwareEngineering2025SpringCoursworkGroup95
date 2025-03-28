@@ -11,6 +11,7 @@ import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.control.*;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 
@@ -48,6 +49,9 @@ public class AddTransaction extends VBox {
 
     @FXML
     private Button delete;
+
+    @FXML
+    public Region deleteSpace;
 
     private final ObjectProperty<EventHandler<SubmitEvent>> onSubmit = new SimpleObjectProperty<>();
 
@@ -141,6 +145,9 @@ public class AddTransaction extends VBox {
         category.setText(transaction.getLeft().category());
         tags.setText(String.join(" ", transaction.getLeft().tags()));
         submit.setText("Update");
+        deleteSpace.setManaged(true);
+        deleteSpace.setVisible(true);
+        delete.setManaged(true);
         delete.setVisible(true);
     }
 
@@ -165,6 +172,7 @@ public class AddTransaction extends VBox {
             message.setText("Time is required");
             return;
         }
+        setDisable(true);
         fireEvent(new SubmitEvent(this, this, false));
     }
 

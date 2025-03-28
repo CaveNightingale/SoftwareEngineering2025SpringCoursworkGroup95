@@ -11,7 +11,6 @@ import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.VBox;
-import javafx.scene.text.Text;
 
 import java.io.IOException;
 
@@ -109,7 +108,7 @@ public class AddEntity extends VBox {
             message.setText("Name is required");
             return;
         }
-        submit.setDisable(true);
+        setDisable(true);
         fireEvent(new SubmitEvent(this, this, false));
     }
 

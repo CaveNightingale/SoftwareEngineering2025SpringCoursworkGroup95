@@ -49,7 +49,7 @@
         <Label styleClass="add-transaction-message" fx:id="message"/>
         <Region styleClass="space"/>
         <Button text="Add" onMouseClicked="#handleMouseClick" fx:id="submit"/>
-        <Region styleClass="space"/>
-        <Button text="Delete" onMouseClicked="#handleDelete" visible="false" fx:id="delete"/>
+        <Region styleClass="space" managed="false" visible="false" fx:id="deleteSpace"/>
+        <Button text="Delete" onMouseClicked="#handleDelete" managed="false" visible="false" fx:id="delete"/>
     </HBox>
 </fx:root>
