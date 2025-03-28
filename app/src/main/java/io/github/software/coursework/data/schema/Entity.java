@@ -3,6 +3,8 @@ package io.github.software.coursework.data.schema;
 import io.github.software.coursework.data.Document;
 import io.github.software.coursework.data.Item;
 
+import java.io.IOException;
+
 public record Entity(
         String name,
         String telephone,
@@ -22,7 +24,8 @@ public record Entity(
 
 
     @Override
-    public void serialize(Document.Writer writer) {
+    public void serialize(Document.Writer writer) throws IOException {
+        writer.writeInteger("schema", 1);
         writer.writeString("name", name);
         writer.writeString("telephone", telephone);
         writer.writeString("email", email);
@@ -32,7 +35,11 @@ public record Entity(
         writer.writeEnd();
     }
 
-    public static Entity deserialize(Document.Reader reader) {
+    public static Entity deserialize(Document.Reader reader) throws IOException {
+        long schema = reader.readInteger("schema");
+        if (schema != 1) {
+            throw new IOException("Unsupported schema version: " + schema);
+        }
         Entity rval = new Entity(
                 reader.readString("name"),
                 reader.readString("telephone"),

@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import io.github.software.coursework.gui.TransactionItem?>
+<?import io.github.software.coursework.gui.EntityItem?>
 <?import javafx.scene.layout.*?>
-<?import javafx.scene.text.*?>
+<?import javafx.scene.text.Text?>
 <fx:root
         xmlns="http://javafx.com/javafx"
         xmlns:fx="http://javafx.com/fxml"
@@ -20,9 +20,6 @@
         >
             <HBox styleClass="entity-item-1st-row">
                 <Text fx:id="name" text="Jia Peidong"/>
-            </HBox>
-            <HBox styleClass="entity-item-2nd-row">
-                <Text fx:id="contact" text="BUPT"/>
             </HBox>
         </VBox>
     </AnchorPane>

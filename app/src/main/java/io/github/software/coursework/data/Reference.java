@@ -1,5 +1,8 @@
 package io.github.software.coursework.data;
 
+import com.google.common.hash.Hashing;
+
+import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 
 public record Reference<T extends Item<T>>(long id) {
@@ -7,5 +10,9 @@ public record Reference<T extends Item<T>>(long id) {
 
     public Reference() {
         this(SECURE_RANDOM.nextLong());
+    }
+
+    public Reference(String string) {
+        this(Hashing.murmur3_128().hashString(string, StandardCharsets.UTF_8).asLong());
     }
 }

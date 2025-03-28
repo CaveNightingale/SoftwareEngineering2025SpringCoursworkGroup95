@@ -3,7 +3,6 @@
 <?import io.github.software.coursework.gui.AddTransaction?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<?import javafx.scene.text.Text?>
 <fx:root
         xmlns="http://javafx.com/javafx"
         xmlns:fx="http://javafx.com/fxml"
@@ -46,8 +45,11 @@
         <TextArea styleClass="add-transaction-field" fx:id="description"/>
     </HBox>
     <HBox styleClass="add-transaction-row">
+        <Region HBox.hgrow="ALWAYS"/>
+        <Label styleClass="add-transaction-message" fx:id="message"/>
+        <Region styleClass="space"/>
         <Button text="Add" onMouseClicked="#handleMouseClick" fx:id="submit"/>
-        <Button text="Delete" onMouseClicked="#handleDelete" visible="false" fx:id="delete"/>
-        <Text styleClass="add-transaction-message" fx:id="message"/>
+        <Region styleClass="space" managed="false" visible="false" fx:id="deleteSpace"/>
+        <Button text="Delete" onMouseClicked="#handleDelete" managed="false" visible="false" fx:id="delete"/>
     </HBox>
 </fx:root>

@@ -1,22 +1,22 @@
 package io.github.software.coursework.gui;
 
 import io.github.software.coursework.data.Reference;
-import io.github.software.coursework.data.Storage;
+import io.github.software.coursework.data.ReferenceItemPair;
 import io.github.software.coursework.data.schema.Entity;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
+import javafx.collections.ObservableList;
 import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.event.EventType;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.FlowPane;
 
-import java.util.SequencedCollection;
+public class EntityList extends FlowPane {
+    private final SimpleObjectProperty<ObservableList<ReferenceItemPair<Entity>>> items = new SimpleObjectProperty<>(this, "items");
 
-public class EntityList extends VBox {
-    private Storage storage;
-    private SequencedCollection<Reference<Entity>> entities;
-
-    private final ObjectProperty<EventHandler<EntityEditClickedEvent>> onEntityEditClicked = new SimpleObjectProperty<>();
+    private final ObjectProperty<EventHandler<EntityEditClickedEvent>> onEntityEditClicked = new SimpleObjectProperty<>(this, "onEntityEditClicked");
 
     public final ObjectProperty<EventHandler<EntityEditClickedEvent>> onEntityEditClickedProperty() {
         return onEntityEditClicked;
@@ -30,6 +30,34 @@ public class EntityList extends VBox {
         onEntityEditClickedProperty().set(value);
     }
 
+    public final SimpleObjectProperty<ObservableList<ReferenceItemPair<Entity>>> itemsProperty() {
+        return items;
+    }
+
+    public final ObservableList<ReferenceItemPair<Entity>> getItems() {
+        return itemsProperty().get();
+    }
+
+    public final void setItems(ObservableList<ReferenceItemPair<Entity>> value) {
+        itemsProperty().set(value);
+    }
+
+    private void onListContentChange(ListChangeListener.Change<? extends ReferenceItemPair<Entity>> change) {
+        while (change.next()) {
+            if (change.wasAdded()) {
+                int index = 0;
+                for (ReferenceItemPair<Entity> pair : change.getAddedSubList()) {
+                    EntityItem item = new EntityItem();
+                    item.setEntity(pair.item());
+                    item.setOnMouseClicked(event -> fireEvent(new EntityEditClickedEvent(pair.reference(), pair.item())));
+                    getChildren().add(change.getFrom() + (index++), item);
+                }
+            } else if (change.wasRemoved()) {
+                getChildren().remove(change.getFrom(), change.getFrom() + change.getRemovedSize());
+            }
+        }
+    }
+
     public EntityList() {
         this.onEntityEditClicked.addListener((observable, oldValue, newValue) -> {
             if (oldValue != null) {
@@ -39,52 +67,42 @@ public class EntityList extends VBox {
                 this.addEventHandler(EntityEditClickedEvent.CLICKED, newValue);
             }
         });
-    }
-
-    public void setStorage(Storage storage) {
-        if (this.storage == storage) {
-            return;
-        }
-        this.storage = storage;
-        load();
-    }
-
-    public void setEntities(SequencedCollection<Reference<Entity>> entity) {
-        if (this.entities == entity) {
-            return;
-        }
-        this.entities = entity;
-        load();
-    }
-
-    public void load() {
-        this.getChildren().clear();
-        if (storage == null || entities == null) {
-            return;
-        }
-        for (Reference<Entity> reference : entities) {
-            EntityItem item = new EntityItem();
-            item.setOnMouseClicked(event -> {
-                this.fireEvent(new EntityEditClickedEvent(reference));
-            });
-            item.setStorage(storage);
-            item.setEntity(reference);
-            this.getChildren().add(item);
-        }
+        itemsProperty().addListener((observable, oldValue, newValue) -> {
+            getChildren().clear();
+            if (oldValue != null) {
+                oldValue.removeListener(this::onListContentChange);
+            }
+            if (newValue != null) {
+                newValue.forEach(pair -> {
+                    EntityItem item = new EntityItem();
+                    item.setEntity(pair.item());
+                    item.setOnMouseClicked(event -> fireEvent(new EntityEditClickedEvent(pair.reference(), pair.item())));
+                    getChildren().add(item);
+                });
+                newValue.addListener(this::onListContentChange);
+            }
+        });
+        setItems(FXCollections.observableArrayList());
     }
 
     public static class EntityEditClickedEvent extends Event {
         public static final EventType<EntityEditClickedEvent> CLICKED = new EventType<>(Event.ANY, "ENTITY_EDIT_CLICKED");
 
         private final Reference<Entity> reference;
+        private final Entity entity;
 
-        public EntityEditClickedEvent(Reference<Entity> reference) {
+        public EntityEditClickedEvent(Reference<Entity> reference, Entity entity) {
             super(CLICKED);
             this.reference = reference;
+            this.entity = entity;
         }
 
         public Reference<Entity> getReference() {
             return reference;
+        }
+
+        public Entity getEntity() {
+            return entity;
         }
     }
 }
