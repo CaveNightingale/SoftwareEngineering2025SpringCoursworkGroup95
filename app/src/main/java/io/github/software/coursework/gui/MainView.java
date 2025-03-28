@@ -6,9 +6,11 @@ import io.github.software.coursework.data.ReferenceItemPair;
 import io.github.software.coursework.data.schema.Entity;
 import io.github.software.coursework.data.schema.Transaction;
 import javafx.application.Platform;
+import javafx.event.Event;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.control.*;
+import javafx.scene.input.KeyCode;
 import javafx.scene.layout.AnchorPane;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 
@@ -132,6 +134,14 @@ public class MainView extends AnchorPane {
             }
         });
 
+        tabPane.setOnKeyReleased(event -> {
+            Tab tab = tabPane.getSelectionModel().getSelectedItem();
+            if (event.getCode() == KeyCode.ESCAPE && tab != null && tab.isClosable()) {
+                tabPane.getTabs().remove(tab);
+                tab.getOnClosed().handle(new Event(Event.ANY));
+            }
+        });
+
         loadEverything();
     }
 
@@ -190,6 +200,7 @@ public class MainView extends AnchorPane {
         addTransaction.getEntityItems().addAll(entityList.getItems());
         addTransactionTab.setContent(addTransaction);
         addTransactionTab.setOnClosed(event -> {
+            System.out.println("xxx");
             addTransactionTab = null;
             addTransaction = null;
             tabPane.getSelectionModel().select(transactionTab);

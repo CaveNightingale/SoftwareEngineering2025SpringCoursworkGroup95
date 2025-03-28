@@ -56,6 +56,6 @@
         <Region HBox.hgrow="ALWAYS"/>
         <Label styleClass="add-entity-message" fx:id="message"/>
         <Region styleClass="space"/>
-        <Button text="Add" onMouseClicked="#handleMouseClick" fx:id="submit"/>
+        <Button text="Add" onAction="#handleMouseClick" fx:id="submit"/>
     </HBox>
 </fx:root>

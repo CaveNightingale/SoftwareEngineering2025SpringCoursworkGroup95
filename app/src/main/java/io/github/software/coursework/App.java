@@ -29,6 +29,7 @@ public class App extends Application {
         stage.setResizable(false);
         stage.setTitle("Financial Management System");
         stage.show();
+        decryptionView.focus();
         decryptionView.setOnDecryptionSubmit(event -> {
             try {
                 storage = new JsonStorage(event.getAccount(), event.getPassword());

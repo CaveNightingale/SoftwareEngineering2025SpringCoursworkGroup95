@@ -55,8 +55,8 @@
         <Tab closable="false" text="Transactions" fx:id="transactionTab">
             <VBox>
                 <ToolBar>
-                    <Button text="Add" onMouseClicked="#handleAddTransaction"/>
-                    <Button text="CSV" onMouseClicked="#handleExportCSV"/>
+                    <Button text="Add" onAction="#handleAddTransaction"/>
+                    <Button text="CSV" onAction="#handleExportCSV"/>
                     <Region HBox.hgrow="ALWAYS"/>
                     <!-- is "save" button needed? -->
                     <Pagination fx:id="pagination"/>
@@ -69,7 +69,7 @@
         <Tab closable="false" text="Entities" fx:id="entityTab">
             <VBox>
                 <ToolBar>
-                    <Button text="Add" onMouseClicked="#handleAddEntity"/>
+                    <Button text="Add" onAction="#handleAddEntity"/>
                     <Region HBox.hgrow="ALWAYS"/>
                     <!-- is "save" button needed? -->
                 </ToolBar>

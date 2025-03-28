@@ -13,6 +13,10 @@
     -fx-max-width: 20em;
 }
 
+.focused-item {
+    -fx-background-color: #d0d0d0;
+}
+
 .transaction-item {
     -fx-border-style: dashed;
     -fx-border-width: 0 0 2px 0;

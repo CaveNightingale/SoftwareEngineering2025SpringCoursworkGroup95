@@ -48,8 +48,8 @@
         <Region HBox.hgrow="ALWAYS"/>
         <Label styleClass="add-transaction-message" fx:id="message"/>
         <Region styleClass="space"/>
-        <Button text="Add" onMouseClicked="#handleMouseClick" fx:id="submit"/>
+        <Button text="Add" onAction="#handleMouseClick" fx:id="submit"/>
         <Region styleClass="space" managed="false" visible="false" fx:id="deleteSpace"/>
-        <Button text="Delete" onMouseClicked="#handleDelete" managed="false" visible="false" fx:id="delete"/>
+        <Button text="Delete" onAction="#handleDelete" managed="false" visible="false" fx:id="delete"/>
     </HBox>
 </fx:root>
