@@ -14,6 +14,8 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.SequencedCollection;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Consumer;
@@ -47,7 +49,7 @@ public class JsonStorage implements AsyncStorage {
         entityExecutor.submit(() -> {
             Thread.currentThread().setName("Entity-IO-Worker");
             try {
-                entityTable = new JsonEntityTable(new EncryptedDirectory(new File(account.path()), key, "entity", true));
+                entityTable = new JsonEntityTable(new EncryptedDirectory(new File(account.path()), key, "entity"));
             } catch (IOException e) {
                 logger.log(Level.SEVERE, "Failed to load entity table", e);
                 entityExecutor.shutdownNow();
@@ -58,7 +60,7 @@ public class JsonStorage implements AsyncStorage {
         transactionExecutor.submit(() -> {
             Thread.currentThread().setName("Transaction-IO-Worker");
             try {
-                transactionTable = new JsonTransactionTable(new EncryptedDirectory(new File(account.path()), key, "transaction", true));
+                transactionTable = new JsonTransactionTable(new EncryptedDirectory(new File(account.path()), key, "transaction"));
             } catch (IOException e) {
                 logger.log(Level.SEVERE, "Failed to load transaction table", e);
                 transactionExecutor.shutdownNow();
@@ -69,7 +71,7 @@ public class JsonStorage implements AsyncStorage {
         modelExecutor.submit(() -> {
             Thread.currentThread().setName("Model-IO-Worker");
             try {
-                modelDirectory = new JsonModelDirectory(new EncryptedDirectory(new File(account.path()), key, "model", true));
+                modelDirectory = new JsonModelDirectory(new EncryptedDirectory(new File(account.path()), key, "model"));
             } catch (Throwable ex) {
                 crash(ex);
             }
@@ -110,10 +112,16 @@ public class JsonStorage implements AsyncStorage {
     }
 
     @Override
-    public void close() throws IOException {
+    public CompletableFuture<Void> close() {
+        CountDownLatch latch = new CountDownLatch(3);
+        CompletableFuture<Void> future = new CompletableFuture<>();
         modelExecutor.submit(() -> {
             try {
                 modelDirectory.flush();
+                latch.countDown();
+                if (latch.getCount() == 0) {
+                    future.complete(null);
+                }
             } catch (IOException e) {
                 logger.log(Level.SEVERE, "Failed to flush model directory", e);
             } catch (Throwable ex) {
@@ -124,6 +132,10 @@ public class JsonStorage implements AsyncStorage {
         entityExecutor.submit(() -> {
             try {
                 entityTable.flush();
+                latch.countDown();
+                if (latch.getCount() == 0) {
+                    future.complete(null);
+                }
             } catch (IOException e) {
                 logger.log(Level.SEVERE, "Failed to flush entity table", e);
             } catch (Throwable ex) {
@@ -134,6 +146,10 @@ public class JsonStorage implements AsyncStorage {
         transactionExecutor.submit(() -> {
             try {
                 transactionTable.flush();
+                latch.countDown();
+                if (latch.getCount() == 0) {
+                    future.complete(null);
+                }
             } catch (IOException e) {
                 logger.log(Level.SEVERE, "Failed to flush transaction table", e);
             } catch (Throwable ex) {
@@ -141,6 +157,7 @@ public class JsonStorage implements AsyncStorage {
             }
         });
         transactionExecutor.shutdown();
+        return future;
     }
 
     private static <T extends Item<T>> ReferenceItemPair<T> first(ArrayList<ReferenceItemPair<T>> list) {

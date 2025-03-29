@@ -83,7 +83,7 @@ public final class AccountManager {
         return defaultAccount;
     }
 
-    public void setDefaultAccount(Account defaultAccount) {
+    public void setDefaultAccount(@Nullable Account defaultAccount) {
         this.defaultAccount = defaultAccount;
     }
 
@@ -100,6 +100,8 @@ public final class AccountManager {
                 int defaultAccountRead = (int) reader.readInteger("default");
                 if (defaultAccountRead >= 0 && defaultAccountRead < accounts.size()) {
                     this.defaultAccount = accounts.get(defaultAccountRead);
+                } else {
+                    this.defaultAccount = null;
                 }
                 reader.readEnd();
             } catch (IOException e) {
@@ -115,7 +117,7 @@ public final class AccountManager {
             Document.Writer list = writer.writeCompound("list");
             int i = 0;
             for (Account account : accounts) {
-                account.serialize(list.writeCompound(i));
+                account.serialize(list.writeCompound(i++));
             }
             list.writeEnd();
             writer.writeInteger("default", accounts.indexOf(defaultAccount));

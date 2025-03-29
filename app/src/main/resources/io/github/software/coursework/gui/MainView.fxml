@@ -27,6 +27,10 @@
         <Tab closable="false" text="Model">
             <ScrollPane fitToWidth="true" fitToHeight="true">
                 <VBox>
+                    <ToolBar>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Button text="Settings" onAction="#handleSettings"/>
+                    </ToolBar>
                     <HBox styleClass="model-title">
                         <Label text="Budget"/>
                         <Region HBox.hgrow="ALWAYS"/>
@@ -77,6 +81,12 @@
                     <EntityList fx:id="entityList" styleClass="entity-list"/>
                 </ScrollPane>
             </VBox>
+        </Tab>
+        <Tab fx:id="settingsTab" text="Settings">
+            <ScrollPane fitToWidth="true" fitToHeight="true" VBox.vgrow="ALWAYS">
+                <VBox fx:id="settings">
+                </VBox>
+            </ScrollPane>
         </Tab>
     </TabPane>
 </fx:root>

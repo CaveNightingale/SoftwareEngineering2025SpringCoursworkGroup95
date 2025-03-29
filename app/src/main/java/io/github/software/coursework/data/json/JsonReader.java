@@ -22,6 +22,7 @@ public class JsonReader implements Document.Reader {
     private int index;
     private JsonReader childReader;
     private boolean exhausted;
+    private boolean suppressWarning = false;
 
     private JsonReader(JsonParser jsonParser, boolean array, boolean root) {
         this.jsonParser = jsonParser;
@@ -141,9 +142,13 @@ public class JsonReader implements Document.Reader {
         this.exhausted = true;
     }
 
+    void suppressWarning() {
+        this.suppressWarning = true;
+    }
+
     @Override
     public void close() throws IOException {
-        if (!exhausted) {
+        if (!exhausted && !suppressWarning) {
             logger.info("Close the reader before reaching the end of the document.");
         }
         if (root) {

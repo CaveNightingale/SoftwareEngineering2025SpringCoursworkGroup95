@@ -4,16 +4,16 @@ import io.github.software.coursework.data.schema.Entity;
 import io.github.software.coursework.data.schema.Transaction;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.util.SequencedCollection;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
 /**
  * An asynchronous storage interface.
  * For simplicity, one thread per table;
  */
-public interface AsyncStorage extends Closeable {
+public interface AsyncStorage {
     /**
      * Write modifications to disk
      */
@@ -54,4 +54,6 @@ public interface AsyncStorage extends Closeable {
     void entity(Consumer<EntityTable> callback);
     void transaction(Consumer<TransactionTable> callback);
     void model(Consumer<ModelDirectory> callback);
+
+    CompletableFuture<Void> close();
 }
