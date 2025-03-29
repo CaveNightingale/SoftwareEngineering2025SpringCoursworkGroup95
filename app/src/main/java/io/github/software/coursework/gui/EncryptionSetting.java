@@ -95,6 +95,20 @@ public class EncryptionSetting extends VBox {
         onRequestRestartProperty().set(value);
     }
 
+    private final ObjectProperty<EventHandler<RequestOpenLogEvent>> onRequestOpenLog = new SimpleObjectProperty<>();
+
+    public final ObjectProperty<EventHandler<RequestOpenLogEvent>> onRequestOpenLogProperty() {
+        return onRequestOpenLog;
+    }
+
+    public final EventHandler<RequestOpenLogEvent> getOnRequestOpenLog() {
+        return onRequestOpenLogProperty().get();
+    }
+
+    public final void setOnRequestOpenLog(EventHandler<RequestOpenLogEvent> value) {
+        onRequestOpenLogProperty().set(value);
+    }
+
     public EncryptionSetting(AccountManager.Account account, String password) {
         FXMLLoader fxmlLoader = new FXMLLoader(EncryptionSetting.class.getResource("EncryptionSetting.fxml"));
         fxmlLoader.setRoot(this);
@@ -111,6 +125,15 @@ public class EncryptionSetting extends VBox {
             }
             if (newValue != null) {
                 this.addEventHandler(RequestRestartEvent.REQUEST_RESTART, newValue);
+            }
+        });
+
+        onRequestOpenLogProperty().addListener((observable, oldValue, newValue) -> {
+            if (oldValue != null) {
+                this.removeEventHandler(RequestOpenLogEvent.REQUEST_OPEN_LOG, oldValue);
+            }
+            if (newValue != null) {
+                this.addEventHandler(RequestOpenLogEvent.REQUEST_OPEN_LOG, newValue);
             }
         });
 
@@ -330,9 +353,9 @@ public class EncryptionSetting extends VBox {
             if (Objects.requireNonNull(new File(accountOriginal.path()).list()).length == 0) {
                 Files.delete(Path.of(accountOriginal.path()));
             }
+            manager.removeAccount(accountOriginal);
             accountOriginal = accountOriginal.withPath(newPath.getText());
             manager.setDefaultAccount(accountOriginal);
-            manager.removeAccount(accountOriginal);
             manager.addAccount(accountOriginal);
             manager.saveAccounts();
             done("Your account is moved.", "You can now use your new directory.");
@@ -409,6 +432,19 @@ public class EncryptionSetting extends VBox {
         });
     }
 
+    @FXML
+    private void openLog() {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setInitialDirectory(new File(accountOriginal.path()));
+        fileChooser.setTitle("Select Log");
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Log", "*.log"));
+        File file = fileChooser.showOpenDialog(this.getScene().getWindow());
+        if (file == null) {
+            return;
+        }
+        Event.fireEvent(this, new RequestOpenLogEvent(file));
+    }
+
     public static class RequestRestartEvent extends Event {
         public static final EventType<RequestRestartEvent> REQUEST_RESTART = new EventType<>(Event.ANY, "REQUEST_RESTART");
         public final Runnable actionDuringRestart;
@@ -416,6 +452,20 @@ public class EncryptionSetting extends VBox {
         public RequestRestartEvent(Runnable actionDuringRestart) {
             super(REQUEST_RESTART);
             this.actionDuringRestart = actionDuringRestart;
+        }
+    }
+
+    public static class RequestOpenLogEvent extends Event {
+        public static final EventType<RequestOpenLogEvent> REQUEST_OPEN_LOG = new EventType<>(Event.ANY, "REQUEST_OPEN_LOG");
+        public final File file;
+
+        public RequestOpenLogEvent(File file) {
+            super(REQUEST_OPEN_LOG);
+            this.file = file;
+        }
+
+        public File getFile() {
+            return file;
         }
     }
 }

@@ -1,6 +1,8 @@
 package io.github.software.coursework;
 
 import io.github.software.coursework.data.AsyncStorage;
+import io.github.software.coursework.data.json.EncryptedLogger;
+import io.github.software.coursework.data.json.Encryption;
 import io.github.software.coursework.data.json.JsonStorage;
 import io.github.software.coursework.gui.DecryptionView;
 import io.github.software.coursework.gui.EncryptionSetting;
@@ -8,10 +10,20 @@ import io.github.software.coursework.gui.MainView;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.scene.Scene;
+import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.control.Tab;
+import javafx.scene.layout.VBox;
+import javafx.scene.text.Text;
+import javafx.scene.text.TextFlow;
 import javafx.stage.Stage;
 
 import java.io.IOException;
-import java.util.Objects;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -82,6 +94,40 @@ public class App extends Application {
                 });
             });
         });
+        encryptionSetting.setOnRequestOpenLog(event1 -> Thread.ofVirtual().start(() -> {
+            SequencedCollection<String> lines;
+            try {
+                byte[] key = Encryption.readKeyFile(event.getPassword(), Files.readString(Path.of(event.getAccount().key())));
+                lines = EncryptedLogger.decodeLog(event1.getFile(), Objects.requireNonNull(key));
+            } catch (IOException e) {
+                logger.log(Level.INFO, "Error during reading log", e);
+                StringWriter sw = new StringWriter();
+                e.printStackTrace(new PrintWriter(sw));
+                lines = Arrays.asList(sw.toString().split("\n"));
+            }
+            SequencedCollection<String> finalLines = lines;
+            Platform.runLater(() -> {
+                Tab tab = new Tab("Log: " + event1.getFile().getName());
+                ScrollPane scrollPane = new ScrollPane();
+                tab.setContent(scrollPane);
+                scrollPane.setFitToHeight(true);
+                scrollPane.setFitToWidth(true);
+                VBox vBox = new VBox();
+                vBox.setStyle("-fx-padding: 1em;");
+                scrollPane.setContent(vBox);
+                for (String line : finalLines) {
+                    TextFlow textFlow = new TextFlow();
+                    vBox.getChildren().add(textFlow);
+                    textFlow.setStyle("-fx-font-size: 12px; -fx-font-family: monospace;");
+                    textFlow.getChildren().add(new Text(line));
+                    textFlow.setStyle("-fx-border-style: dashed; -fx-border-width: 0 0 1px 0; -fx-border-color: #000000;");
+                }
+                Label endOfLog = new Label("End of log");
+                endOfLog.setStyle("-fx-font-style: italic;");
+                vBox.getChildren().add(endOfLog);
+                mainView.openExternalTab(tab);
+            });
+        }));
         mainView.setStorageSetting(encryptionSetting);
         return new Scene(mainView, 800, 600);
     }

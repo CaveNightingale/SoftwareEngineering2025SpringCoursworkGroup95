@@ -14,10 +14,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.SequencedCollection;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.*;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -31,6 +28,7 @@ public class JsonStorage implements AsyncStorage {
     private final ExecutorService entityExecutor = Executors.newSingleThreadExecutor();
     private final ExecutorService transactionExecutor = Executors.newSingleThreadExecutor();
     private final ExecutorService modelExecutor = Executors.newSingleThreadExecutor();
+    private final EncryptedLogger opLogger;
 
     private void crash(Throwable throwable) {
         logger.log(Level.SEVERE, "A fatal error has occurred in worker thread " + Thread.currentThread(), throwable);
@@ -46,6 +44,7 @@ public class JsonStorage implements AsyncStorage {
         if (!Files.exists(Path.of(account.path()))) {
             throw new FileNotFoundException("Account path does not exist");
         }
+        this.opLogger = new EncryptedLogger(new File(account.path()), key);
         entityExecutor.submit(() -> {
             Thread.currentThread().setName("Entity-IO-Worker");
             try {
@@ -121,6 +120,7 @@ public class JsonStorage implements AsyncStorage {
                 latch.countDown();
                 if (latch.getCount() == 0) {
                     future.complete(null);
+                    this.opLogger.flush();
                 }
             } catch (IOException e) {
                 logger.log(Level.SEVERE, "Failed to flush model directory", e);
@@ -135,6 +135,7 @@ public class JsonStorage implements AsyncStorage {
                 latch.countDown();
                 if (latch.getCount() == 0) {
                     future.complete(null);
+                    this.opLogger.flush();
                 }
             } catch (IOException e) {
                 logger.log(Level.SEVERE, "Failed to flush entity table", e);
@@ -149,6 +150,7 @@ public class JsonStorage implements AsyncStorage {
                 latch.countDown();
                 if (latch.getCount() == 0) {
                     future.complete(null);
+                    this.opLogger.flush();
                 }
             } catch (IOException e) {
                 logger.log(Level.SEVERE, "Failed to flush transaction table", e);
@@ -157,7 +159,13 @@ public class JsonStorage implements AsyncStorage {
             }
         });
         transactionExecutor.shutdown();
-        return future;
+        return future.thenRunAsync(() -> {
+            try {
+                opLogger.close();
+            } catch (IOException e) {
+                logger.log(Level.SEVERE, "Failed to close logger", e);
+            }
+        }, ForkJoinPool.commonPool());
     }
 
     private static <T extends Item<T>> ReferenceItemPair<T> first(ArrayList<ReferenceItemPair<T>> list) {
@@ -167,7 +175,7 @@ public class JsonStorage implements AsyncStorage {
         return list.getFirst();
     }
 
-    public static class JsonEntityTable implements EntityTable {
+    public class JsonEntityTable implements EntityTable {
         private final ChunkedIndex<ReferenceItemPair<Entity>> entityChunkedIndex;
 
         private JsonEntityTable(Directory directory) throws IOException {
@@ -188,9 +196,11 @@ public class JsonStorage implements AsyncStorage {
         public void put(Reference<Entity> key, @Nullable Entity value) throws IOException {
             ReferenceItemPair<Entity> queried = first(this.entityChunkedIndex.querySamples(new ReferenceItemPair<>(key, null), null, 0, 1));
             if (queried != null && queried.reference().equals(key)) { // Lower bound searching may return a different key
+                opLogger.log("REMOVE_ENTITY", queried);
                 this.entityChunkedIndex.removeSample(queried);
             }
             if (value != null) {
+                opLogger.log("ADD_ENTITY", new ReferenceItemPair<>(key, value));
                 this.entityChunkedIndex.addSample(new ReferenceItemPair<>(key, value));
             }
         }
@@ -206,7 +216,7 @@ public class JsonStorage implements AsyncStorage {
         }
     }
 
-    public static class JsonTransactionTable implements TransactionTable {
+    public class JsonTransactionTable implements TransactionTable {
         private final ChunkedIndex<ReferenceItemPair<Transaction>> transactionIndex;
         private final ChunkedIndex<ReferenceItemPair<Transaction>> transactionIndexByTime;
 
@@ -237,10 +247,12 @@ public class JsonStorage implements AsyncStorage {
         public void put(Reference<Transaction> key, @Nullable Transaction value) throws IOException {
             ReferenceItemPair<Transaction> queried = first(this.transactionIndex.querySamples(new ReferenceItemPair<>(key, null), null, 0, 1));
             if (queried != null && queried.reference().equals(key)) { // Lower bound searching may return a different key
+                opLogger.log("REMOVE_TRANSACTION", queried);
                 this.transactionIndex.removeSample(queried);
                 this.transactionIndexByTime.removeSample(queried);
             }
             if (value != null) {
+                opLogger.log("ADD_TRANSACTION", new ReferenceItemPair<>(key, value));
                 this.transactionIndex.addSample(new ReferenceItemPair<>(key, value));
                 this.transactionIndexByTime.addSample(new ReferenceItemPair<>(key, value));
             }
@@ -257,7 +269,7 @@ public class JsonStorage implements AsyncStorage {
         }
     }
 
-    public static final class JsonModelDirectory implements ModelDirectory {
+    public final class JsonModelDirectory implements ModelDirectory {
         Directory backing;
         private JsonModelDirectory(Directory directory) {
             this.backing = directory;
@@ -276,6 +288,11 @@ public class JsonStorage implements AsyncStorage {
         @Override
         public <T extends Item<T>> void put(String name, @Nullable T item) throws IOException {
             backing.put(name, item);
+        }
+
+        @Override
+        public void log(String event, Item<?>... args) {
+            opLogger.log(event, args);
         }
     }
 }

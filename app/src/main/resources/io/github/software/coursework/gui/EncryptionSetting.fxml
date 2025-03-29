@@ -17,6 +17,11 @@
         <Button text="Rename" styleClass="setting-path-field-select" onAction="#handleRenameAccount"/>
     </HBox>
     <HBox styleClass="setting-line">
+        <Label text="Logs" styleClass="setting-field-name"/>
+        <Region HBox.hgrow="ALWAYS"/>
+        <Button text="Open" styleClass="setting-field-button" onAction="#openLog"/>
+    </HBox>
+    <HBox styleClass="setting-line">
         <Label style="-fx-text-fill: #ff0000;" text="You need to restart the application to apply changes in the red rectangle area."/>
     </HBox>
     <VBox styleClass="setting-require-restart-outer">

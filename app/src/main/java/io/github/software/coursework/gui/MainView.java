@@ -181,6 +181,15 @@ public class MainView extends AnchorPane {
         loadEverything();
     }
 
+    public void openExternalTab(Tab externalTab) {
+        if (tabPane.getTabs().contains(externalTab)) {
+            tabPane.getSelectionModel().select(externalTab);
+            return;
+        }
+        tabPane.getTabs().add(externalTab);
+        tabPane.getSelectionModel().select(externalTab);
+    }
+
     public void loadEverything() {
         asyncStorage.entity(table -> {
             try {

@@ -49,6 +49,7 @@ public interface AsyncStorage {
     }
 
     interface ModelDirectory extends DirectoryAccessor, Flush {
+        void log(String event, Item<?> ...args);
     }
 
     void entity(Consumer<EntityTable> callback);
