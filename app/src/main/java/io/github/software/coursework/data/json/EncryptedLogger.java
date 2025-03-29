@@ -2,6 +2,7 @@ package io.github.software.coursework.data.json;
 
 import com.fasterxml.jackson.core.JsonEncoding;
 import com.fasterxml.jackson.core.JsonFactory;
+import io.github.software.coursework.data.AsyncStorage;
 import io.github.software.coursework.data.Document;
 import io.github.software.coursework.data.Item;
 
@@ -25,7 +26,7 @@ import java.util.SequencedCollection;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 public final class EncryptedLogger implements Closeable {
-    private record Entry(Date time, String event, Item<?>[] items) {}
+    private record Entry(Date time, AsyncStorage.Sensitivity sensitivity, String event, Item[] items) {}
     // Size padded to prevent inference of the length of the data
     private final int paddingChunkSize = 512;
 
@@ -59,9 +60,10 @@ public final class EncryptedLogger implements Closeable {
             try (Document.Writer jsonWriter = JsonWriter.createWriter(factory.createGenerator(baos, JsonEncoding.UTF8))) {
                 jsonWriter.writeString("time", new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(entry.time));
                 jsonWriter.writeString("event", entry.event);
+                jsonWriter.writeString("sensitivity", entry.sensitivity.toString());
                 Document.Writer itemsWriter = jsonWriter.writeCompound("items");
                 int i = 0;
-                for (Item<?> item : entry.items) {
+                for (Item item : entry.items) {
                     item.serialize(itemsWriter.writeCompound(i++));
                 }
                 itemsWriter.writeEnd();
@@ -95,8 +97,8 @@ public final class EncryptedLogger implements Closeable {
         }
     }
 
-    public void log(String event, Item<?>... items) {
-        queue.add(new Entry(new Date(), event, items));
+    public void log(String event, AsyncStorage.Sensitivity sensitivity, Item... items) {
+        queue.add(new Entry(new Date(), sensitivity, event, items));
     }
 
     @Override

@@ -19,8 +19,6 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Tab;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Paint;
-import javafx.scene.text.Font;
-import javafx.scene.text.FontPosture;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
 import javafx.stage.Stage;
@@ -51,6 +49,9 @@ public class App extends Application {
         stage.setScene(scene);
         stage.setResizable(false);
         stage.setTitle("Financial Management System");
+        stage.setWidth(400);
+        stage.setHeight(275);
+        stage.setMaximized(false);
         stage.show();
         decryptionView.focus();
         decryptionView.setOnDecryptionSubmit(event -> {
@@ -94,15 +95,12 @@ public class App extends Application {
                 }
                 Platform.runLater(() -> {
                     storage = null;
-                    stage.setWidth(400);
-                    stage.setHeight(250);
-                    stage.setMaximized(false);
                     start(stage);
                 });
             });
         });
         encryptionSetting.setOnRequestOpenLog(event1 -> Thread.ofVirtual().start(() -> {
-            SequencedCollection<String> lines = null;
+            SequencedCollection<String> lines;
             String errors = null;
             SequencedCollection<String> finalLines = new ArrayList<>();
             try {
@@ -163,7 +161,7 @@ public class App extends Application {
     public void stop() throws Exception {
         super.stop();
         if (storage != null) {
-            storage.close();
+            storage.close().get();
         }
     }
 }

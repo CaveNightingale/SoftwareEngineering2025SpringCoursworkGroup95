@@ -117,69 +117,70 @@ public final class JsonStorage implements AsyncStorage {
         modelExecutor.submit(() -> {
             try {
                 modelDirectory.flush();
-                latch.countDown();
-                if (latch.getCount() == 0) {
-                    future.complete(null);
-                    this.opLogger.flush();
-                }
             } catch (IOException e) {
                 logger.log(Level.SEVERE, "Failed to flush model directory", e);
             } catch (Throwable ex) {
                 crash(ex);
+            } finally {
+                latch.countDown();
             }
         });
         modelExecutor.shutdown();
         entityExecutor.submit(() -> {
             try {
                 entityTable.flush();
-                latch.countDown();
-                if (latch.getCount() == 0) {
-                    future.complete(null);
-                    this.opLogger.flush();
-                }
             } catch (IOException e) {
                 logger.log(Level.SEVERE, "Failed to flush entity table", e);
             } catch (Throwable ex) {
                 crash(ex);
+            } finally {
+                latch.countDown();
             }
         });
         entityExecutor.shutdown();
         transactionExecutor.submit(() -> {
             try {
                 transactionTable.flush();
-                latch.countDown();
-                if (latch.getCount() == 0) {
-                    future.complete(null);
-                    this.opLogger.flush();
-                }
             } catch (IOException e) {
                 logger.log(Level.SEVERE, "Failed to flush transaction table", e);
             } catch (Throwable ex) {
                 crash(ex);
+            } finally {
+                latch.countDown();
             }
         });
         transactionExecutor.shutdown();
-        return future.thenRunAsync(() -> {
+        Thread.ofVirtual().start(() -> {
+            try {
+                latch.await();
+            } catch (InterruptedException e) {
+                logger.log(Level.SEVERE, "Failed to wait for flush", e);
+                Thread.currentThread().interrupt();
+                future.completeExceptionally(e);
+            }
             try {
                 opLogger.close();
             } catch (IOException e) {
                 logger.log(Level.SEVERE, "Failed to close logger", e);
+                future.completeExceptionally(e);
             }
-        }, ForkJoinPool.commonPool());
+            future.complete(null);
+        });
+        return future;
     }
 
-    private static <T extends Item<T>> ReferenceItemPair<T> first(ArrayList<ReferenceItemPair<T>> list) {
+    private static <T extends Item> ReferenceItemPair<T> first(ArrayList<ReferenceItemPair<T>> list) {
         if (list.isEmpty()) {
             return null;
         }
         return list.getFirst();
     }
 
-    public class JsonEntityTable implements EntityTable {
+    public final class JsonEntityTable implements EntityTable {
         private final ChunkedIndex<ReferenceItemPair<Entity>> entityChunkedIndex;
 
         private JsonEntityTable(Directory directory) throws IOException {
-            this.entityChunkedIndex = new ChunkedIndex<ReferenceItemPair<Entity>>(directory, Comparator.comparingLong(a -> a.reference().id()), reader -> ReferenceItemPair.deserialize(reader, Entity::deserialize));
+            this.entityChunkedIndex = new ChunkedIndex<>(directory, Comparator.comparingLong(a -> a.reference().id()), reader -> ReferenceItemPair.deserialize(reader, Entity::deserialize));
         }
 
         @Override
@@ -193,14 +194,14 @@ public final class JsonStorage implements AsyncStorage {
         }
 
         @Override
-        public void put(Reference<Entity> key, @Nullable Entity value) throws IOException {
+        public void put(Reference<Entity> key, Sensitivity sensitivity, @Nullable Entity value) throws IOException {
             ReferenceItemPair<Entity> queried = first(this.entityChunkedIndex.querySamples(new ReferenceItemPair<>(key, null), null, 0, 1));
             if (queried != null && queried.reference().equals(key)) { // Lower bound searching may return a different key
-                opLogger.log("REMOVE_ENTITY", queried);
+                opLogger.log("REMOVE_ENTITY", sensitivity, queried);
                 this.entityChunkedIndex.removeSample(queried);
             }
             if (value != null) {
-                opLogger.log("ADD_ENTITY", new ReferenceItemPair<>(key, value));
+                opLogger.log("ADD_ENTITY", sensitivity, new ReferenceItemPair<>(key, value));
                 this.entityChunkedIndex.addSample(new ReferenceItemPair<>(key, value));
             }
         }
@@ -216,15 +217,15 @@ public final class JsonStorage implements AsyncStorage {
         }
     }
 
-    public class JsonTransactionTable implements TransactionTable {
+    public final class JsonTransactionTable implements TransactionTable {
         private final ChunkedIndex<ReferenceItemPair<Transaction>> transactionIndex;
         private final ChunkedIndex<ReferenceItemPair<Transaction>> transactionIndexByTime;
 
         private JsonTransactionTable(Directory directory) throws IOException {
-            this.transactionIndex = new ChunkedIndex<ReferenceItemPair<Transaction>>(
+            this.transactionIndex = new ChunkedIndex<>(
                     directory, Comparator.comparingLong(a -> a.reference().id()),
                     reader -> ReferenceItemPair.deserialize(reader, Transaction::deserialize));
-            this.transactionIndexByTime = new ChunkedIndex<ReferenceItemPair<Transaction>>(
+            this.transactionIndexByTime = new ChunkedIndex<>(
                     directory.withNamespace("by-time"), Comparator.comparingLong((ReferenceItemPair<Transaction> a) -> a.item().time()).reversed(),
                     reader -> ReferenceItemPair.deserialize(reader, Transaction::deserialize));
         }
@@ -244,15 +245,15 @@ public final class JsonStorage implements AsyncStorage {
         }
 
         @Override
-        public void put(Reference<Transaction> key, @Nullable Transaction value) throws IOException {
+        public void put(Reference<Transaction> key, Sensitivity sensitivity, @Nullable Transaction value) throws IOException {
             ReferenceItemPair<Transaction> queried = first(this.transactionIndex.querySamples(new ReferenceItemPair<>(key, null), null, 0, 1));
             if (queried != null && queried.reference().equals(key)) { // Lower bound searching may return a different key
-                opLogger.log("REMOVE_TRANSACTION", queried);
+                opLogger.log("REMOVE_TRANSACTION", sensitivity, queried);
                 this.transactionIndex.removeSample(queried);
                 this.transactionIndexByTime.removeSample(queried);
             }
             if (value != null) {
-                opLogger.log("ADD_TRANSACTION", new ReferenceItemPair<>(key, value));
+                opLogger.log("ADD_TRANSACTION", sensitivity, new ReferenceItemPair<>(key, value));
                 this.transactionIndex.addSample(new ReferenceItemPair<>(key, value));
                 this.transactionIndexByTime.addSample(new ReferenceItemPair<>(key, value));
             }
@@ -281,18 +282,18 @@ public final class JsonStorage implements AsyncStorage {
         }
 
         @Override
-        public <T extends Item<T>> @Nullable T get(String name, DeserializationConstructor<T> constructor) throws IOException {
+        public <T extends Item> @Nullable T get(String name, DeserializationConstructor<T> constructor) throws IOException {
             return backing.get(name, constructor);
         }
 
         @Override
-        public <T extends Item<T>> void put(String name, @Nullable T item) throws IOException {
+        public <T extends Item> void put(String name, @Nullable T item) throws IOException {
             backing.put(name, item);
         }
 
         @Override
-        public void log(String event, Item<?>... args) {
-            opLogger.log(event, args);
+        public void log(String event, Sensitivity sensitivity, Item... args) {
+            opLogger.log(event, sensitivity, args);
         }
     }
 }

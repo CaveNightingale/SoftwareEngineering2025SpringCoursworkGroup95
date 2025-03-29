@@ -108,7 +108,7 @@ public class MainView extends AnchorPane {
                 });
                 addTransaction.setOnSubmit(event1 -> asyncStorage.transaction(table -> {
                     try {
-                        table.put(transaction, event1.isDelete() ? null : addTransaction.getTransaction());
+                        table.put(transaction, AsyncStorage.Sensitivity.NORMAL, event1.isDelete() ? null : addTransaction.getTransaction());
                     } catch (IOException e) {
                         logger.log(Level.SEVERE, "Cannot update transaction", e);
                     }
@@ -136,7 +136,7 @@ public class MainView extends AnchorPane {
                 });
                 addEntity.setOnSubmit(event1 -> asyncStorage.entity(table -> {
                     try {
-                        table.put(entity, addEntity.getEntity());
+                        table.put(entity, AsyncStorage.Sensitivity.NORMAL, addEntity.getEntity());
                     } catch (IOException e) {
                         logger.log(Level.SEVERE, "Cannot update entity", e);
                     }
@@ -252,7 +252,7 @@ public class MainView extends AnchorPane {
         });
         addTransaction.setOnSubmit(event -> asyncStorage.transaction(table -> {
             try {
-                table.put(new Reference<>(), addTransaction.getTransaction());
+                table.put(new Reference<>(), AsyncStorage.Sensitivity.NORMAL, addTransaction.getTransaction());
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -284,7 +284,7 @@ public class MainView extends AnchorPane {
         });
         addEntity.setOnSubmit(event -> asyncStorage.entity(table -> {
             try {
-                table.put(new Reference<>(), addEntity.getEntity());
+                table.put(new Reference<>(), AsyncStorage.Sensitivity.NORMAL, addEntity.getEntity());
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }

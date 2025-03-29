@@ -6,7 +6,7 @@ import io.github.software.coursework.data.Item;
 
 import java.io.IOException;
 
-public record IntegerItem(long value) implements Item<IntegerItem>, Comparable<IntegerItem> {
+public record IntegerItem(long value) implements Item, Comparable<IntegerItem> {
     @Override
     public void serialize(Document.Writer writer) throws IOException {
         writer.writeInteger("value", value);

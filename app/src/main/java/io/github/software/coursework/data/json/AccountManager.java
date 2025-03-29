@@ -16,7 +16,7 @@ import java.util.logging.Logger;
 
 @ParametersAreNonnullByDefault
 public final class AccountManager {
-    public record Account(String name, String path, String key) implements Item<Account>, Comparable<Account> {
+    public record Account(String name, String path, String key) implements Item, Comparable<Account> {
 
         @Override
         public void serialize(Document.Writer writer) throws IOException {

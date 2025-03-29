@@ -26,7 +26,7 @@ public final class EncryptedDirectory implements Directory {
     private final File directory;
     private final byte[] key;
     private final String namespace;
-    private final HashMap<String, Item<?>> buffer = new HashMap<>();
+    private final HashMap<String, Item> buffer = new HashMap<>();
     private final Cache<String, Object> cache = CacheBuilder.newBuilder()
             .maximumSize(1024)
             .expireAfterAccess(Duration.ofMinutes(5))
@@ -106,7 +106,7 @@ public final class EncryptedDirectory implements Directory {
 
     @Override
     @SuppressWarnings("unchecked")
-    public <T extends Item<T>> @Nullable T get(String name, DeserializationConstructor<T> constructor) throws IOException {
+    public <T extends Item> @Nullable T get(String name, DeserializationConstructor<T> constructor) throws IOException {
         if (buffer.containsKey(name)) {
             return (T) buffer.get(name);
         }
@@ -136,13 +136,13 @@ public final class EncryptedDirectory implements Directory {
     }
 
     @Override
-    public <T extends Item<T>> void put(String name, @Nullable T item) {
+    public <T extends Item> void put(String name, @Nullable T item) {
         buffer.put(name, item);
     }
 
     @Override
     public void flush() throws IOException {
-        for (Map.Entry<String, Item<?>> entry : buffer.entrySet()) {
+        for (Map.Entry<String, Item> entry : buffer.entrySet()) {
             File file = new File(directory, obfuscateFileName(entry.getKey()));
             if (entry.getValue() == null) {
                 if (file.exists() && !file.delete()) {
