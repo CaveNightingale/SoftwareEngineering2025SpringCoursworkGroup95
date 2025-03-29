@@ -20,18 +20,18 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class EncryptedDirectory implements Directory {
+public final class EncryptedDirectory implements Directory {
     private static final Logger logger = Logger.getLogger("EncryptedDirectory");
     private final Object none = new Object();
-    protected final File directory;
-    protected final byte[] key;
-    protected final String namespace;
-    protected final HashMap<String, Item<?>> buffer = new HashMap<>();
-    protected final Cache<String, Object> cache = CacheBuilder.newBuilder()
+    private final File directory;
+    private final byte[] key;
+    private final String namespace;
+    private final HashMap<String, Item<?>> buffer = new HashMap<>();
+    private final Cache<String, Object> cache = CacheBuilder.newBuilder()
             .maximumSize(1024)
             .expireAfterAccess(Duration.ofMinutes(5))
             .build();
-    protected final JsonFactory jsonFactory = new JsonFactory();
+    private final JsonFactory jsonFactory = new JsonFactory();
 
     public EncryptedDirectory(File directory, byte[] key, String namespace) {
         this.directory = directory;

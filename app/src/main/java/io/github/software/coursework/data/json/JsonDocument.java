@@ -7,7 +7,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
-public class JsonDocument implements Document {
+public final class JsonDocument implements Document {
     private final ByteArrayOutputStream bytes;
     private static final JsonFactory JSON_FACTORY = JsonFactory.builder().build();
 

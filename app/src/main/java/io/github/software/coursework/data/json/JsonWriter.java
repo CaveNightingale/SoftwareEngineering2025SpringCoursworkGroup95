@@ -12,7 +12,7 @@ import java.util.logging.Logger;
 import java.util.stream.IntStream;
 
 @ParametersAreNonnullByDefault
-public class JsonWriter implements Document.Writer {
+public final class JsonWriter implements Document.Writer {
     private record Entry(String key, @Nullable Object value) {}
 
     private final Logger logger = Logger.getLogger("JsonWriter");

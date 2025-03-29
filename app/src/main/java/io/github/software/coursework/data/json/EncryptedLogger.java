@@ -119,6 +119,7 @@ public final class EncryptedLogger implements Closeable {
             throw new RuntimeException(e);
         }
         boolean firstLineRead = false;
+        boolean finalLineRead = false;
         try (BufferedReader reader = new BufferedReader(new FileReader(file, StandardCharsets.UTF_8))) {
             String line;
             while ((line = reader.readLine()) != null) {
@@ -137,7 +138,15 @@ public final class EncryptedLogger implements Closeable {
                     continue;
                 }
                 if (line.startsWith(Encryption.LOG_END.trim())) {
-                    break;
+                    if (!finalLineRead) {
+                        finalLineRead = true;
+                        continue;
+                    } else {
+                        throw new IOException("Multiple log end lines");
+                    }
+                }
+                if (finalLineRead) {
+                    continue;
                 }
                 byte[] encrypted;
                 try {
@@ -162,6 +171,9 @@ public final class EncryptedLogger implements Closeable {
                 int size = ((decoded[0] & 0xff) << 24) | ((decoded[1] & 0xff) << 16) | ((decoded[2] & 0xff) << 8) | (decoded[3] & 0xff);
                 lines.add(new String(decoded, 4, size, StandardCharsets.UTF_8));
             }
+        }
+        if (!firstLineRead) {
+            throw new IOException("Cannot find log start line. This file does not look like a log file.");
         }
         return lines;
     }

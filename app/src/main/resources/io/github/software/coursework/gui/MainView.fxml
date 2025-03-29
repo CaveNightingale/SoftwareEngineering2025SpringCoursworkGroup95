@@ -65,7 +65,7 @@
                     <!-- is "save" button needed? -->
                     <Pagination fx:id="pagination"/>
                 </ToolBar>
-                <ScrollPane fitToWidth="true" fitToHeight="true" VBox.vgrow="ALWAYS">
+                <ScrollPane fitToWidth="true" fitToHeight="true" VBox.vgrow="ALWAYS" vbarPolicy="ALWAYS">
                     <TransactionList fx:id="transactionList" styleClass="transaction-list"/>
                 </ScrollPane>
             </VBox>
@@ -77,7 +77,7 @@
                     <Region HBox.hgrow="ALWAYS"/>
                     <!-- is "save" button needed? -->
                 </ToolBar>
-                <ScrollPane fitToWidth="true" fitToHeight="true" VBox.vgrow="ALWAYS">
+                <ScrollPane fitToWidth="true" fitToHeight="true" VBox.vgrow="ALWAYS" vbarPolicy="ALWAYS">
                     <EntityList fx:id="entityList" styleClass="entity-list"/>
                 </ScrollPane>
             </VBox>

@@ -19,7 +19,7 @@ import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class JsonStorage implements AsyncStorage {
+public final class JsonStorage implements AsyncStorage {
     private static final Logger logger = Logger.getLogger(JsonStorage.class.getName());
 
     private JsonEntityTable entityTable;

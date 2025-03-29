@@ -1,5 +1,9 @@
 package io.github.software.coursework;
 
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import io.github.software.coursework.data.AsyncStorage;
 import io.github.software.coursework.data.json.EncryptedLogger;
 import io.github.software.coursework.data.json.Encryption;
@@ -14,6 +18,9 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Tab;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Paint;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontPosture;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
 import javafx.stage.Stage;
@@ -95,17 +102,29 @@ public class App extends Application {
             });
         });
         encryptionSetting.setOnRequestOpenLog(event1 -> Thread.ofVirtual().start(() -> {
-            SequencedCollection<String> lines;
+            SequencedCollection<String> lines = null;
+            String errors = null;
+            SequencedCollection<String> finalLines = new ArrayList<>();
             try {
                 byte[] key = Encryption.readKeyFile(event.getPassword(), Files.readString(Path.of(event.getAccount().key())));
                 lines = EncryptedLogger.decodeLog(event1.getFile(), Objects.requireNonNull(key));
+                JsonFactory jsonFactory = new JsonFactory();
+                for (String line : lines) {
+                    StringWriter stringWriter = new StringWriter();
+                    try (JsonParser parser = jsonFactory.createParser(line); JsonGenerator generator = jsonFactory.createGenerator(stringWriter).setPrettyPrinter(new DefaultPrettyPrinter())) {
+                        while (parser.nextToken() != null) {
+                            generator.copyCurrentEvent(parser);
+                        }
+                    }
+                    finalLines.add(stringWriter.toString());
+                }
             } catch (IOException e) {
                 logger.log(Level.INFO, "Error during reading log", e);
                 StringWriter sw = new StringWriter();
                 e.printStackTrace(new PrintWriter(sw));
-                lines = Arrays.asList(sw.toString().split("\n"));
+                errors = sw.toString();
             }
-            SequencedCollection<String> finalLines = lines;
+            String finalErrors = errors;
             Platform.runLater(() -> {
                 Tab tab = new Tab("Log: " + event1.getFile().getName());
                 ScrollPane scrollPane = new ScrollPane();
@@ -115,17 +134,25 @@ public class App extends Application {
                 VBox vBox = new VBox();
                 vBox.setStyle("-fx-padding: 1em;");
                 scrollPane.setContent(vBox);
-                for (String line : finalLines) {
+                scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.ALWAYS);
+                if (finalErrors == null) {
+                    for (String line : finalLines) {
+                        TextFlow textFlow = new TextFlow();
+                        vBox.getChildren().add(textFlow);
+                        textFlow.setStyle("-fx-font-size: 12px; -fx-font-family: monospace; -fx-border-style: dashed; -fx-border-width: 0 0 1px 0; -fx-border-color: #000000;");
+                        textFlow.getChildren().add(new Text(line));
+                    }
+                    vBox.getChildren().add(new Label("End of log"));
+                } else {
                     TextFlow textFlow = new TextFlow();
                     vBox.getChildren().add(textFlow);
-                    textFlow.setStyle("-fx-font-size: 12px; -fx-font-family: monospace;");
-                    textFlow.getChildren().add(new Text(line));
-                    textFlow.setStyle("-fx-border-style: dashed; -fx-border-width: 0 0 1px 0; -fx-border-color: #000000;");
+                    textFlow.setStyle("-fx-font-size: 12px; -fx-font-family: monospace;-fx-text-fill: #ff0000;");
+                    Text text = new Text(finalErrors);
+                    text.setFill(Paint.valueOf("#ff0000"));
+                    textFlow.getChildren().add(text);
                 }
-                Label endOfLog = new Label("End of log");
-                endOfLog.setStyle("-fx-font-style: italic;");
-                vBox.getChildren().add(endOfLog);
                 mainView.openExternalTab(tab);
+                Platform.runLater(() -> scrollPane.setVvalue(1.0));
             });
         }));
         mainView.setStorageSetting(encryptionSetting);

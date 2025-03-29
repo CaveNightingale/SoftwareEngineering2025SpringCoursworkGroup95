@@ -11,7 +11,7 @@ import java.util.Comparator;
  * A set, stored in chunks, that supports adding, removing, and querying elements.
  * @param <T>
  */
-public class ChunkedIndex<T extends Item<T>> implements AutoCloseable {
+public final class ChunkedIndex<T extends Item<T>> implements AutoCloseable {
     private int splitThreshold = 512;
     private int mergeThreshold = 186;
     private final ArrayList<ChunkDescription<T>> chunkDescriptions;

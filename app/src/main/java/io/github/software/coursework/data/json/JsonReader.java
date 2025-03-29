@@ -13,7 +13,7 @@ import java.util.Arrays;
 import java.util.logging.Logger;
 
 @ParametersAreNonnullByDefault
-public class JsonReader implements Document.Reader {
+public final class JsonReader implements Document.Reader {
     private final Logger logger = Logger.getLogger("JsonReader");
 
     private final JsonParser jsonParser;
