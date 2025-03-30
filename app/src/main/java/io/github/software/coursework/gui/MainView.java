@@ -6,10 +6,16 @@ import io.github.software.coursework.data.ReferenceItemPair;
 import io.github.software.coursework.data.schema.Entity;
 import io.github.software.coursework.data.schema.Transaction;
 import javafx.application.Platform;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
+import javafx.event.Event;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.scene.Node;
 import javafx.scene.control.*;
+import javafx.scene.input.KeyCode;
 import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.VBox;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 
 import java.io.IOException;
@@ -42,6 +48,12 @@ public class MainView extends AnchorPane {
     @FXML
     private Pagination pagination;
 
+    @FXML
+    private Tab settingsTab;
+
+    @FXML
+    private VBox settings;
+
     private Tab addTransactionTab;
 
     private AddTransaction addTransaction;
@@ -55,6 +67,20 @@ public class MainView extends AnchorPane {
     private final HashMap<Reference<Entity>, Tab> editEntityTabs = new HashMap<>();
 
     private final AsyncStorage asyncStorage;
+
+    public final ObjectProperty<Node> storageSetting = new SimpleObjectProperty<>(this, "storageSetting");
+
+    public final ObjectProperty<Node> storageSettingProperty() {
+        return storageSetting;
+    }
+
+    public final Node getStorageSetting() {
+        return storageSettingProperty().get();
+    }
+
+    public final void setStorageSetting(Node value) {
+        storageSettingProperty().set(value);
+    }
 
     public MainView(AsyncStorage asyncStorage) {
         FXMLLoader fxmlLoader = new FXMLLoader(MainView.class.getResource("MainView.fxml"));
@@ -82,7 +108,7 @@ public class MainView extends AnchorPane {
                 });
                 addTransaction.setOnSubmit(event1 -> asyncStorage.transaction(table -> {
                     try {
-                        table.put(transaction, event1.isDelete() ? null : addTransaction.getTransaction());
+                        table.put(transaction, AsyncStorage.Sensitivity.NORMAL, event1.isDelete() ? null : addTransaction.getTransaction());
                     } catch (IOException e) {
                         logger.log(Level.SEVERE, "Cannot update transaction", e);
                     }
@@ -110,7 +136,7 @@ public class MainView extends AnchorPane {
                 });
                 addEntity.setOnSubmit(event1 -> asyncStorage.entity(table -> {
                     try {
-                        table.put(entity, addEntity.getEntity());
+                        table.put(entity, AsyncStorage.Sensitivity.NORMAL, addEntity.getEntity());
                     } catch (IOException e) {
                         logger.log(Level.SEVERE, "Cannot update entity", e);
                     }
@@ -132,7 +158,36 @@ public class MainView extends AnchorPane {
             }
         });
 
+        tabPane.setOnKeyReleased(event -> {
+            Tab tab = tabPane.getSelectionModel().getSelectedItem();
+            if (event.getCode() == KeyCode.ESCAPE && tab != null && tab.isClosable()) {
+                tabPane.getTabs().remove(tab);
+                tab.getOnClosed().handle(new Event(Event.ANY));
+            }
+        });
+        tabPane.setTabDragPolicy(TabPane.TabDragPolicy.REORDER);
+        tabPane.getTabs().remove(settingsTab);
+        storageSettingProperty().addListener((observable, oldValue, newValue) -> {
+            // Storage setting is the only setting that is implemented externally, so it is always at the end
+            // Since we don't want to couple the storage details and the transactionality details
+            if (oldValue != null) {
+                settings.getChildren().remove(oldValue);
+            }
+            if (newValue != null) {
+                settings.getChildren().add(newValue);
+            }
+        });
+
         loadEverything();
+    }
+
+    public void openExternalTab(Tab externalTab) {
+        if (tabPane.getTabs().contains(externalTab)) {
+            tabPane.getSelectionModel().select(externalTab);
+            return;
+        }
+        tabPane.getTabs().add(externalTab);
+        tabPane.getSelectionModel().select(externalTab);
     }
 
     public void loadEverything() {
@@ -190,13 +245,14 @@ public class MainView extends AnchorPane {
         addTransaction.getEntityItems().addAll(entityList.getItems());
         addTransactionTab.setContent(addTransaction);
         addTransactionTab.setOnClosed(event -> {
+            System.out.println("xxx");
             addTransactionTab = null;
             addTransaction = null;
             tabPane.getSelectionModel().select(transactionTab);
         });
         addTransaction.setOnSubmit(event -> asyncStorage.transaction(table -> {
             try {
-                table.put(new Reference<>(), addTransaction.getTransaction());
+                table.put(new Reference<>(), AsyncStorage.Sensitivity.NORMAL, addTransaction.getTransaction());
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -228,7 +284,7 @@ public class MainView extends AnchorPane {
         });
         addEntity.setOnSubmit(event -> asyncStorage.entity(table -> {
             try {
-                table.put(new Reference<>(), addEntity.getEntity());
+                table.put(new Reference<>(), AsyncStorage.Sensitivity.NORMAL, addEntity.getEntity());
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -266,5 +322,13 @@ public class MainView extends AnchorPane {
         alert.setTitle("Error");
         alert.setHeaderText("Coming Soon");
         alert.show();
+    }
+
+    @FXML
+    private void handleSettings() {
+        if (!tabPane.getTabs().contains(settingsTab)) {
+            tabPane.getTabs().add(settingsTab);
+        }
+        tabPane.getSelectionModel().select(settingsTab);
     }
 }

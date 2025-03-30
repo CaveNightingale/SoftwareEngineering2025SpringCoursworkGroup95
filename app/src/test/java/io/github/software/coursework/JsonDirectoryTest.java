@@ -1,12 +1,11 @@
 package io.github.software.coursework;
 
 import io.github.software.coursework.data.Directory;
-import io.github.software.coursework.data.Document;
-import io.github.software.coursework.data.Item;
 import io.github.software.coursework.data.Reference;
 import io.github.software.coursework.data.json.ChunkedIndex;
 import io.github.software.coursework.data.json.EncryptedDirectory;
 import io.github.software.coursework.data.schema.Entity;
+import io.github.software.coursework.util.IntegerItem;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
@@ -96,25 +95,6 @@ public class JsonDirectoryTest {
         // Assert file extensions
         for (File file : Objects.requireNonNull(tempDir.listFiles())) {
             assertTrue(file.getName().endsWith(".txt"));
-        }
-    }
-
-    record IntegerItem(long value) implements Item<IntegerItem>, Comparable<IntegerItem> {
-        @Override
-        public void serialize(Document.Writer writer) throws IOException {
-            writer.writeInteger("value", value);
-            writer.writeEnd();
-        }
-
-        public static IntegerItem deserialize(Document.Reader reader) throws IOException {
-            long value = reader.readInteger("value");
-            reader.readEnd();
-            return new IntegerItem(value);
-        }
-
-        @Override
-        public int compareTo(IntegerItem o) {
-            return Long.compare(value, o.value);
         }
     }
 

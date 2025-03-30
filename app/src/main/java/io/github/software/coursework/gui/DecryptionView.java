@@ -17,6 +17,7 @@ import javafx.stage.FileChooser;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Objects;
 
 public class DecryptionView extends AnchorPane {
     @FXML
@@ -36,6 +37,9 @@ public class DecryptionView extends AnchorPane {
 
     @FXML
     private VBox importNext;
+
+    @FXML
+    public VBox faqPage;
 
     @FXML
     private TextField path;
@@ -60,6 +64,12 @@ public class DecryptionView extends AnchorPane {
 
     @FXML
     private Label passwordIncorrectImport;
+
+    @FXML
+    public Label passwordIncorrectCreate;
+
+    @FXML
+    public Hyperlink faqLink;
 
     private final ObjectProperty<EventHandler<DecryptionSubmitEvent>> onDecryptionSubmit = new SimpleObjectProperty<>();
 
@@ -119,6 +129,18 @@ public class DecryptionView extends AnchorPane {
         if (accountManager.getDefaultAccount() != null) {
             account.setValue(accountManager.getDefaultAccount());
         }
+
+        password.setOnAction(event -> handleDecrypt());
+
+        passwordCreate.textProperty().addListener((observable, oldValue, newValue) -> {
+            if (!Objects.equals(oldValue, newValue)) {
+                passwordIncorrectCreate.setVisible(newValue == null || !isPasswordString(newValue));
+            }
+        });
+    }
+
+    public void focus() {
+        password.requestFocus();
     }
 
     public void handleDecrypt() {
@@ -137,6 +159,28 @@ public class DecryptionView extends AnchorPane {
         }
     }
 
+    private boolean isPasswordString(String password) {
+        if (password.length() < 8) {
+            return false;
+        }
+        boolean digit = false;
+        boolean upper = false;
+        boolean lower = false;
+        boolean other = false;
+        for (char c : password.toCharArray()) {
+            if (Character.isDigit(c)) {
+                digit = true;
+            } else if (Character.isUpperCase(c)) {
+                upper = true;
+            } else if (Character.isLowerCase(c)) {
+                lower = true;
+            } else {
+                other = true;
+            }
+        }
+        return digit && upper && lower && other;
+    }
+
     public void handleImport() {
         AccountManager.Account account1 = new AccountManager.Account(accountImport.getText(), path.getText(), key.getText());
         accountManager.addAccount(account1);
@@ -150,12 +194,14 @@ public class DecryptionView extends AnchorPane {
         importPage.setVisible(false);
         importNext.setVisible(false);
         decryptPage.setVisible(false);
+        faqPage.setVisible(false);
     }
 
     public void handleImportPage() {
         importPage.setVisible(true);
         createPage.setVisible(false);
         decryptPage.setVisible(false);
+        faqPage.setVisible(false);
         importNext.setVisible(false);
     }
 
@@ -164,10 +210,20 @@ public class DecryptionView extends AnchorPane {
         importPage.setVisible(false);
         importNext.setVisible(false);
         createPage.setVisible(false);
+        faqPage.setVisible(false);
     }
 
     public void handleImportNext() {
         importNext.setVisible(true);
+        importPage.setVisible(false);
+        createPage.setVisible(false);
+        decryptPage.setVisible(false);
+        faqPage.setVisible(false);
+    }
+
+    public void handleFaqPage() {
+        faqPage.setVisible(true);
+        importNext.setVisible(false);
         importPage.setVisible(false);
         createPage.setVisible(false);
         decryptPage.setVisible(false);

@@ -5,7 +5,7 @@ import java.io.IOException;
 /**
  * A serializable item.
  */
-public interface Item<T extends Item<T>> {
+public interface Item {
     /**
      * Serialize an item to a writer.
      * Typically, a class implementing this interface should be immutable and final.

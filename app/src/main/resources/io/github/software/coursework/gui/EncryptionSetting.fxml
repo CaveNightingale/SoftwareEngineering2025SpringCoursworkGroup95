@@ -1,0 +1,125 @@
+<?import io.github.software.coursework.gui.EncryptionSetting?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import org.controlsfx.control.ToggleSwitch?>
+<fx:root
+        xmlns="http://javafx.com/javafx"
+        xmlns:fx="http://javafx.com/fxml"
+        type="io.github.software.coursework.gui.EncryptionSetting"
+>
+    <HBox styleClass="setting-title">
+        <Label text="Encryption"/>
+    </HBox>
+    <HBox styleClass="setting-line">
+        <Label text="Account" styleClass="setting-field-name"/>
+        <Region HBox.hgrow="ALWAYS"/>
+        <TextField fx:id="account" styleClass="setting-account-field"/>
+        <Button text="Rename" styleClass="setting-path-field-select" onAction="#handleRenameAccount"/>
+    </HBox>
+    <HBox styleClass="setting-line">
+        <Label text="Logs" styleClass="setting-field-name"/>
+        <Region HBox.hgrow="ALWAYS"/>
+        <Button text="Open" styleClass="setting-field-button" onAction="#openLog"/>
+    </HBox>
+    <HBox styleClass="setting-line">
+        <Label style="-fx-text-fill: #ff0000;" text="You need to restart the application to apply changes in the red rectangle area."/>
+    </HBox>
+    <VBox styleClass="setting-require-restart-outer">
+        <VBox styleClass="setting-require-restart">
+            <HBox styleClass="setting-line" fx:id="pathLine">
+                <Label text="Path" styleClass="setting-field-name"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Label fx:id="path" styleClass="setting-path-field"/>
+                <Button text="Move" styleClass="setting-path-field-select" onAction="#handleEditingPath"/>
+            </HBox>
+            <HBox styleClass="setting-line" fx:id="pathSubForm" visible="false" managed="false">
+                <VBox styleClass="setting-sub-form" HBox.hgrow="ALWAYS">
+                    <Label text="Move Your Account" styleClass="setting-sub-title" />
+                    <HBox styleClass="setting-line">
+                        <Label text="New Path" styleClass="setting-field-name"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <TextField fx:id="newPath" styleClass="setting-path-field"/>
+                        <Button text="Select" styleClass="setting-path-field-select" onAction="#handleMoveTargetSelect"/>
+                    </HBox>
+                    <HBox styleClass="setting-line">
+                        <Label text="Move Secret Key" styleClass="setting-field-name"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <ToggleSwitch fx:id="moveKey" styleClass="setting-path-field-select"/>
+                    </HBox>
+                    <HBox styleClass="setting-line">
+                        <Label text="Move Backup" styleClass="setting-field-name"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <ToggleSwitch fx:id="moveBackup" styleClass="setting-path-field-select"/>
+                    </HBox>
+                    <HBox styleClass="setting-line">
+                        <Label text="Confirm" styleClass="setting-field-name"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Button text="Move Account and Restart" styleClass="setting-field-button" onAction="#handleMoveData"/>
+                    </HBox>
+                </VBox>
+            </HBox>
+            <HBox styleClass="setting-line" fx:id="keyLine">
+                <Label text="Secret Key" styleClass="setting-field-name"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Label fx:id="key" styleClass="setting-path-field"/>
+                <Button text="Change" styleClass="setting-path-field-select" onAction="#handleEditingKey"/>
+            </HBox>
+            <HBox styleClass="setting-line" fx:id="keySubForm" visible="false" managed="false">
+                <VBox styleClass="setting-sub-form" HBox.hgrow="ALWAYS">
+                    <Label text="Re-encrypt Your Data with Another Secret Key" styleClass="setting-sub-title" />
+                    <HBox styleClass="setting-line">
+                        <Label text="Note: Backups will not be kept as it is." />
+                    </HBox>
+                    <HBox styleClass="setting-field">
+                        <Label text="Note: If you select a path of key that not exist, a new key will be created." />
+                    </HBox>
+                    <HBox styleClass="setting-line">
+                        <Label text="New Key" styleClass="setting-field-name"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <TextField fx:id="newKeyPath" styleClass="setting-path-field"/>
+                        <Button text="Select" styleClass="setting-path-field-select" onAction="#handleNewKeySelect"/>
+                    </HBox>
+                    <HBox styleClass="setting-line">
+                        <Label text="Password" styleClass="setting-field-name"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <PasswordField fx:id="newKeyPassword" styleClass="setting-field-password"/>
+                    </HBox>
+                    <HBox styleClass="setting-line">
+                        <Label text="Confirm" styleClass="setting-field-name"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Button text="Re-encrypt and Restart" styleClass="setting-field-button" onAction="#handleReencrypt"/>
+                    </HBox>
+                    <Label text="Change the Password of Your Key" styleClass="setting-sub-title" />
+                    <HBox styleClass="setting-line">
+                        <Label text="Note: Other accounts using this key will be affected as well."/>
+                    </HBox>
+                    <HBox styleClass="setting-line">
+                        <Label text="Password" styleClass="setting-field-name"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <PasswordField fx:id="editKeyPassword" styleClass="setting-field-password"/>
+                    </HBox>
+                    <HBox styleClass="setting-line">
+                        <Label text="Confirm" styleClass="setting-field-name"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Button text="Change Password and Restart" styleClass="setting-field-button" onAction="#handleChangePassword"/>
+                    </HBox>
+                </VBox>
+            </HBox>
+            <HBox styleClass="setting-line">
+                <Label text="Delete" styleClass="setting-field-name"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Button text="Delete Account and Restart" styleClass="setting-field-button" onAction="#handleDeleteAccount"/>
+            </HBox>
+            <HBox styleClass="setting-line">
+                <Label text="Backup" styleClass="setting-field-name"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Button text="Backup Account and Restart" styleClass="setting-field-button" onAction="#handleBackupAccount"/>
+            </HBox>
+            <HBox styleClass="setting-line">
+                <Label text="Export" styleClass="setting-field-name"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Button text="Export Account and Restart" styleClass="setting-field-button" onAction="#handleExportAccount"/>
+            </HBox>
+        </VBox>
+    </VBox>
+</fx:root>

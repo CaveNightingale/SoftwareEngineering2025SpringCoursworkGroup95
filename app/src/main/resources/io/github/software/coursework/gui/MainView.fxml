@@ -27,6 +27,10 @@
         <Tab closable="false" text="Model">
             <ScrollPane fitToWidth="true" fitToHeight="true">
                 <VBox>
+                    <ToolBar>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Button text="Settings" onAction="#handleSettings"/>
+                    </ToolBar>
                     <HBox styleClass="model-title">
                         <Label text="Budget"/>
                         <Region HBox.hgrow="ALWAYS"/>
@@ -55,13 +59,13 @@
         <Tab closable="false" text="Transactions" fx:id="transactionTab">
             <VBox>
                 <ToolBar>
-                    <Button text="Add" onMouseClicked="#handleAddTransaction"/>
-                    <Button text="CSV" onMouseClicked="#handleExportCSV"/>
+                    <Button text="Add" onAction="#handleAddTransaction"/>
+                    <Button text="CSV" onAction="#handleExportCSV"/>
                     <Region HBox.hgrow="ALWAYS"/>
                     <!-- is "save" button needed? -->
                     <Pagination fx:id="pagination"/>
                 </ToolBar>
-                <ScrollPane fitToWidth="true" fitToHeight="true" VBox.vgrow="ALWAYS">
+                <ScrollPane fitToWidth="true" fitToHeight="true" VBox.vgrow="ALWAYS" vbarPolicy="ALWAYS">
                     <TransactionList fx:id="transactionList" styleClass="transaction-list"/>
                 </ScrollPane>
             </VBox>
@@ -69,14 +73,20 @@
         <Tab closable="false" text="Entities" fx:id="entityTab">
             <VBox>
                 <ToolBar>
-                    <Button text="Add" onMouseClicked="#handleAddEntity"/>
+                    <Button text="Add" onAction="#handleAddEntity"/>
                     <Region HBox.hgrow="ALWAYS"/>
                     <!-- is "save" button needed? -->
                 </ToolBar>
-                <ScrollPane fitToWidth="true" fitToHeight="true" VBox.vgrow="ALWAYS">
+                <ScrollPane fitToWidth="true" fitToHeight="true" VBox.vgrow="ALWAYS" vbarPolicy="ALWAYS">
                     <EntityList fx:id="entityList" styleClass="entity-list"/>
                 </ScrollPane>
             </VBox>
+        </Tab>
+        <Tab fx:id="settingsTab" text="Settings">
+            <ScrollPane fitToWidth="true" fitToHeight="true" VBox.vgrow="ALWAYS">
+                <VBox fx:id="settings">
+                </VBox>
+            </ScrollPane>
         </Tab>
     </TabPane>
 </fx:root>

@@ -2,12 +2,7 @@ package io.github.software.coursework.data;
 
 import java.io.IOException;
 
-public record ReferenceItemPair<T extends Item<T>>(Reference<T> reference, T item) implements Item<ReferenceItemPair<T>> {
-    public ReferenceItemPair(Reference<T> reference, T item) {
-        this.reference = reference;
-        this.item = item;
-    }
-
+public record ReferenceItemPair<T extends Item>(Reference<T> reference, T item) implements Item {
     public ReferenceItemPair<T> withReference(Reference<T> reference) {
         return new ReferenceItemPair<>(reference, item);
     }
@@ -24,7 +19,7 @@ public record ReferenceItemPair<T extends Item<T>>(Reference<T> reference, T ite
     }
 
     @SuppressWarnings("unchecked")
-    public static <T extends Item<T>> ReferenceItemPair<T> deserialize(Document.Reader reader, DeserializationConstructor<T> constructor) throws IOException {
+    public static <T extends Item> ReferenceItemPair<T> deserialize(Document.Reader reader, DeserializationConstructor<T> constructor) throws IOException {
         Reference<T> reference = (Reference<T>) reader.readReference("reference");
         T item = constructor.deserialize(reader.readCompound("item"));
         reader.readEnd();

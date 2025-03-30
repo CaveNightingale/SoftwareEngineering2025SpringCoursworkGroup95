@@ -15,7 +15,7 @@ public record Transaction(
         String category,
         Reference<Entity> entity,
         ImmutableList<String> tags
-) implements Item<Transaction> {
+) implements Item {
 
     @Override
     public void serialize(Document.Writer writer) throws IOException{

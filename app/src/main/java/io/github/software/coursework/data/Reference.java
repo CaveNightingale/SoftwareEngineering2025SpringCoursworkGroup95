@@ -5,7 +5,7 @@ import com.google.common.hash.Hashing;
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 
-public record Reference<T extends Item<T>>(long id) {
+public record Reference<T extends Item>(long id) {
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
     public Reference() {
