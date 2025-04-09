@@ -31,6 +31,9 @@ dependencies {
     // JUnit Jupiter
     testImplementation 'org.junit.jupiter:junit-jupiter:5.11.3'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+    // Apache Commons Math
+    implementation 'org.apache.commons:commons-math3:3.6.1'
 }
 
 java {
@@ -50,4 +53,12 @@ application {
 tasks.named('test') {
     // Use JUnit Platform for unit tests.
     useJUnitPlatform()
+}
+
+tasks.withType(JavaExec) {
+    systemProperty "file.encoding", "UTF-8"
+}
+
+tasks.withType(JavaCompile) {
+    options.encoding = "UTF-8"
 }
