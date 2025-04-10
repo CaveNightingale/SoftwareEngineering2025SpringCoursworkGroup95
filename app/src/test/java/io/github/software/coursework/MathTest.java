@@ -1,5 +1,6 @@
 package io.github.software.coursework;
 import org.apache.commons.math3.distribution.BetaDistribution;
+import org.junit.jupiter.api.Test;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
@@ -18,13 +19,9 @@ import java.io.FileOutputStream;
 import java.io.PrintStream;
 
 public class MathTest {
-    public static void main(String[] args) {
-        main1();
-//        main2();
-        main3();
-    }
 
-    public static void  main1() {
+    @Test
+    public void main1() {
         System.out.println("中文测试：你好，世界！");
         System.out.println("JVM 默认编码：" + System.getProperty("file.encoding"));
 

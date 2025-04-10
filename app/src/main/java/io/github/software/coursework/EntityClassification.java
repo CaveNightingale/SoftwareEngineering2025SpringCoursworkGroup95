@@ -1,12 +1,9 @@
-package io.github.software.coursework.gui;
+package io.github.software.coursework;
 
 import java.io.*;
 import java.nio.file.*;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -17,10 +14,19 @@ import java.io.PrintStream;
 
 import org.apache.commons.math3.distribution.BetaDistribution;
 
-public class EntityClasification {
-    public static void main(String[] args) {
-        String dictionaryPath = "app/src/test/java/io/github/software/coursework/Dataset";
-        List<String> categories = GetCategories(dictionaryPath);
+import java.util.stream.Collectors;
+
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.file.*;
+
+import java.nio.file.Files;
+import java.nio.charset.StandardCharsets;
+
+public class EntityClassification {
+
+    public static void entityClassification(String fileFolderName) {
+        List<String> categories = getCategories(fileFolderName);
 
         System.out.println(categories);
 
@@ -31,7 +37,7 @@ public class EntityClasification {
         for (String category : categories) {
             System.out.println(category);
 
-            Map<String, Integer> nGramMap = ReadText(dictionaryPath + "/" + category + ".txt", category);
+            Map<String, Integer> nGramMap = readText(fileFolderName, category);
 
             for (Map.Entry<String, Integer> entry : nGramMap.entrySet()) {
                 String nGram = entry.getKey();
@@ -53,18 +59,19 @@ public class EntityClasification {
         Map<String, Double> nGramProbability = new HashMap<>();
         for (String nGrams : nGramToCategory.keySet()) {
             int accu = nGramFrequency.get(nGrams), freq = nGramFrequency.get(nGrams);
-            nGramProbability.put(nGrams, GetProbability(accu, freq - accu));
+            nGramProbability.put(nGrams, getProbability(accu, freq - accu));
         }
 
-        String modelParametersDirectory = "app/src/main/java/io/github/software/coursework/algo/BayesianParameters.txt";
+        String modelParametersDirectory = "build/Bayesian/" + fileFolderName + ".txt";
 
         try (FileWriter writer = new FileWriter(modelParametersDirectory, false)) {
             writer.write(""); // 写入空内容
+            System.out.println("Writing " + modelParametersDirectory);
         } catch (IOException e) {
             e.printStackTrace();
         }
 
-        try (FileOutputStream fileStream = new FileOutputStream(modelParametersDirectory, true)) {
+        try (FileOutputStream fileStream = new FileOutputStream(modelParametersDirectory, false)) {
 
             PrintStream printStream = new PrintStream(fileStream);
             System.setOut(printStream);
@@ -80,30 +87,44 @@ public class EntityClasification {
         }
     }
 
-    public static List<String> GetCategories(String dictionaryPath) {
+    public static List<String> getCategories(String fileFolderName) {
         List<String> categories = new ArrayList<>();
 
-        try (DirectoryStream<Path> stream = Files.newDirectoryStream(Paths.get(dictionaryPath), "*.txt")) {
-            for (Path path : stream) {
-                if (Files.isRegularFile(path)) {
-                    categories.add(path.getFileName().toString().replaceFirst(".txt$", ""));
+        System.out.println(fileFolderName);
+
+        try (BufferedReader dirReader = new BufferedReader(new InputStreamReader(
+                Objects.requireNonNull(EntityClassification.class.getResourceAsStream(fileFolderName))))) {
+
+            while (true) {
+                String line = dirReader.readLine();
+
+                if (line == null) {
+                    break;
                 }
+
+                categories.add(line.replaceFirst(".txt", ""));
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
 
+        System.out.println(categories);
+
         return categories;
     }
 
-    public static Map<String, Integer> ReadText(String dictionaryPath, String category) {
-        try (BufferedReader br = new BufferedReader(new FileReader(dictionaryPath))) {
+    public static Map<String, Integer> readText(String fileFolderName, String category) {
+        try (InputStream reader = Objects.requireNonNull(EntityClassification.class.getResourceAsStream(fileFolderName + "/" + category + ".txt"))) {
+            byte[] allText = reader.readAllBytes();
+            System.out.println(allText);
 
+            String content = new String(allText, StandardCharsets.UTF_8);
+
+            List<String> textByLines = content.lines().collect(Collectors.toList());
             Map<String, Integer> nGrams = new HashMap<>();
-            String line;
 
-            while ((line = br.readLine()) != null) {
-                line = line.replaceFirst("^\\d+\\.", "");
+            for (String line : textByLines) {
+//                line = line.replaceFirst("^\\d+\\.", "");
 
                 line = line.replaceAll("[^\\u4e00-\\u9fa5a-zA-Z0-9]", "");
 
@@ -138,7 +159,6 @@ public class EntityClasification {
             }
 
             return nGrams;
-
         } catch (IOException e) {
             e.printStackTrace();
 
@@ -146,7 +166,7 @@ public class EntityClasification {
         }
     }
 
-    public static Double GetProbability(Integer x, Integer y) {
+    public static Double getProbability(Integer x, Integer y) {
         BetaDistribution bd = new BetaDistribution(x + 1, y + 1);
         double l = 0.0, r = 1.0, mid;
         while (r - l > 0.00000001) {
