@@ -5,8 +5,8 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 import java.io.IOException;
 
 interface DirectoryAccessor {
-    <T extends Item> @Nullable T get(String name, DeserializationConstructor<T> constructor) throws IOException;
-    default <T extends Item> @Nullable T get(Reference<T> name, DeserializationConstructor<T> constructor) throws IOException {
+    <T extends Item> @Nullable T get(String name, Deserialize<T> constructor) throws IOException;
+    default <T extends Item> @Nullable T get(Reference<T> name, Deserialize<T> constructor) throws IOException {
         return get(Long.toUnsignedString(name.id(), 16), constructor);
     }
 

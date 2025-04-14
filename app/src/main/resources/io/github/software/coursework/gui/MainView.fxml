@@ -24,7 +24,7 @@
             AnchorPane.rightAnchor="0.0"
             AnchorPane.topAnchor="0.0"
     >
-        <Tab closable="false" text="Model">
+        <Tab closable="false" text="Dashboard">
             <ScrollPane fitToWidth="true" fitToHeight="true">
                 <VBox>
                     <ToolBar>

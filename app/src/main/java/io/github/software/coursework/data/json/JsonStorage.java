@@ -13,6 +13,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.SequencedCollection;
 import java.util.concurrent.*;
 import java.util.function.Consumer;
@@ -282,7 +283,7 @@ public final class JsonStorage implements AsyncStorage {
         }
 
         @Override
-        public <T extends Item> @Nullable T get(String name, DeserializationConstructor<T> constructor) throws IOException {
+        public <T extends Item> @Nullable T get(String name, Deserialize<T> constructor) throws IOException {
             return backing.get(name, constructor);
         }
 

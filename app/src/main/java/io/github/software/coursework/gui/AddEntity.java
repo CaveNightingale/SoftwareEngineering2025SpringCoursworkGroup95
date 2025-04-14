@@ -16,6 +16,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.VBox;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.controlsfx.control.SearchableComboBox;
 
 import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
@@ -38,7 +39,7 @@ public class AddEntity extends VBox {
     private TextField website;
 
     @FXML
-    private ComboBox<String> type;
+    private SearchableComboBox<String> type;
 
     @FXML
     private Label message;
@@ -144,14 +145,11 @@ public class AddEntity extends VBox {
                 typePredictionTask.cancel(true);
             }
             CompletableFuture<ImmutableIntArray> predictionTask = typePredictionTask = model.predictEntityTypes(ImmutableList.of(getEntity()));
-            typePredictionTask.thenAccept(result -> {
-                Platform.runLater(() -> {
-                    if (predictionTask == typePredictionTask) {
-                        System.out.println("predict " + result.get(0));
-                        type.setValue(getTypeDisplayName(Entity.Type.values()[result.get(0)]));
-                    }
-                });
-            });
+            typePredictionTask.thenAccept(result -> Platform.runLater(() -> {
+                if (predictionTask == typePredictionTask) {
+                    type.setValue(getTypeDisplayName(Entity.Type.values()[result.get(0)]));
+                }
+            }));
         }
     }
 }

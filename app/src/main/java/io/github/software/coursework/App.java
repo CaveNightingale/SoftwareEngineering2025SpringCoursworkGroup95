@@ -31,6 +31,8 @@ import java.io.StringWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -99,6 +101,7 @@ public class App extends Application {
                 }
                 Platform.runLater(() -> {
                     storage = null;
+                    model = null;
                     start(stage);
                 });
             });
@@ -161,9 +164,7 @@ public class App extends Application {
         return new Scene(mainView, 800, 600);
     }
 
-    @Override
-    public void stop() throws Exception {
-        super.stop();
+    private void saveModel() {
         if (model != null) {
             storage.model(modelDirectory -> {
                 try {
@@ -175,6 +176,13 @@ public class App extends Application {
                 }
             });
         }
+    }
+
+    // TODO: Add manual save button and let user decide if the changes should be saved at exit
+    @Override
+    public void stop() throws Exception {
+        super.stop();
+        saveModel();
         if (storage != null) {
             storage.close().get();
         }

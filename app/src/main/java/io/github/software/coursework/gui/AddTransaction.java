@@ -16,6 +16,7 @@ import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.controlsfx.control.SearchableComboBox;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -36,7 +37,7 @@ public class AddTransaction extends VBox {
     private TextField amount;
 
     @FXML
-    private ComboBox<ReferenceItemPair<Entity>> entity;
+    private SearchableComboBox<ReferenceItemPair<Entity>> entity;
 
     @FXML
     private TextField category;

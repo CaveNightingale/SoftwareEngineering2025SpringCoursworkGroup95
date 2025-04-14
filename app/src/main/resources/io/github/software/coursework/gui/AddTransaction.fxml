@@ -3,6 +3,7 @@
 <?import io.github.software.coursework.gui.AddTransaction?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
+<?import org.controlsfx.control.SearchableComboBox?>
 <fx:root
         xmlns="http://javafx.com/javafx"
         xmlns:fx="http://javafx.com/fxml"
@@ -22,7 +23,7 @@
     <HBox styleClass="add-transaction-row">
         <Label text="Entity"/>
         <Region HBox.hgrow="ALWAYS"/>
-        <ComboBox styleClass="add-transaction-field" fx:id="entity"/>
+        <SearchableComboBox styleClass="add-transaction-field" fx:id="entity"/>
     </HBox>
     <HBox styleClass="add-transaction-row">
         <Label text="Time"/>
