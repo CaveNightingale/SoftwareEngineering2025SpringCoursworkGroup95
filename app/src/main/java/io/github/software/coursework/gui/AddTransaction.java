@@ -1,10 +1,12 @@
 package io.github.software.coursework.gui;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.primitives.ImmutableIntArray;
 import io.github.software.coursework.algo.Model;
 import io.github.software.coursework.data.ReferenceItemPair;
 import io.github.software.coursework.data.schema.Entity;
 import io.github.software.coursework.data.schema.Transaction;
+import io.github.software.coursework.util.Bitmask;
 import javafx.application.Platform;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
@@ -14,10 +16,9 @@ import javafx.collections.ObservableList;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
-import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
-import javafx.scene.shape.Box;
+import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.controlsfx.control.SearchableComboBox;
 
@@ -25,9 +26,10 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
+
+import static io.github.software.coursework.gui.Helper.*;
 
 public class AddTransaction extends VBox {
     @FXML
@@ -165,6 +167,7 @@ public class AddTransaction extends VBox {
             Button button = new Button(tag);
             button.setOnAction(event -> {
                 selectedTags.remove(tag);
+                handleTagInput();
                 updateTagItems();
             });
             box.getChildren().add(button);
@@ -172,8 +175,24 @@ public class AddTransaction extends VBox {
         }
     }
 
-    private final ListChangeListener<String> categoryItemsListener = change -> updateCategoryItems();
-    private final ListChangeListener<String> tagItemsListener = change -> updateTagItems();
+    private boolean categoryPresent = false;
+    private boolean tagPresent = false;
+    private CompletableFuture<ImmutablePair<ImmutableIntArray, Bitmask.View2D>> predictionTask = null;
+    private final Helper.Debounce predict;
+    private boolean suppressUpdate = false;
+
+    private final ListChangeListener<String> categoryItemsListener = change -> {
+        updateCategoryItems();
+        if (predictionTask != null) {
+            handlePredictorInput(); // Restart prediction
+        }
+    };
+    private final ListChangeListener<String> tagItemsListener = change -> {
+        updateTagItems();
+        if (predictionTask != null) {
+            handlePredictorInput(); // Restart prediction
+        }
+    };
 
     public AddTransaction(@Nullable Transaction transaction, @Nullable Entity entity1, Model model) {
         FXMLLoader fxmlLoader = new FXMLLoader(MainView.class.getResource("AddTransaction.fxml"));
@@ -223,10 +242,16 @@ public class AddTransaction extends VBox {
                 oldValue.removeListener(categoryItemsListener);
                 category.setValue(null);
                 category.getItems().clear();
+                if (predictionTask != null) {
+                    handlePredictorInput();
+                }
             }
             if (newValue != null) {
                 newValue.addListener(categoryItemsListener);
                 updateCategoryItems();
+                if (predictionTask != null) {
+                    handlePredictorInput();
+                }
             }
         });
 
@@ -234,10 +259,18 @@ public class AddTransaction extends VBox {
             if (oldValue != null) {
                 oldValue.removeListener(tagItemsListener);
                 addTags.getItems().clear();
+                if (predictionTask != null) {
+                    predictionTask.cancel(true);
+                    predictionTask = null;
+                }
             }
             if (newValue != null) {
                 newValue.addListener(tagItemsListener);
                 updateTagItems();
+                if (predictionTask != null) {
+                    predictionTask.cancel(true);
+                    predictionTask = null;
+                }
             }
         });
 
@@ -257,7 +290,38 @@ public class AddTransaction extends VBox {
             deleteSpace.setVisible(true);
             delete.setManaged(true);
             delete.setVisible(true);
+            categoryPresent = true;
+            tagPresent = true;
         }
+
+        predict = debounce(() -> {
+            if ((!tagPresent || !categoryPresent) && validate() == null) {
+                CompletableFuture<ImmutablePair<ImmutableIntArray, Bitmask.View2D>> task = predictionTask = model.predictCategoriesAndTags(
+                        ImmutableList.of(getTransaction()),
+                        ImmutableList.copyOf(getCategoryItems()),
+                        ImmutableList.copyOf(getTagItems())
+                );
+                task.thenAccept(result -> Platform.runLater(() -> {
+                    if (predictionTask == task) {
+                        if (!categoryPresent) {
+                            suppressUpdate = true;
+                            category.setValue(getCategoryItems().get(result.getLeft().get(0)));
+                            suppressUpdate = false;
+                        }
+                        if (!tagPresent) {
+                            Bitmask.View2D mask = result.getRight();
+                            selectedTags.clear();
+                            for (int i = 0; i < mask.width(); i++) {
+                                if (mask.get(i, 0)) {
+                                    selectedTags.add(getTagItems().get(i));
+                                }
+                            }
+                            updateTagItems();
+                        }
+                    }
+                }));
+            }
+        });
     }
 
     public Transaction getTransaction() {
@@ -273,28 +337,32 @@ public class AddTransaction extends VBox {
     }
 
     public void handleMouseClick() {
-        if (title.getText().isEmpty()) {
-            message.setText("Title is required");
-            return;
-        }
-        if (amount.getText().isEmpty()) {
-            message.setText("Amount is required");
-            return;
-        }
-        if (!amount.getText().matches("[+\\-]?\\d+\\.?\\d{0,2}")) {
-            message.setText("Amount is invalid");
-            return;
-        }
-        if (entity.getValue() == null) {
-            message.setText("Entity is required");
-            return;
-        }
-        if (time.getValue() == null) {
-            message.setText("Time is required");
+        String message = validate();
+        if (message != null) {
+            this.message.setText(message);
             return;
         }
         setDisable(true);
         fireEvent(new SubmitEvent(this, this, false));
+    }
+
+    private String validate() {
+        if (title.getText().isEmpty()) {
+            return "Title is required";
+        }
+        if (amount.getText().isEmpty()) {
+            return "Amount is required";
+        }
+        if (!amount.getText().matches("[+\\-]?\\d+\\.?\\d{0,2}")) {
+            return "Amount is invalid";
+        }
+        if (entity.getValue() == null) {
+            return "Entity is required";
+        }
+        if (time.getValue() == null) {
+            return "Time is required";
+        }
+        return null;
     }
 
     public void handleDelete() {
@@ -303,7 +371,10 @@ public class AddTransaction extends VBox {
 
     public void handleAddTag(String tag) {
         selectedTags.add(tag);
-        Platform.runLater(this::updateTagItems);
+        Platform.runLater(() -> {
+            handleTagInput();
+            updateTagItems();
+        });
     }
 
     private void setupTagsInput() {
@@ -323,5 +394,32 @@ public class AddTransaction extends VBox {
                 setupTagsInput();
             }
         });
+    }
+
+    public void handlePredictorInput() {
+        if (suppressUpdate) {
+            return;
+        }
+        if (predictionTask != null) {
+            predictionTask.cancel(true);
+            predictionTask = null;
+        }
+        predict.run();
+    }
+
+    public void handleTagInput() {
+        if (suppressUpdate) {
+            return;
+        }
+        tagPresent = true;
+        handlePredictorInput();
+    }
+
+    public void handleCategoryInput() {
+        if (suppressUpdate) {
+            return;
+        }
+        categoryPresent = true;
+        handlePredictorInput();
     }
 }

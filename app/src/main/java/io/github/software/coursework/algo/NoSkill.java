@@ -5,7 +5,6 @@ import com.google.common.primitives.ImmutableDoubleArray;
 import com.google.common.primitives.ImmutableIntArray;
 import com.google.common.primitives.ImmutableLongArray;
 import io.github.software.coursework.data.AsyncStorage;
-import io.github.software.coursework.data.Document;
 import io.github.software.coursework.data.schema.Entity;
 import io.github.software.coursework.data.schema.Transaction;
 import io.github.software.coursework.util.Bitmask;
@@ -44,9 +43,9 @@ public final class NoSkill implements Model {
         double[] budgetConfidenceLower = new double[time.length()];
         double[] budgetConfidenceUpper = new double[time.length()];
         for (int i = 0; i < time.length(); i++) {
-            budgetMean[i] = (double) time.get(i) / 850;
-            budgetConfidenceLower[i] = (double) time.get(i) / 900;
-            budgetConfidenceUpper[i] = (double) time.get(i) / 800;
+            budgetMean[i] = (double) time.get(i) / 850000;
+            budgetConfidenceLower[i] = (double) time.get(i) / 900000;
+            budgetConfidenceUpper[i] = (double) time.get(i) / 800000;
         }
         return CompletableFuture.completedFuture(
                 ImmutablePair.of(

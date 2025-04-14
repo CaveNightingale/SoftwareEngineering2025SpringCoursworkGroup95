@@ -11,7 +11,6 @@ import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.control.Button;
-import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.VBox;
@@ -20,6 +19,8 @@ import org.controlsfx.control.SearchableComboBox;
 
 import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
+
+import static io.github.software.coursework.gui.Helper.*;
 
 public class AddEntity extends VBox {
 
@@ -47,9 +48,11 @@ public class AddEntity extends VBox {
     @FXML
     private Button submit;
 
-    private final Model model;
-
     private boolean typePresent = false;
+
+    private boolean suppressUpdate = false;
+
+    private final Helper.Debounce predict;
 
     private CompletableFuture<ImmutableIntArray> typePredictionTask = null;
 
@@ -77,8 +80,6 @@ public class AddEntity extends VBox {
             throw new RuntimeException(e);
         }
 
-        this.model = model;
-
         this.onSubmit.addListener((observable, oldValue, newValue) -> {
             if (oldValue != null) {
                 this.removeEventHandler(SubmitEvent.SUBMIT, oldValue);
@@ -96,7 +97,21 @@ public class AddEntity extends VBox {
             website.setText(entity.website());
             type.setValue(getTypeDisplayName(entity.type()));
             submit.setText("Update");
+            typePresent = true;
         }
+
+        predict = debounce(() -> {
+            if (!typePresent && !name.getText().isBlank()) {
+                CompletableFuture<ImmutableIntArray> predictionTask = typePredictionTask = model.predictEntityTypes(ImmutableList.of(getEntity()));
+                typePredictionTask.thenAccept(result -> Platform.runLater(() -> {
+                    if (predictionTask == typePredictionTask) {
+                        suppressUpdate = true;
+                        type.setValue(getTypeDisplayName(Entity.Type.values()[result.get(0)]));
+                        suppressUpdate = false;
+                    }
+                }));
+            }
+        });
     }
 
     private static String getTypeDisplayName(Entity.Type entity) {
@@ -132,6 +147,9 @@ public class AddEntity extends VBox {
     }
 
     public void handleTypeInput() {
+        if (suppressUpdate) {
+            return;
+        }
         if (typePredictionTask != null) {
             typePredictionTask.cancel(true);
             typePredictionTask = null;
@@ -139,17 +157,14 @@ public class AddEntity extends VBox {
         typePresent = true;
     }
 
-    public void handleNonTypeInput() {
-        if (!typePresent && !name.getText().isBlank()) {
-            if (typePredictionTask != null) {
-                typePredictionTask.cancel(true);
-            }
-            CompletableFuture<ImmutableIntArray> predictionTask = typePredictionTask = model.predictEntityTypes(ImmutableList.of(getEntity()));
-            typePredictionTask.thenAccept(result -> Platform.runLater(() -> {
-                if (predictionTask == typePredictionTask) {
-                    type.setValue(getTypeDisplayName(Entity.Type.values()[result.get(0)]));
-                }
-            }));
+    public void handlePredictorInput() {
+        if (suppressUpdate) {
+            return;
         }
+        if (typePredictionTask != null) {
+            typePredictionTask.cancel(true);
+            typePredictionTask = null;
+        }
+        predict.run();
     }
 }

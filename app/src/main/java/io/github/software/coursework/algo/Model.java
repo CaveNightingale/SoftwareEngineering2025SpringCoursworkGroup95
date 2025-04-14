@@ -1,19 +1,16 @@
 package io.github.software.coursework.algo;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMultimap;
 import com.google.common.primitives.ImmutableDoubleArray;
 import com.google.common.primitives.ImmutableIntArray;
 import com.google.common.primitives.ImmutableLongArray;
 import io.github.software.coursework.data.AsyncStorage;
-import io.github.software.coursework.data.Document;
 import io.github.software.coursework.data.schema.Entity;
 import io.github.software.coursework.data.schema.Transaction;
 import io.github.software.coursework.util.Bitmask;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
 
@@ -50,7 +47,7 @@ public interface Model {
 
     /**
      * Predict the budget usage for the given time.
-     * @param time The time to predict, in seconds.
+     * @param time The time to predict, in milliseconds.
      * @return (E, (L, R)) where E is the expected budget usage, (L, R) is 0.9-confidence interval.
      */
     CompletableFuture<ImmutablePair<ImmutableDoubleArray, Pair<ImmutableDoubleArray, ImmutableDoubleArray>>>
