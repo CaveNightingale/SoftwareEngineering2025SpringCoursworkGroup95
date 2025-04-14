@@ -4,6 +4,7 @@ import io.github.software.coursework.algo.Model;
 import io.github.software.coursework.data.AsyncStorage;
 import io.github.software.coursework.data.Reference;
 import io.github.software.coursework.data.ReferenceItemPair;
+import io.github.software.coursework.data.SyntaxException;
 import io.github.software.coursework.data.schema.Entity;
 import io.github.software.coursework.data.schema.Transaction;
 import javafx.application.Platform;
@@ -20,10 +21,7 @@ import javafx.scene.layout.VBox;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Objects;
-import java.util.SequencedCollection;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -54,6 +52,12 @@ public class MainView extends AnchorPane {
 
     @FXML
     private VBox settings;
+
+    @FXML
+    private EditList categoriesEdit;
+
+    @FXML
+    private EditList tagsEdit;
 
     private Tab addTransactionTab;
 
@@ -103,6 +107,8 @@ public class MainView extends AnchorPane {
             tabPane.getSelectionModel().select(editTransactionTabs.computeIfAbsent(transaction, t -> {
                 AddTransaction addTransaction = new AddTransaction(event.getTransaction(), event.getEntity(), model);
                 addTransaction.setEntityItems(entityList.getItems());
+                addTransaction.setCategoryItems(categoriesEdit.getNames());
+                addTransaction.setTagItems(tagsEdit.getNames());
                 Tab tab = new Tab("Edit: " + event.getTransaction().title());
                 tab.setContent(addTransaction);
                 tab.setOnClosed(event1 -> {
@@ -120,6 +126,8 @@ public class MainView extends AnchorPane {
                         editTransactionTabs.remove(transaction);
                         tabPane.getSelectionModel().select(transactionTab);
                         loadTransactions();
+                        loadCategories();
+                        loadTags();
                     });
                 }));
                 tabPane.getTabs().add(tab);
@@ -180,6 +188,80 @@ public class MainView extends AnchorPane {
             }
         });
 
+        categoriesEdit.setOnSubmit(event -> {
+            if (event.isInsertMode()) {
+                asyncStorage.transaction(table -> {
+                    try {
+                        table.addCategory(event.getName(), AsyncStorage.Sensitivity.NORMAL);
+                        Platform.runLater(event::reset);
+                    } catch (SyntaxException e) {
+                        Platform.runLater(() -> {
+                            Alert alert = new Alert(Alert.AlertType.ERROR);
+                            alert.setTitle("Unable to add category");
+                            alert.setHeaderText(e.getMessage());
+                            alert.show();
+                        });
+                    } catch (IOException e) {
+                        logger.log(Level.SEVERE, "Cannot add category", e);
+                    }
+                });
+            } else {
+                asyncStorage.transaction(table -> {
+                    try {
+                        table.removeCategory(event.getName(), AsyncStorage.Sensitivity.NORMAL);
+                        Platform.runLater(event::reset);
+                    } catch (SyntaxException e) {
+                        Platform.runLater(() -> {
+                            Alert alert = new Alert(Alert.AlertType.ERROR);
+                            alert.setTitle("Unable to delete category");
+                            alert.setHeaderText(e.getMessage());
+                            alert.show();
+                        });
+                    } catch (IOException e) {
+                        logger.log(Level.SEVERE, "Cannot delete category", e);
+                    }
+                });
+            }
+            loadCategories();
+        });
+
+        tagsEdit.setOnSubmit(event -> {
+            if (event.isInsertMode()) {
+                asyncStorage.transaction(table -> {
+                    try {
+                        table.addTag(event.getName(), AsyncStorage.Sensitivity.NORMAL);
+                        Platform.runLater(event::reset);
+                    } catch (SyntaxException e) {
+                        Platform.runLater(() -> {
+                            Alert alert = new Alert(Alert.AlertType.ERROR);
+                            alert.setTitle("Unable to add tag");
+                            alert.setHeaderText(e.getMessage());
+                            alert.show();
+                        });
+                    } catch (IOException e) {
+                        logger.log(Level.SEVERE, "Cannot add tag", e);
+                    }
+                });
+            } else {
+                asyncStorage.transaction(table -> {
+                    try {
+                        table.removeTag(event.getName(), AsyncStorage.Sensitivity.NORMAL);
+                        Platform.runLater(event::reset);
+                    } catch (SyntaxException e) {
+                        Platform.runLater(() -> {
+                            Alert alert = new Alert(Alert.AlertType.ERROR);
+                            alert.setTitle("Unable to delete tag");
+                            alert.setHeaderText(e.getMessage());
+                            alert.show();
+                        });
+                    } catch (IOException e) {
+                        logger.log(Level.SEVERE, "Cannot delete tag", e);
+                    }
+                });
+            }
+            loadTags();
+        });
+
         loadEverything();
     }
 
@@ -190,6 +272,38 @@ public class MainView extends AnchorPane {
         }
         tabPane.getTabs().add(externalTab);
         tabPane.getSelectionModel().select(externalTab);
+    }
+
+    public void loadCategories() {
+        asyncStorage.transaction(table -> {
+            try {
+                ImmutablePair<Set<String>, Set<String>> categories = table.getCategories();
+                Platform.runLater(() -> {
+                    categoriesEdit.getNames().clear();
+                    categoriesEdit.getNames().addAll(categories.getLeft());
+                    categoriesEdit.getProtectedNames().clear();
+                    categoriesEdit.getProtectedNames().addAll(categories.getRight());
+                });
+            } catch (IOException e) {
+                logger.log(Level.SEVERE, "Failed to list categories", e);
+            }
+        });
+    }
+
+    public void loadTags() {
+        asyncStorage.transaction(table -> {
+            try {
+                ImmutablePair<Set<String>, Set<String>> tags = table.getTags();
+                Platform.runLater(() -> {
+                    tagsEdit.getNames().clear();
+                    tagsEdit.getNames().addAll(tags.getLeft());
+                    tagsEdit.getProtectedNames().clear();
+                    tagsEdit.getProtectedNames().addAll(tags.getRight());
+                });
+            } catch (IOException e) {
+                logger.log(Level.SEVERE, "Failed to list tags", e);
+            }
+        });
     }
 
     public void loadEverything() {
@@ -204,6 +318,8 @@ public class MainView extends AnchorPane {
                 logger.log(Level.SEVERE, "Failed to list entities", e);
             }
         });
+        loadCategories();
+        loadTags();
         loadTransactions();
     }
 
@@ -244,7 +360,9 @@ public class MainView extends AnchorPane {
         }
         addTransaction = new AddTransaction(null, null, model);
         addTransactionTab = new Tab("Add Transaction");
-        addTransaction.getEntityItems().addAll(entityList.getItems());
+        addTransaction.setEntityItems(entityList.getItems());
+        addTransaction.setCategoryItems(categoriesEdit.getNames());
+        addTransaction.setTagItems(tagsEdit.getNames());
         addTransactionTab.setContent(addTransaction);
         addTransactionTab.setOnClosed(event -> {
             System.out.println("xxx");
@@ -263,6 +381,8 @@ public class MainView extends AnchorPane {
                 addTransactionTab = null;
                 addTransaction = null;
                 tabPane.getSelectionModel().select(transactionTab);
+                loadCategories();
+                loadTags();
                 loadTransactions();
             });
         }));

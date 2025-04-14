@@ -2,10 +2,12 @@ package io.github.software.coursework.data;
 
 import io.github.software.coursework.data.schema.Entity;
 import io.github.software.coursework.data.schema.Transaction;
+import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.io.IOException;
 import java.util.SequencedCollection;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
@@ -68,6 +70,29 @@ public interface AsyncStorage {
          * @throws IOException If an I/O error occurs.
          */
         SequencedCollection<ReferenceItemPair<Transaction>> list(long start, long end, int offset, int limit) throws IOException;
+
+        /**
+         * Get the set of all categories and the set of categories in use/
+         */
+        ImmutablePair<Set<String>, Set<String>> getCategories() throws IOException;
+
+        /**
+         * Add a category
+         * @throws SyntaxException if the request is impossible, e.g. adding a category that is already in use.
+         */
+        void addCategory(String category, Sensitivity sensitivity) throws IOException;
+
+        /**
+         * Remove a category
+         * @throws SyntaxException if the request is impossible, e.g. removing a category that is in use.
+         */
+        void removeCategory(String category, Sensitivity sensitivity) throws IOException;
+
+        ImmutablePair<Set<String>, Set<String>> getTags() throws IOException;
+
+        void addTag(String tag, Sensitivity sensitivity) throws IOException;
+
+        void removeTag(String tag, Sensitivity sensitivity) throws IOException;
     }
 
     interface ModelDirectory extends DirectoryAccessor, Flush {

@@ -5,22 +5,28 @@ import io.github.software.coursework.algo.Model;
 import io.github.software.coursework.data.ReferenceItemPair;
 import io.github.software.coursework.data.schema.Entity;
 import io.github.software.coursework.data.schema.Transaction;
+import javafx.application.Platform;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.scene.Node;
 import javafx.scene.control.*;
-import javafx.scene.layout.Region;
-import javafx.scene.layout.VBox;
-import org.apache.commons.lang3.tuple.ImmutablePair;
+import javafx.scene.layout.*;
+import javafx.scene.shape.Box;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.controlsfx.control.SearchableComboBox;
 
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Objects;
 
 public class AddTransaction extends VBox {
@@ -40,10 +46,10 @@ public class AddTransaction extends VBox {
     private SearchableComboBox<ReferenceItemPair<Entity>> entity;
 
     @FXML
-    private TextField category;
+    private SearchableComboBox<String> category;
 
     @FXML
-    private TextField tags;
+    private SearchableComboBox<String> addTags;
 
     @FXML
     private Label message;
@@ -55,7 +61,18 @@ public class AddTransaction extends VBox {
     private Button delete;
 
     @FXML
-    public Region deleteSpace;
+    private Region deleteSpace;
+
+    @FXML
+    private HBox tagsRow;
+
+    @FXML
+    private HBox auxTagsRow;
+
+    @FXML
+    private Label clickToRemove;
+
+    private final ArrayList<String> selectedTags = new ArrayList<>();
 
     private final ObjectProperty<EventHandler<SubmitEvent>> onSubmit = new SimpleObjectProperty<>();
 
@@ -82,6 +99,81 @@ public class AddTransaction extends VBox {
     public final void setEntityItems(ObservableList<ReferenceItemPair<Entity>> value) {
         entityItemsProperty().set(value);
     }
+
+    private final SimpleObjectProperty<ObservableList<String>> categoryItems = new SimpleObjectProperty<>(this, "categoryItems");
+    public final ObjectProperty<ObservableList<String>> categoryItemsProperty() {
+        return categoryItems;
+    }
+
+    public final ObservableList<String> getCategoryItems() {
+        return categoryItemsProperty().get();
+    }
+
+    public final void setCategoryItems(ObservableList<String> value) {
+        categoryItemsProperty().set(value);
+    }
+
+    private final SimpleObjectProperty<ObservableList<String>> tagsItems = new SimpleObjectProperty<>(this, "tagsItems");
+    public final ObjectProperty<ObservableList<String>> tagItemsProperty() {
+        return tagsItems;
+    }
+
+    public final ObservableList<String> getTagItems() {
+        return tagItemsProperty().get();
+    }
+
+    public final void setTagItems(ObservableList<String> value) {
+        tagItemsProperty().set(value);
+    }
+
+    // A workaround for ControlsFX's ArrayIndexOutOfBoundsException
+    // Just avoid emitting the list change listener on the list by directly setting a new list
+    private void updateCategoryItems() {
+        String oldValue = category.getValue();
+        category.setValue(null);
+        category.setItems(FXCollections.observableArrayList(getCategoryItems()));
+        if (oldValue != null && getCategoryItems().contains(oldValue)) {
+            category.setValue(oldValue);
+        }
+    }
+
+    private void updateTagItems() {
+        ArrayList<String> tagItems = new ArrayList<>(getTagItems());
+        tagItems.removeAll(selectedTags);
+        addTags.setItems(FXCollections.observableArrayList(tagItems));
+        boolean shouldUseAux = !selectedTags.isEmpty();
+        boolean usingAux = auxTagsRow.getChildren().contains(addTags);
+        if (shouldUseAux && !usingAux) {
+            tagsRow.getChildren().remove(addTags);
+            auxTagsRow.getChildren().add(addTags);
+            auxTagsRow.setVisible(true);
+            auxTagsRow.setManaged(true);
+            clickToRemove.setVisible(true);
+            clickToRemove.setManaged(true);
+        } else if (!shouldUseAux && usingAux) {
+            auxTagsRow.getChildren().remove(addTags);
+            tagsRow.getChildren().add(addTags);
+            auxTagsRow.setVisible(false);
+            auxTagsRow.setManaged(false);
+            clickToRemove.setVisible(false);
+            clickToRemove.setManaged(false);
+        }
+        tagsRow.getChildren().removeIf(node -> node.getStyleClass().contains("add-transaction-tag"));
+        for (String tag : selectedTags) {
+            VBox box = new VBox();
+            box.getStyleClass().add("add-transaction-tag");
+            Button button = new Button(tag);
+            button.setOnAction(event -> {
+                selectedTags.remove(tag);
+                updateTagItems();
+            });
+            box.getChildren().add(button);
+            tagsRow.getChildren().add(box);
+        }
+    }
+
+    private final ListChangeListener<String> categoryItemsListener = change -> updateCategoryItems();
+    private final ListChangeListener<String> tagItemsListener = change -> updateTagItems();
 
     public AddTransaction(@Nullable Transaction transaction, @Nullable Entity entity1, Model model) {
         FXMLLoader fxmlLoader = new FXMLLoader(MainView.class.getResource("AddTransaction.fxml"));
@@ -117,7 +209,7 @@ public class AddTransaction extends VBox {
             }
         });
 
-        this.onSubmit.addListener((observable, oldValue, newValue) -> {
+        onSubmitProperty().addListener((observable, oldValue, newValue) -> {
             if (oldValue != null) {
                 this.removeEventHandler(SubmitEvent.SUBMIT, oldValue);
             }
@@ -126,14 +218,40 @@ public class AddTransaction extends VBox {
             }
         });
 
+        categoryItemsProperty().addListener((observable, oldValue, newValue) -> {
+            if (oldValue != null) {
+                oldValue.removeListener(categoryItemsListener);
+                category.setValue(null);
+                category.getItems().clear();
+            }
+            if (newValue != null) {
+                newValue.addListener(categoryItemsListener);
+                updateCategoryItems();
+            }
+        });
+
+        tagItemsProperty().addListener((observable, oldValue, newValue) -> {
+            if (oldValue != null) {
+                oldValue.removeListener(tagItemsListener);
+                addTags.getItems().clear();
+            }
+            if (newValue != null) {
+                newValue.addListener(tagItemsListener);
+                updateTagItems();
+            }
+        });
+
+        addTags.setPromptText("Add...");
+        setupTagsInput();
+
         if (transaction != null) {
             title.setText(transaction.title());
             description.setText(transaction.description());
             time.setValue(LocalDate.ofEpochDay(transaction.time() / 86400000));
             amount.setText(BigDecimal.valueOf(transaction.amount()).divide(BigDecimal.valueOf(100)).toString());
             entity.setValue(new ReferenceItemPair<>(transaction.entity(), Objects.requireNonNull(entity1)));
-            category.setText(transaction.category());
-            tags.setText(String.join(" ", transaction.tags()));
+            category.setValue(transaction.category());
+            selectedTags.addAll(transaction.tags());
             submit.setText("Update");
             deleteSpace.setManaged(true);
             deleteSpace.setVisible(true);
@@ -148,9 +266,9 @@ public class AddTransaction extends VBox {
                 description.getText(),
                 time.getValue().toEpochDay() * 86400000,
                 new BigDecimal(amount.getText()).multiply(BigDecimal.valueOf(100)).longValue(),
-                category.getText(),
+                category.getValue(),
                 entity.getValue().reference(),
-                ImmutableList.copyOf(tags.getText().split("\\s+"))
+                ImmutableList.copyOf(selectedTags)
         );
     }
 
@@ -181,5 +299,29 @@ public class AddTransaction extends VBox {
 
     public void handleDelete() {
         fireEvent(new SubmitEvent(this, this, true));
+    }
+
+    public void handleAddTag(String tag) {
+        selectedTags.add(tag);
+        Platform.runLater(this::updateTagItems);
+    }
+
+    private void setupTagsInput() {
+        addTags.valueProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue != null) {
+                handleAddTag(newValue);
+                SearchableComboBox<String> next = new SearchableComboBox<>();
+                next.setPromptText(addTags.getPromptText());
+                next.getStyleClass().addAll(addTags.getStyleClass());
+                next.setItems(getTagItems());
+                if (tagsRow.getChildren().contains(addTags)) {
+                    tagsRow.getChildren().set(tagsRow.getChildren().indexOf(addTags), next);
+                } else {
+                    auxTagsRow.getChildren().set(auxTagsRow.getChildren().indexOf(addTags), next);
+                }
+                addTags = next;
+                setupTagsInput();
+            }
+        });
     }
 }

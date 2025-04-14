@@ -72,6 +72,8 @@ public class App extends Application {
                 decryptionView.reportPasswordIncorrect();
                 return;
             }
+            stage.setWidth(800);
+            stage.setHeight(600);
             stage.setResizable(true);
             Scene mainScene = getScene(stage, event);
             stage.setScene(mainScene);

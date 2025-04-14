@@ -33,12 +33,16 @@
     <HBox styleClass="add-transaction-row">
         <Label text="Category"/>
         <Region HBox.hgrow="ALWAYS"/>
-        <TextField styleClass="add-transaction-field" fx:id="category"/>
+        <SearchableComboBox styleClass="add-transaction-field" fx:id="category"/>
     </HBox>
-    <HBox styleClass="add-transaction-row">
+    <HBox styleClass="add-transaction-row" fx:id="tagsRow">
         <Label text="Tags"/>
         <Region HBox.hgrow="ALWAYS"/>
-        <TextField styleClass="add-transaction-field" fx:id="tags"/>
+        <Label text="Click to remove" visible="false" managed="false" fx:id="clickToRemove" styleClass="setting-tip"/>
+        <SearchableComboBox styleClass="add-transaction-field" fx:id="addTags"/>
+    </HBox>
+    <HBox styleClass="add-transaction-row" fx:id="auxTagsRow" visible="false" managed="false">
+        <Region HBox.hgrow="ALWAYS"/>
     </HBox>
     <HBox styleClass="add-transaction-row">
         <Label text="Description"/>
