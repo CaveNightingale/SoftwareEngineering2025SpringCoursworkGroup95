@@ -4,6 +4,8 @@ import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
+import io.github.software.coursework.algo.Model;
+import io.github.software.coursework.algo.NoSkill;
 import io.github.software.coursework.data.AsyncStorage;
 import io.github.software.coursework.data.json.EncryptedLogger;
 import io.github.software.coursework.data.json.Encryption;
@@ -41,6 +43,7 @@ public class App extends Application {
         launch(args);
     }
     private AsyncStorage storage;
+    private Model model;
 
     @Override
     public void start(Stage stage) {
@@ -61,6 +64,7 @@ public class App extends Application {
             }
             try {
                 storage = new JsonStorage(event.getAccount(), event.getPassword());
+                model = new NoSkill();
             } catch (IOException ex) {
                 logger.log(Level.INFO, "Cannot decrypt", ex);
                 decryptionView.reportPasswordIncorrect();
@@ -74,7 +78,7 @@ public class App extends Application {
     }
 
     private Scene getScene(Stage stage, DecryptionView.DecryptionSubmitEvent event) {
-        MainView mainView = new MainView(storage);
+        MainView mainView = new MainView(storage, model);
         EncryptionSetting encryptionSetting = new EncryptionSetting(event.getAccount(), event.getPassword());
         encryptionSetting.setOnRequestRestart(event1 -> {
             mainView.setDisable(true);
@@ -160,6 +164,17 @@ public class App extends Application {
     @Override
     public void stop() throws Exception {
         super.stop();
+        if (model != null) {
+            storage.model(modelDirectory -> {
+                try {
+                    model.saveParameters(modelDirectory);
+                } catch (IOException e) {
+                    logger.log(Level.SEVERE, "Error during saving", e);
+                    logger.log(Level.SEVERE, "The application will be closed immediately.");
+                    System.exit(1);
+                }
+            });
+        }
         if (storage != null) {
             storage.close().get();
         }

@@ -1,6 +1,10 @@
 package io.github.software.coursework.gui;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.primitives.ImmutableIntArray;
+import io.github.software.coursework.algo.Model;
 import io.github.software.coursework.data.schema.Entity;
+import javafx.application.Platform;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.event.EventHandler;
@@ -11,8 +15,10 @@ import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.VBox;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.io.IOException;
+import java.util.concurrent.CompletableFuture;
 
 public class AddEntity extends VBox {
 
@@ -40,6 +46,12 @@ public class AddEntity extends VBox {
     @FXML
     private Button submit;
 
+    private final Model model;
+
+    private boolean typePresent = false;
+
+    private CompletableFuture<ImmutableIntArray> typePredictionTask = null;
+
     private final ObjectProperty<EventHandler<SubmitEvent>> onSubmit = new SimpleObjectProperty<>();
 
     public final ObjectProperty<EventHandler<SubmitEvent>> onSubmitProperty() {
@@ -54,7 +66,7 @@ public class AddEntity extends VBox {
         onSubmitProperty().set(value);
     }
 
-    public AddEntity() {
+    public AddEntity(@Nullable Entity entity, Model model) {
         FXMLLoader fxmlLoader = new FXMLLoader(MainView.class.getResource("AddEntity.fxml"));
         fxmlLoader.setRoot(this);
         fxmlLoader.setController(this);
@@ -64,6 +76,8 @@ public class AddEntity extends VBox {
             throw new RuntimeException(e);
         }
 
+        this.model = model;
+
         this.onSubmit.addListener((observable, oldValue, newValue) -> {
             if (oldValue != null) {
                 this.removeEventHandler(SubmitEvent.SUBMIT, oldValue);
@@ -72,6 +86,27 @@ public class AddEntity extends VBox {
                 this.addEventHandler(SubmitEvent.SUBMIT, newValue);
             }
         });
+
+        if (entity != null) {
+            name.setText(entity.name());
+            telephone.setText(entity.telephone());
+            email.setText(entity.email());
+            address.setText(entity.address());
+            website.setText(entity.website());
+            type.setValue(getTypeDisplayName(entity.type()));
+            submit.setText("Update");
+        }
+    }
+
+    private static String getTypeDisplayName(Entity.Type entity) {
+        return switch (entity) {
+            case UNKNOWN -> "";
+            case INDIVIDUAL -> "Individual";
+            case EDUCATION -> "Education";
+            case GOVERNMENT -> "Government";
+            case COMMERCIAL -> "Commercial";
+            case NONPROFIT -> "Non-profit";
+        };
     }
 
     public Entity getEntity() {
@@ -86,23 +121,6 @@ public class AddEntity extends VBox {
         );
     }
 
-    public void setEntity(Entity entity) {
-        name.setText(entity.name());
-        telephone.setText(entity.telephone());
-        email.setText(entity.email());
-        address.setText(entity.address());
-        website.setText(entity.website());
-        type.setValue(switch (entity.type()) {
-            case UNKNOWN -> "";
-            case INDIVIDUAL -> "Individual";
-            case EDUCATION -> "Education";
-            case GOVERNMENT -> "Government";
-            case COMMERCIAL -> "Commercial";
-            case NONPROFIT -> "Non-profit";
-        });
-        submit.setText("Update");
-    }
-
     public void handleMouseClick() {
         if (name.getText().isBlank()) {
             message.setText("Name is required");
@@ -112,4 +130,28 @@ public class AddEntity extends VBox {
         fireEvent(new SubmitEvent(this, this, false));
     }
 
+    public void handleTypeInput() {
+        if (typePredictionTask != null) {
+            typePredictionTask.cancel(true);
+            typePredictionTask = null;
+        }
+        typePresent = true;
+    }
+
+    public void handleNonTypeInput() {
+        if (!typePresent && !name.getText().isBlank()) {
+            if (typePredictionTask != null) {
+                typePredictionTask.cancel(true);
+            }
+            CompletableFuture<ImmutableIntArray> predictionTask = typePredictionTask = model.predictEntityTypes(ImmutableList.of(getEntity()));
+            typePredictionTask.thenAccept(result -> {
+                Platform.runLater(() -> {
+                    if (predictionTask == typePredictionTask) {
+                        System.out.println("predict " + result.get(0));
+                        type.setValue(getTypeDisplayName(Entity.Type.values()[result.get(0)]));
+                    }
+                });
+            });
+        }
+    }
 }

@@ -14,32 +14,32 @@
     <HBox styleClass="add-entity-row">
         <Label text="Name"/>
         <Region HBox.hgrow="ALWAYS"/>
-        <TextField styleClass="add-entity-field" fx:id="name"/>
+        <TextField styleClass="add-entity-field" fx:id="name" onKeyTyped="#handleNonTypeInput"/>
     </HBox>
     <HBox styleClass="add-entity-row">
         <Label text="Telephone"/>
         <Region HBox.hgrow="ALWAYS"/>
-        <TextField styleClass="add-entity-field" fx:id="telephone"/>
+        <TextField styleClass="add-entity-field" fx:id="telephone" onKeyTyped="#handleNonTypeInput"/>
     </HBox>
     <HBox styleClass="add-entity-row">
         <Label text="Email"/>
         <Region HBox.hgrow="ALWAYS"/>
-        <TextField styleClass="add-entity-field" fx:id="email"/>
+        <TextField styleClass="add-entity-field" fx:id="email" onKeyTyped="#handleNonTypeInput"/>
     </HBox>
     <HBox styleClass="add-entity-row">
         <Label text="Address"/>
         <Region HBox.hgrow="ALWAYS"/>
-        <TextField styleClass="add-entity-field" fx:id="address"/>
+        <TextField styleClass="add-entity-field" fx:id="address" onKeyTyped="#handleNonTypeInput"/>
     </HBox>
     <HBox styleClass="add-entity-row">
         <Label text="Website"/>
         <Region HBox.hgrow="ALWAYS"/>
-        <TextField styleClass="add-entity-field" fx:id="website"/>
+        <TextField styleClass="add-entity-field" fx:id="website" onKeyTyped="#handleNonTypeInput"/>
     </HBox>
     <HBox styleClass="add-entity-row">
         <Label text="Type"/>
         <Region HBox.hgrow="ALWAYS"/>
-        <ComboBox styleClass="add-entity-field" fx:id="type" value="">
+        <ComboBox styleClass="add-entity-field" fx:id="type" value="" onMouseClicked="#handleTypeInput">
             <items>
                 <FXCollections fx:factory="observableArrayList">
                     <String fx:value=""/>

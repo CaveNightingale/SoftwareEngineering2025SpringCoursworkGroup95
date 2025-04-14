@@ -5,6 +5,7 @@ import com.google.common.collect.ImmutableMultimap;
 import com.google.common.primitives.ImmutableDoubleArray;
 import com.google.common.primitives.ImmutableIntArray;
 import com.google.common.primitives.ImmutableLongArray;
+import io.github.software.coursework.data.AsyncStorage;
 import io.github.software.coursework.data.Document;
 import io.github.software.coursework.data.schema.Entity;
 import io.github.software.coursework.data.schema.Transaction;
@@ -12,6 +13,8 @@ import io.github.software.coursework.util.Bitmask;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -22,15 +25,15 @@ import java.util.concurrent.CompletableFuture;
 public interface Model {
     /**
      * Save the model parameters to a writer.
-     * @param writer The writer to write to.
+     * @param writer The directory write to
      */
-    void saveParameters(Document.Writer writer);
+    void saveParameters(AsyncStorage.ModelDirectory writer) throws IOException;
 
     /**
      * Load the model parameters from a reader IN-PLACE.
-     * @param reader The reader to read from.
+     * @param reader The directory read from
      */
-    void loadParameters(Document.Reader reader);
+    void loadParameters(AsyncStorage.ModelDirectory reader) throws IOException;
 
     /**
      * Make a copy of the model.
@@ -47,7 +50,7 @@ public interface Model {
 
     /**
      * Predict the budget usage for the given time.
-     * @param time The time to predict.
+     * @param time The time to predict, in seconds.
      * @return (E, (L, R)) where E is the expected budget usage, (L, R) is 0.9-confidence interval.
      */
     CompletableFuture<ImmutablePair<ImmutableDoubleArray, Pair<ImmutableDoubleArray, ImmutableDoubleArray>>>

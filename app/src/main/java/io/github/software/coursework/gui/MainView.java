@@ -1,5 +1,6 @@
 package io.github.software.coursework.gui;
 
+import io.github.software.coursework.algo.Model;
 import io.github.software.coursework.data.AsyncStorage;
 import io.github.software.coursework.data.Reference;
 import io.github.software.coursework.data.ReferenceItemPair;
@@ -68,6 +69,8 @@ public class MainView extends AnchorPane {
 
     private final AsyncStorage asyncStorage;
 
+    private final Model model;
+
     public final ObjectProperty<Node> storageSetting = new SimpleObjectProperty<>(this, "storageSetting");
 
     public final ObjectProperty<Node> storageSettingProperty() {
@@ -82,7 +85,7 @@ public class MainView extends AnchorPane {
         storageSettingProperty().set(value);
     }
 
-    public MainView(AsyncStorage asyncStorage) {
+    public MainView(AsyncStorage asyncStorage, Model model) {
         FXMLLoader fxmlLoader = new FXMLLoader(MainView.class.getResource("MainView.fxml"));
         fxmlLoader.setRoot(this);
         fxmlLoader.setController(this);
@@ -93,13 +96,13 @@ public class MainView extends AnchorPane {
         }
 
         this.asyncStorage = asyncStorage;
+        this.model = model;
 
         transactionList.setOnTransactionEditClicked(event -> {
             Reference<Transaction> transaction = event.getReference();
             tabPane.getSelectionModel().select(editTransactionTabs.computeIfAbsent(transaction, t -> {
-                AddTransaction addTransaction = new AddTransaction();
+                AddTransaction addTransaction = new AddTransaction(event.getTransaction(), event.getEntity(), model);
                 addTransaction.setEntityItems(entityList.getItems());
-                addTransaction.setTransaction(ImmutablePair.of(event.getTransaction(), event.getEntity()));
                 Tab tab = new Tab("Edit: " + event.getTransaction().title());
                 tab.setContent(addTransaction);
                 tab.setOnClosed(event1 -> {
@@ -126,8 +129,7 @@ public class MainView extends AnchorPane {
         entityList.setOnEntityEditClicked(event -> {
             Reference<Entity> entity = event.getReference();
             tabPane.getSelectionModel().select(editEntityTabs.computeIfAbsent(entity, t -> {
-                AddEntity addEntity = new AddEntity();
-                addEntity.setEntity(event.getEntity());
+                AddEntity addEntity = new AddEntity(event.getEntity(), model);
                 Tab tab = new Tab("Edit: " + event.getEntity().name());
                 tab.setContent(addEntity);
                 tab.setOnClosed(event1 -> {
@@ -240,7 +242,7 @@ public class MainView extends AnchorPane {
             tabPane.getSelectionModel().select(addTransactionTab);
             return;
         }
-        addTransaction = new AddTransaction();
+        addTransaction = new AddTransaction(null, null, model);
         addTransactionTab = new Tab("Add Transaction");
         addTransaction.getEntityItems().addAll(entityList.getItems());
         addTransactionTab.setContent(addTransaction);
@@ -274,7 +276,7 @@ public class MainView extends AnchorPane {
             tabPane.getSelectionModel().select(addEntityTab);
             return;
         }
-        addEntity = new AddEntity();
+        addEntity = new AddEntity(null, model);
         addEntityTab = new Tab("Add Entity");
         addEntityTab.setContent(addEntity);
         addEntityTab.setOnClosed(event -> {

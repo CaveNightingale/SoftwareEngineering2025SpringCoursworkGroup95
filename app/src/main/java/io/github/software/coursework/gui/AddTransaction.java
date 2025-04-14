@@ -1,6 +1,7 @@
 package io.github.software.coursework.gui;
 
 import com.google.common.collect.ImmutableList;
+import io.github.software.coursework.algo.Model;
 import io.github.software.coursework.data.ReferenceItemPair;
 import io.github.software.coursework.data.schema.Entity;
 import io.github.software.coursework.data.schema.Transaction;
@@ -14,10 +15,12 @@ import javafx.scene.control.*;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.Objects;
 
 public class AddTransaction extends VBox {
     @FXML
@@ -79,7 +82,7 @@ public class AddTransaction extends VBox {
         entityItemsProperty().set(value);
     }
 
-    public AddTransaction() {
+    public AddTransaction(@Nullable Transaction transaction, @Nullable Entity entity1, Model model) {
         FXMLLoader fxmlLoader = new FXMLLoader(MainView.class.getResource("AddTransaction.fxml"));
         fxmlLoader.setRoot(this);
         fxmlLoader.setController(this);
@@ -121,6 +124,21 @@ public class AddTransaction extends VBox {
                 this.addEventHandler(SubmitEvent.SUBMIT, newValue);
             }
         });
+
+        if (transaction != null) {
+            title.setText(transaction.title());
+            description.setText(transaction.description());
+            time.setValue(LocalDate.ofEpochDay(transaction.time() / 86400000));
+            amount.setText(BigDecimal.valueOf(transaction.amount()).divide(BigDecimal.valueOf(100)).toString());
+            entity.setValue(new ReferenceItemPair<>(transaction.entity(), Objects.requireNonNull(entity1)));
+            category.setText(transaction.category());
+            tags.setText(String.join(" ", transaction.tags()));
+            submit.setText("Update");
+            deleteSpace.setManaged(true);
+            deleteSpace.setVisible(true);
+            delete.setManaged(true);
+            delete.setVisible(true);
+        }
     }
 
     public Transaction getTransaction() {
@@ -133,22 +151,6 @@ public class AddTransaction extends VBox {
                 entity.getValue().reference(),
                 ImmutableList.copyOf(tags.getText().split("\\s+"))
         );
-    }
-
-    @SuppressWarnings("BigDecimalMethodWithoutRoundingCalled")
-    public void setTransaction(ImmutablePair<Transaction, Entity> transaction) {
-        title.setText(transaction.getLeft().title());
-        description.setText(transaction.getLeft().description());
-        time.setValue(LocalDate.ofEpochDay(transaction.getLeft().time() / 86400000));
-        amount.setText(BigDecimal.valueOf(transaction.getLeft().amount()).divide(BigDecimal.valueOf(100)).toString());
-        entity.setValue(new ReferenceItemPair<>(transaction.getLeft().entity(), transaction.getRight()));
-        category.setText(transaction.getLeft().category());
-        tags.setText(String.join(" ", transaction.getLeft().tags()));
-        submit.setText("Update");
-        deleteSpace.setManaged(true);
-        deleteSpace.setVisible(true);
-        delete.setManaged(true);
-        delete.setVisible(true);
     }
 
     public void handleMouseClick() {
