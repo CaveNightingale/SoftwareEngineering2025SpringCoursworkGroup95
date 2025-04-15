@@ -170,6 +170,12 @@
     -fx-alignment: center-right;
 }
 
+.setting-field-text {
+    -fx-min-width: 15em;
+    -fx-pref-width: 30em;
+    -fx-alignment: center-right;
+}
+
 .setting-field-button {
     -fx-min-width: 15em;
     -fx-pref-width: 30em;
@@ -228,4 +234,9 @@
 
 .setting-tip {
     -fx-text-fill: #999999;
+}
+
+.setting-field-half {
+    -fx-pref-width: 15em;
+    -fx-min-width: 15em;
 }

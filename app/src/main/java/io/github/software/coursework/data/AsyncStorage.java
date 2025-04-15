@@ -1,6 +1,7 @@
 package io.github.software.coursework.data;
 
 import io.github.software.coursework.data.schema.Entity;
+import io.github.software.coursework.data.schema.Goal;
 import io.github.software.coursework.data.schema.Transaction;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -93,6 +94,10 @@ public interface AsyncStorage {
         void addTag(String tag, Sensitivity sensitivity) throws IOException;
 
         void removeTag(String tag, Sensitivity sensitivity) throws IOException;
+
+        @Nullable Goal getGoal() throws IOException;
+
+        void setGoal(@Nullable Goal goal, Sensitivity sensitivity) throws IOException;
     }
 
     interface ModelDirectory extends DirectoryAccessor, Flush {

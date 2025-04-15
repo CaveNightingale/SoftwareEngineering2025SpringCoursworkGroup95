@@ -38,14 +38,35 @@ public final class NoSkill implements Model {
     }
 
     @Override
-    public CompletableFuture<ImmutablePair<ImmutableDoubleArray, Pair<ImmutableDoubleArray, ImmutableDoubleArray>>> predictBudgetUsage(ImmutableLongArray time) {
+    public CompletableFuture<ImmutablePair<ImmutableDoubleArray, Pair<ImmutableDoubleArray, ImmutableDoubleArray>>> predictBudgetUsage(long reference, ImmutableLongArray time) {
         double[] budgetMean = new double[time.length()];
         double[] budgetConfidenceLower = new double[time.length()];
         double[] budgetConfidenceUpper = new double[time.length()];
         for (int i = 0; i < time.length(); i++) {
-            budgetMean[i] = (double) time.get(i) / 850000;
-            budgetConfidenceLower[i] = (double) time.get(i) / 900000;
-            budgetConfidenceUpper[i] = (double) time.get(i) / 800000;
+            budgetMean[i] = (double) (time.get(i) - reference) / 85000;
+            budgetConfidenceLower[i] = (double) (time.get(i) - reference) / 100000;
+            budgetConfidenceUpper[i] = (double) (time.get(i) - reference) / 60000;
+        }
+        return CompletableFuture.completedFuture(
+                ImmutablePair.of(
+                        ImmutableDoubleArray.copyOf(budgetMean),
+                        ImmutablePair.of(
+                                ImmutableDoubleArray.copyOf(budgetConfidenceLower),
+                                ImmutableDoubleArray.copyOf(budgetConfidenceUpper)
+                        )
+                )
+        );
+    }
+
+    @Override
+    public CompletableFuture<ImmutablePair<ImmutableDoubleArray, Pair<ImmutableDoubleArray, ImmutableDoubleArray>>> predictSavedAmount(long reference, ImmutableLongArray time) {
+        double[] budgetMean = new double[time.length()];
+        double[] budgetConfidenceLower = new double[time.length()];
+        double[] budgetConfidenceUpper = new double[time.length()];
+        for (int i = 0; i < time.length(); i++) {
+            budgetMean[i] = (double) (time.get(i) - reference) / 120000;
+            budgetConfidenceLower[i] = (double) (time.get(i) - reference) / 110000;
+            budgetConfidenceUpper[i] = (double) (time.get(i) - reference) / 70000;
         }
         return CompletableFuture.completedFuture(
                 ImmutablePair.of(

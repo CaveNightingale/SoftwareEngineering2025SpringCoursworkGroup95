@@ -280,7 +280,7 @@ public class AddTransaction extends VBox {
         if (transaction != null) {
             title.setText(transaction.title());
             description.setText(transaction.description());
-            time.setValue(LocalDate.ofEpochDay(transaction.time() / 86400000));
+            time.setValue(LocalDate.ofEpochDay(Math.floorDiv(transaction.time(), 86400000)));
             amount.setText(BigDecimal.valueOf(transaction.amount()).divide(BigDecimal.valueOf(100)).toString());
             entity.setValue(new ReferenceItemPair<>(transaction.entity(), Objects.requireNonNull(entity1)));
             category.setValue(transaction.category());
@@ -295,7 +295,7 @@ public class AddTransaction extends VBox {
         }
 
         predict = debounce(() -> {
-            if ((!tagPresent || !categoryPresent) && validate() == null) {
+            if ((!tagPresent || !categoryPresent) && validate() == null && !getCategoryItems().isEmpty()) {
                 CompletableFuture<ImmutablePair<ImmutableIntArray, Bitmask.View2D>> task = predictionTask = model.predictCategoriesAndTags(
                         ImmutableList.of(getTransaction()),
                         ImmutableList.copyOf(getCategoryItems()),
@@ -311,7 +311,7 @@ public class AddTransaction extends VBox {
                         if (!tagPresent) {
                             Bitmask.View2D mask = result.getRight();
                             selectedTags.clear();
-                            for (int i = 0; i < mask.width(); i++) {
+                            for (int i = 0; i < getTagItems().size(); i++) {
                                 if (mask.get(i, 0)) {
                                     selectedTags.add(getTagItems().get(i));
                                 }

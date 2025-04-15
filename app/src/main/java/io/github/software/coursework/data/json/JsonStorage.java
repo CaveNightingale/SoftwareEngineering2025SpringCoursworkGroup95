@@ -3,6 +3,7 @@ package io.github.software.coursework.data.json;
 import com.google.common.collect.ImmutableList;
 import io.github.software.coursework.data.*;
 import io.github.software.coursework.data.schema.Entity;
+import io.github.software.coursework.data.schema.Goal;
 import io.github.software.coursework.data.schema.Transaction;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -218,20 +219,28 @@ public final class JsonStorage implements AsyncStorage {
     }
 
     private static final class Counting extends HashMap<String, Long> implements Item {
-        public void increment(String key) {
+        public void increment(String key, long value) {
             if (!containsKey(key)) {
                 logger.warning("Key " + key + " not found, probably these data are saved by an old version of the app. However, ignoring it.");
                 return;
             }
-            put(key, get(key) + 1);
+            put(key, get(key) + value);
+        }
+
+        public void increment(String key) {
+            increment(key, 1);
+        }
+
+        public void decrement(String key, long value) {
+            if (!containsKey(key)) {
+                logger.warning("Key " + key + " not found, probably these data are saved by an old version of the app. However, ignoring it.");
+                return;
+            }
+            put(key, get(key) - value);
         }
 
         public void decrement(String key) {
-            if (!containsKey(key)) {
-                logger.warning("Key " + key + " not found, probably these data are saved by an old version of the app. However, ignoring it.");
-                return;
-            }
-            put(key, get(key) - 1);
+            decrement(key, 1);
         }
 
         @Override
@@ -366,6 +375,30 @@ public final class JsonStorage implements AsyncStorage {
                     writer.writeString("tag", tag);
                     writer.writeEnd();
                 });
+            }
+        }
+
+        @Override
+        public @Nullable Goal getGoal() throws IOException {
+            try {
+                return Optional.ofNullable(directory.get("goal", Goal.Optional::deserialize))
+                        .map(Goal.Optional::goal).orElse(null);
+            } catch (NoSuchDocumentException ex) {
+                return null;
+            }
+        }
+
+        @Override
+        public void setGoal(@Nullable Goal goal, Sensitivity sensitivity) throws IOException {
+            Goal oldGoal = getGoal();
+            if (oldGoal != null) {
+                opLogger.log("RESET_GOAL", sensitivity, oldGoal);
+            }
+            if (goal == null) {
+                directory.put("goal", new Goal.Optional());
+            } else {
+                opLogger.log("SET_GOAL", sensitivity, goal);
+                directory.put("goal", new Goal.Optional(goal));
             }
         }
 

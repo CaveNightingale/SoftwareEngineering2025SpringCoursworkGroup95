@@ -47,11 +47,21 @@ public interface Model {
 
     /**
      * Predict the budget usage for the given time.
+     * @param reference The reference time, in milliseconds.
      * @param time The time to predict, in milliseconds.
-     * @return (E, (L, R)) where E is the expected budget usage, (L, R) is 0.9-confidence interval.
+     * @return (E, (L, R)) where E is the expected budget usage, (L, R) is 0.9-confidence interval, in cents.
      */
     CompletableFuture<ImmutablePair<ImmutableDoubleArray, Pair<ImmutableDoubleArray, ImmutableDoubleArray>>>
-    predictBudgetUsage(ImmutableLongArray time);
+    predictBudgetUsage(long reference, ImmutableLongArray time);
+
+    /**
+     * Predict the saved amount for the given time.
+     * @param reference The reference time, in milliseconds.
+     *                  time The time to predict, in milliseconds.
+     * @return (E, (L, R)) where E is the expected saved amount, (L, R) is 0.9-confidence interval, in cents.
+     */
+    CompletableFuture<ImmutablePair<ImmutableDoubleArray, Pair<ImmutableDoubleArray, ImmutableDoubleArray>>>
+    predictSavedAmount(long reference, ImmutableLongArray time);
 
     /**
      * Predict the categories and tags for the given transactions.
