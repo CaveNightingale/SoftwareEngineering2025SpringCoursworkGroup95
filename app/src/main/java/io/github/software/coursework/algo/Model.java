@@ -85,7 +85,8 @@ public interface Model {
      * @param categories The categories to predict.
      * @param startTime The start time, in milliseconds.
      * @param endTime The end time, in milliseconds.
-     * @return (O, C) where O is the overall budget, C is the budget for each category.
+     * @return ((O, C), (A, B)) where O is the overall budget, C is the budget for each category, A is the overall saving, B is the saving for each category.
      */
-    CompletableFuture<ImmutablePair<Long, ImmutableLongArray>> predictBudget(ImmutableList<String> categories, long startTime, long endTime);
+    CompletableFuture<ImmutablePair<ImmutablePair<Long, ImmutableLongArray>, ImmutablePair<Long, ImmutableLongArray>>>
+    predictGoals(ImmutableList<String> categories, long startTime, long endTime);
 }

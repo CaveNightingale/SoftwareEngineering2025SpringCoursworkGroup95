@@ -114,7 +114,19 @@ public final class NoSkill implements Model {
     }
 
     @Override
-    public CompletableFuture<ImmutablePair<Long, ImmutableLongArray>> predictBudget(ImmutableList<String> categories, long startTime, long endTime) {
-        return CompletableFuture.completedFuture(ImmutablePair.of(10000L, ImmutableLongArray.copyOf(new long[categories.size()])));
+    public CompletableFuture<ImmutablePair<ImmutablePair<Long, ImmutableLongArray>, ImmutablePair<Long, ImmutableLongArray>>> predictGoals(ImmutableList<String> categories, long startTime, long endTime) {
+        long[] budget = new long[categories.size()];
+        long[] saving = new long[categories.size()];
+        Random random = new Random();
+        for (int i = 0; i < categories.size(); i++) {
+            budget[i] = random.nextInt(10000);
+            saving[i] = random.nextInt(20000);
+        }
+        return CompletableFuture.completedFuture(
+                ImmutablePair.of(
+                        ImmutablePair.of(random.nextLong(1000L), ImmutableLongArray.copyOf(budget)),
+                        ImmutablePair.of(random.nextLong(2000L), ImmutableLongArray.copyOf(saving))
+                )
+        );
     }
 }

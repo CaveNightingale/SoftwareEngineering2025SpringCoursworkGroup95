@@ -1,6 +1,7 @@
 package io.github.software.coursework.gui;
 
 import com.google.common.collect.ImmutableList;
+import io.github.software.coursework.algo.Model;
 import io.github.software.coursework.data.schema.Goal;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
@@ -24,6 +25,7 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Objects;
 
 // TODO: Replace Double with BigDecimal
 public class GoalSetting extends VBox {
@@ -42,6 +44,8 @@ public class GoalSetting extends VBox {
 
     @FXML
     private Spinner<Double> goalSaving;
+
+    private Model model;
 
     private final HashMap<String, Pair<Long, Long>> categorical = new HashMap<>();
 
@@ -105,6 +109,10 @@ public class GoalSetting extends VBox {
         });
     }
 
+    public void setModel(Model model) {
+        this.model = model;
+    }
+
     private void rebuildCategoryList() {
         ArrayList<String> categories = new ArrayList<>(getCategories());
         categories.sort(String::compareTo);
@@ -147,6 +155,23 @@ public class GoalSetting extends VBox {
     }
 
     public void handleAutoComplete() {
+        Objects.requireNonNull(model);
+        if (goalStart.getValue() == null) {
+            goalStart.setValue(LocalDate.now());
+        }
+        if (goalEnd.getValue() == null) {
+            goalEnd.setValue(LocalDate.now().plusDays(30));
+        }
+        ImmutableList<String> categories = ImmutableList.copyOf(getCategories());
+        model.predictGoals(categories, goalStart.getValue().toEpochDay() * 86400000, goalEnd.getValue().toEpochDay() * 86400000)
+                .thenAccept(result -> {
+                    goalBudget.getValueFactory().setValue(result.getLeft().getLeft() / 100.0);
+                    goalSaving.getValueFactory().setValue(result.getRight().getLeft() / 100.0);
+                    for (int i = 0; i < categories.size(); i++) {
+                        categorical.put(categories.get(i), Pair.of(result.getLeft().getRight().get(i), result.getRight().getRight().get(i)));
+                    }
+                    rebuildCategoryList();
+                });
     }
 
     private String validate() {

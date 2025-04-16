@@ -48,7 +48,7 @@
                     <HBox styleClass="model-title">
                         <Label text="Saving"/>
                         <Region HBox.hgrow="ALWAYS"/>
-                        <Text text="\$1000000000000000000.00 saved"/>
+                        <Text fx:id="savedAmount"/>
                     </HBox>
                     <HBox>
                         <Chart fx:id="savingProgress"  HBox.hgrow="ALWAYS" prefHeight="150" minHeight="150"/>

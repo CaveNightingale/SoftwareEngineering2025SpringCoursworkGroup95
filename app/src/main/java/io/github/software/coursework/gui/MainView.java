@@ -89,6 +89,9 @@ public class MainView extends AnchorPane {
     @FXML
     private Text budgetAmount;
 
+    @FXML
+    private Text savedAmount;
+
     private Tab addTransactionTab;
 
     private AddTransaction addTransaction;
@@ -301,6 +304,7 @@ public class MainView extends AnchorPane {
             }
             Platform.runLater(this::loadGoal);
         }));
+        goalSetting.setModel(model);
 
         loadEverything();
     }
@@ -407,22 +411,30 @@ public class MainView extends AnchorPane {
                 end = end - Math.floorMod(end, day);
                 today = Math.min(today, end);
                 double[] budgetTrain;
+                double[] savedTrain;
                 long[] timeToPredict;
-                long budgetUsed = 0;
+                long totalUsed = 0;
+                long totalSaved = 0;
                 if (today >= start) {
                     SequencedCollection<ReferenceItemPair<Transaction>> transactions = table.list(start, today, 0, Integer.MAX_VALUE);
                     budgetTrain = new double[(int) ((today - start) / day + 1)];
+                    savedTrain = new double[(int) ((today - start) / day + 1)];
                     for (ReferenceItemPair<Transaction> transaction : transactions) {
+                        long time = transaction.item().time();
+                        int binIndex = (int) Math.floorDiv(time - start, day);
+                        savedTrain[binIndex] += transaction.item().amount();
+                        totalSaved += transaction.item().amount();
                         if (transaction.item().amount() > 0) { // Not a budget use
                             continue;
                         }
-                        long time = transaction.item().time();
-                        int binIndex = (int) Math.floorDiv(time - start, day);
                         budgetTrain[binIndex] -= transaction.item().amount();
-                        budgetUsed -= transaction.item().amount();
+                        totalUsed -= transaction.item().amount();
                     }
                     for (int i = 1; i < budgetTrain.length; i++) {
                         budgetTrain[i] = budgetTrain[i] + budgetTrain[i - 1];
+                    }
+                    for (int i = 1; i < savedTrain.length; i++) {
+                        savedTrain[i] = savedTrain[i] + savedTrain[i - 1];
                     }
                     timeToPredict = new long[(int) ((end - today) / day)];
                     for (int i = 0; i < timeToPredict.length; i++) {
@@ -430,6 +442,7 @@ public class MainView extends AnchorPane {
                     }
                 } else {
                     budgetTrain = new double[0];
+                    savedTrain = new double[0];
                     timeToPredict = new long[(int) ((end - start) / day)];
                     for (int i = 0; i < timeToPredict.length; i++) {
                         timeToPredict[i] = start + (i + 1) * day;
@@ -438,7 +451,8 @@ public class MainView extends AnchorPane {
                 long finalStart = start;
                 long finalEnd = end;
                 long finalToday = today;
-                long finalBudgetUsed = budgetUsed;
+                long finalTotalUsed = totalUsed;
+                long finalTotalSaved = totalSaved;
                 model.predictBudgetUsage(today, ImmutableLongArray.copyOf(timeToPredict)).thenAccept(prediction -> {
                     ImmutableDoubleArray mean = prediction.getLeft();
                     ImmutableDoubleArray lower = prediction.getRight().getLeft();
@@ -451,16 +465,44 @@ public class MainView extends AnchorPane {
                             finalStart,
                             finalEnd,
                             finalToday,
-                            goal == null ? Double.NaN : goal.budget()
+                            goal == null ? Double.NaN : goal.budget(),
+                            "Budget"
                     );
                     Platform.runLater(() -> {
+                        BigDecimal used = new BigDecimal(finalTotalUsed).divide(BigDecimal.valueOf(100));
                         if (goal == null) {
-                            budgetAmount.setText(new BigDecimal(finalBudgetUsed).divide(BigDecimal.valueOf(100)) + " used");
+                            budgetAmount.setText(used + " used");
                         } else {
-                            budgetAmount.setText(new BigDecimal(finalBudgetUsed).divide(BigDecimal.valueOf(100)) + " / "
+                            budgetAmount.setText(used + " / "
                                     + new BigDecimal(goal.budget()).divide(BigDecimal.valueOf(100)) + " used");
                         }
                         budgetProgress.setRenderer(renderer);
+                    });
+                });
+                model.predictSavedAmount(today, ImmutableLongArray.copyOf(timeToPredict)).thenAccept(prediction -> {
+                    ImmutableDoubleArray mean = prediction.getLeft();
+                    ImmutableDoubleArray lower = prediction.getRight().getLeft();
+                    ImmutableDoubleArray upper = prediction.getRight().getRight();
+                    SequentialPredictionRenderer renderer = new SequentialPredictionRenderer(
+                            ImmutableDoubleArray.copyOf(savedTrain),
+                            mean,
+                            lower,
+                            upper,
+                            finalStart,
+                            finalEnd,
+                            finalToday,
+                            goal == null ? Double.NaN : goal.saving(),
+                            "Goal"
+                    );
+                    Platform.runLater(() -> {
+                        BigDecimal saved = new BigDecimal(finalTotalSaved).divide(BigDecimal.valueOf(100));
+                        if (goal == null) {
+                            savedAmount.setText(saved + " saved");
+                        } else {
+                            savedAmount.setText(saved + " / "
+                                    + new BigDecimal(goal.saving()).divide(BigDecimal.valueOf(100)) + " saved");
+                        }
+                        savingProgress.setRenderer(renderer);
                     });
                 });
             } catch (IOException e) {
@@ -581,6 +623,7 @@ public class MainView extends AnchorPane {
         private final long end;
         private final long today;
         private final double reference;
+        private final String referenceName;
 
         private final int sequenceLength;
         private final double top;
@@ -594,7 +637,8 @@ public class MainView extends AnchorPane {
                 long start,
                 long end,
                 long today,
-                double reference
+                double reference,
+                String referenceName
         ) {
             this.trainingSamples = trainingSamples;
             this.predictedMean = predictedMean;
@@ -602,8 +646,9 @@ public class MainView extends AnchorPane {
             this.predictedUpperBound = predictedUpperBound;
             this.start = start;
             this.end = end;
-            this.reference = reference;
             this.today = today;
+            this.reference = reference;
+            this.referenceName = referenceName;
 
             this.sequenceLength = trainingSamples.length() + predictedMean.length();
             double top = 1;
@@ -672,10 +717,11 @@ public class MainView extends AnchorPane {
             }
             drawXAxis(xTicks);
 
+            double scale = Math.abs((top - bottom) * cent);
             if (Double.isFinite(reference)) {
-                drawYAxis(0, Math.max(Math.abs(reference * cent) / 4, 0.2));
+                drawYAxis(0, Math.max(Math.max(Math.abs(reference * cent) / 4, 0.2), scale / 8));
             } else {
-                drawYAxis(0, Math.abs(top * cent) / 4);
+                drawYAxis(0, scale / 4);
             }
 
             double[] trainX = IntStream.range(-1, trainingSamples.length()).asDoubleStream().toArray();
@@ -701,7 +747,7 @@ public class MainView extends AnchorPane {
                 drawReference(fracXToDataX(0), y, fracXToDataX(1), y, Color.RED.deriveColor(1, 1, 1, 0.5));
                 save();
                 getGraphicsContext().setStroke(Color.RED.deriveColor(1, 1, 1, 0.5));
-                drawText("Budget", ALIGN_START, ALIGN_END, fromFracX(0) + 5, fromDataY(y) - 5);
+                drawText(this.referenceName, ALIGN_START, ALIGN_END, fromFracX(0) + 5, fromDataY(y) - 5);
                 restore();
             }
 
