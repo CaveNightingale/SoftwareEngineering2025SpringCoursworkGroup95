@@ -31,8 +31,6 @@ import java.io.StringWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -67,6 +65,13 @@ public class App extends Application {
             try {
                 storage = new JsonStorage(event.getAccount(), event.getPassword());
                 model = new NoSkill();
+                storage.model(modelDirectory -> {
+                    try {
+                        model.loadParameters(modelDirectory);
+                    } catch (IOException e) {
+                        logger.log(Level.SEVERE, "Error during loading model.", e);
+                    }
+                });
             } catch (IOException ex) {
                 logger.log(Level.INFO, "Cannot decrypt", ex);
                 decryptionView.reportPasswordIncorrect();

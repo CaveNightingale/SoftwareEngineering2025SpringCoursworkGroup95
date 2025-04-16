@@ -28,6 +28,7 @@ public interface Model {
 
     /**
      * Load the model parameters from a reader IN-PLACE.
+     * If the operation fails, the model should be in a consistent state.
      * @param reader The directory read from
      */
     void loadParameters(AsyncStorage.ModelDirectory reader) throws IOException;
