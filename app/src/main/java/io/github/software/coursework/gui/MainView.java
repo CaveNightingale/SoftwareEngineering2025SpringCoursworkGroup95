@@ -5,6 +5,7 @@ import com.google.common.primitives.Doubles;
 import com.google.common.primitives.ImmutableDoubleArray;
 import com.google.common.primitives.ImmutableLongArray;
 import io.github.software.coursework.algo.Model;
+import io.github.software.coursework.algo.Update;
 import io.github.software.coursework.data.AsyncStorage;
 import io.github.software.coursework.data.Reference;
 import io.github.software.coursework.data.ReferenceItemPair;
@@ -152,7 +153,9 @@ public class MainView extends AnchorPane {
                 });
                 addTransaction.setOnSubmit(event1 -> asyncStorage.transaction(table -> {
                     try {
-                        table.put(transaction, AsyncStorage.Sensitivity.NORMAL, event1.isDelete() ? null : addTransaction.getTransaction());
+                        Transaction item = event1.isDelete() ? null : addTransaction.getTransaction();
+                        Transaction old = table.put(transaction, AsyncStorage.Sensitivity.NORMAL, item);
+                        model.trainOnUpdate(Update.empty(), Update.single(transaction, old, item));
                     } catch (IOException e) {
                         logger.log(Level.SEVERE, "Cannot update transaction", e);
                     }
@@ -181,7 +184,9 @@ public class MainView extends AnchorPane {
                 });
                 addEntity.setOnSubmit(event1 -> asyncStorage.entity(table -> {
                     try {
-                        table.put(entity, AsyncStorage.Sensitivity.NORMAL, addEntity.getEntity());
+                        Entity item = addEntity.getEntity();
+                        Entity old = table.put(entity, AsyncStorage.Sensitivity.NORMAL, item);
+                        model.trainOnUpdate(Update.single(entity, old, item), Update.empty());
                     } catch (IOException e) {
                         logger.log(Level.SEVERE, "Cannot update entity", e);
                     }
@@ -591,7 +596,10 @@ public class MainView extends AnchorPane {
         });
         addTransaction.setOnSubmit(event -> asyncStorage.transaction(table -> {
             try {
-                table.put(new Reference<>(), AsyncStorage.Sensitivity.NORMAL, addTransaction.getTransaction());
+                Reference<Transaction> ref = new Reference<>();
+                Transaction item = addTransaction.getTransaction();
+                Transaction old = table.put(ref, AsyncStorage.Sensitivity.NORMAL, item);
+                model.trainOnUpdate(Update.empty(), Update.single(ref, old, item));
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -625,7 +633,10 @@ public class MainView extends AnchorPane {
         });
         addEntity.setOnSubmit(event -> asyncStorage.entity(table -> {
             try {
-                table.put(new Reference<>(), AsyncStorage.Sensitivity.NORMAL, addEntity.getEntity());
+                Reference<Entity> ref = new Reference<>();
+                Entity item = addEntity.getEntity();
+                Entity old = table.put(ref, AsyncStorage.Sensitivity.NORMAL, item);
+                model.trainOnUpdate(Update.single(ref, old, item), Update.empty());
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }

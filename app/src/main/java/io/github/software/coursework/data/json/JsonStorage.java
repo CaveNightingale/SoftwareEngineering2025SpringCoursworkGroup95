@@ -195,16 +195,19 @@ public final class JsonStorage implements AsyncStorage {
         }
 
         @Override
-        public void put(Reference<Entity> key, Sensitivity sensitivity, @Nullable Entity value) throws IOException {
+        public @Nullable Entity put(Reference<Entity> key, Sensitivity sensitivity, @Nullable Entity value) throws IOException {
             ReferenceItemPair<Entity> queried = first(this.entityChunkedIndex.querySamples(new ReferenceItemPair<>(key, null), null, 0, 1));
+            Entity item = null;
             if (queried != null && queried.reference().equals(key)) { // Lower bound searching may return a different key
                 opLogger.log("REMOVE_ENTITY", sensitivity, queried);
                 this.entityChunkedIndex.removeSample(queried);
+                item = queried.item();
             }
             if (value != null) {
                 opLogger.log("ADD_ENTITY", sensitivity, new ReferenceItemPair<>(key, value));
                 this.entityChunkedIndex.addSample(new ReferenceItemPair<>(key, value));
             }
+            return item;
         }
 
         @Override
@@ -329,7 +332,7 @@ public final class JsonStorage implements AsyncStorage {
         @Override
         public void removeCategory(String category, Sensitivity sensitivity) throws IOException {
             if (!categoryCount.containsKey(category)) {
-                throw  new SyntaxException("Category does not exist");
+                throw new SyntaxException("Category does not exist");
             } else if (categoryCount.get(category) > 0) {
                 throw new SyntaxException("Category is currently in use");
             } else {
@@ -411,8 +414,9 @@ public final class JsonStorage implements AsyncStorage {
         }
 
         @Override
-        public void put(Reference<Transaction> key, Sensitivity sensitivity, @Nullable Transaction value) throws IOException {
+        public @Nullable Transaction put(Reference<Transaction> key, Sensitivity sensitivity, @Nullable Transaction value) throws IOException {
             ReferenceItemPair<Transaction> queried = first(this.transactionIndex.querySamples(new ReferenceItemPair<>(key, null), null, 0, 1));
+            Transaction item = null;
             if (queried != null && queried.reference().equals(key)) { // Lower bound searching may return a different key
                 opLogger.log("REMOVE_TRANSACTION", sensitivity, queried);
                 categoryCount.decrement(queried.item().category());
@@ -421,6 +425,7 @@ public final class JsonStorage implements AsyncStorage {
                 }
                 this.transactionIndex.removeSample(queried);
                 this.transactionIndexByTime.removeSample(queried);
+                item = queried.item();
             }
             if (value != null) {
                 opLogger.log("ADD_TRANSACTION", sensitivity, new ReferenceItemPair<>(key, value));
@@ -434,6 +439,7 @@ public final class JsonStorage implements AsyncStorage {
             // Statistics is updated in every put() call
             directory.put("category", categoryCount);
             directory.put("tag", tagCount);
+            return item;
         }
 
         @Override

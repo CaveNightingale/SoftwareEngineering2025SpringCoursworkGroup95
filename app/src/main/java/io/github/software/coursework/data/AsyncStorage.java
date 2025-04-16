@@ -52,7 +52,7 @@ public interface AsyncStorage {
      * @param <V> The value type.
      */
     interface Table<K, V> {
-        void put(K key, Sensitivity sensitivity, @Nullable V value) throws IOException;
+        @Nullable V put(K key, Sensitivity sensitivity, @Nullable V value) throws IOException;
         V get(K key) throws IOException;
     }
 
