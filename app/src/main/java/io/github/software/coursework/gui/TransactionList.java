@@ -12,10 +12,9 @@ import javafx.collections.ObservableList;
 import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.event.EventType;
+import javafx.scene.input.KeyCode;
 import javafx.scene.layout.VBox;
 import org.apache.commons.lang3.tuple.ImmutablePair;
-
-import java.util.SequencedCollection;
 
 public class TransactionList extends VBox {
     private final ObjectProperty<EventHandler<TransactionEditClickedEvent>> onTransactionEditClicked = new SimpleObjectProperty<>();
@@ -46,15 +45,32 @@ public class TransactionList extends VBox {
         itemsProperty().set(value);
     }
 
+    private TransactionItem createItem(ImmutablePair<ReferenceItemPair<Transaction>, Entity> pair) {
+        TransactionItem item = new TransactionItem();
+        item.setTransaction(ImmutablePair.of(pair.getLeft().item(), pair.getRight().name()));
+        item.setFocusTraversable(true);
+        item.setOnMouseClicked(event -> fireEvent(new TransactionEditClickedEvent(pair.getLeft().reference(), pair.getLeft().item(), pair.getRight())));
+        item.setOnKeyReleased(event -> {
+            if (event.getCode() == KeyCode.ENTER) {
+                fireEvent(new TransactionEditClickedEvent(pair.getLeft().reference(), pair.getLeft().item(), pair.getRight()));
+            }
+        });
+        item.focusedProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue) {
+                item.getStyleClass().add("focused-item");
+            } else {
+                item.getStyleClass().remove("focused-item");
+            }
+        });
+        return item;
+    }
+
     private void onListContentChange(ListChangeListener.Change<? extends ImmutablePair<ReferenceItemPair<Transaction>, Entity>> change) {
         while (change.next()) {
             if (change.wasAdded()) {
                 int index = 0;
                 for (ImmutablePair<ReferenceItemPair<Transaction>, Entity> pair : change.getAddedSubList()) {
-                    TransactionItem item = new TransactionItem();
-                    item.setTransaction(ImmutablePair.of(pair.getLeft().item(), pair.getRight().name()));
-                    item.setOnMouseClicked(event -> fireEvent(new TransactionEditClickedEvent(pair.getLeft().reference(), pair.getLeft().item(), pair.getRight())));
-                    getChildren().add(change.getFrom() + (index++), item);
+                    getChildren().add(change.getFrom() + (index++), createItem(pair));
                 }
             } else if (change.wasRemoved()) {
                 getChildren().remove(change.getFrom(), change.getFrom() + change.getRemovedSize());
@@ -77,12 +93,7 @@ public class TransactionList extends VBox {
                 oldValue.removeListener(this::onListContentChange);
             }
             if (newValue != null) {
-                newValue.forEach(pair -> {
-                    TransactionItem item = new TransactionItem();
-                    item.setTransaction(ImmutablePair.of(pair.getLeft().item(), pair.getRight().name()));
-                    item.setOnMouseClicked(event -> fireEvent(new TransactionEditClickedEvent(pair.getLeft().reference(), pair.getLeft().item(), pair.getRight())));
-                    getChildren().add(item);
-                });
+                newValue.forEach(pair -> getChildren().add(createItem(pair)));
                 newValue.addListener(this::onListContentChange);
             }
         });

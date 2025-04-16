@@ -16,7 +16,7 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 
-public class DecryptingInputStream extends InputStream {
+public final class DecryptingInputStream extends InputStream {
     private final InputStream backing;
     private final Cipher cipher;
     private int base64Value;

@@ -3,6 +3,7 @@ package io.github.software.coursework.data.json;
 import com.fasterxml.jackson.core.JsonEncoding;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.google.common.collect.ImmutableList;
+import io.github.software.coursework.data.Deserialize;
 import io.github.software.coursework.data.Document;
 import io.github.software.coursework.data.Item;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -16,7 +17,7 @@ import java.util.logging.Logger;
 
 @ParametersAreNonnullByDefault
 public final class AccountManager {
-    public record Account(String name, String path, String key) implements Item<Account>, Comparable<Account> {
+    public record Account(String name, String path, String key) implements Item, Comparable<Account> {
 
         @Override
         public void serialize(Document.Writer writer) throws IOException {
@@ -83,7 +84,7 @@ public final class AccountManager {
         return defaultAccount;
     }
 
-    public void setDefaultAccount(Account defaultAccount) {
+    public void setDefaultAccount(@Nullable Account defaultAccount) {
         this.defaultAccount = defaultAccount;
     }
 
@@ -91,15 +92,14 @@ public final class AccountManager {
         accounts.clear();
         if (accountsFile.exists()) {
             try (Document.Reader reader = JsonReader.createReader(jsonFactory.createParser(accountsFile))) {
-                Document.Reader list = reader.readCompound("list");
-                for (int i = 0; !list.isEnd(); i++) {
-                    Account account = Account.deserialize(list.readCompound(i));
-                    accounts.add(account);
-                }
-                list.readEnd();
+                accounts.addAll(((Deserialize<Account>) Account::deserialize)
+                        .asList(ArrayList::new)
+                        .deserialize(reader.readCompound("list")));
                 int defaultAccountRead = (int) reader.readInteger("default");
                 if (defaultAccountRead >= 0 && defaultAccountRead < accounts.size()) {
                     this.defaultAccount = accounts.get(defaultAccountRead);
+                } else {
+                    this.defaultAccount = null;
                 }
                 reader.readEnd();
             } catch (IOException e) {
@@ -112,12 +112,7 @@ public final class AccountManager {
     public void saveAccounts() {
         accountsFile.getParentFile().mkdirs();
         try (Document.Writer writer = JsonWriter.createWriter(jsonFactory.createGenerator(accountsFile, JsonEncoding.UTF8))) {
-            Document.Writer list = writer.writeCompound("list");
-            int i = 0;
-            for (Account account : accounts) {
-                account.serialize(list.writeCompound(i));
-            }
-            list.writeEnd();
+            Item.asList(accounts).serialize(writer.writeCompound("list"));
             writer.writeInteger("default", accounts.indexOf(defaultAccount));
             writer.writeEnd();
         } catch (IOException e) {

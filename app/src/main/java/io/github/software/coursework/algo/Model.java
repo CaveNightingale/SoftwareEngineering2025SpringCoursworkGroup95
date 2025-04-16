@@ -1,17 +1,17 @@
 package io.github.software.coursework.algo;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMultimap;
 import com.google.common.primitives.ImmutableDoubleArray;
 import com.google.common.primitives.ImmutableIntArray;
 import com.google.common.primitives.ImmutableLongArray;
-import io.github.software.coursework.data.Document;
+import io.github.software.coursework.data.AsyncStorage;
 import io.github.software.coursework.data.schema.Entity;
 import io.github.software.coursework.data.schema.Transaction;
 import io.github.software.coursework.util.Bitmask;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 
+import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -22,15 +22,16 @@ import java.util.concurrent.CompletableFuture;
 public interface Model {
     /**
      * Save the model parameters to a writer.
-     * @param writer The writer to write to.
+     * @param writer The directory write to
      */
-    void saveParameters(Document.Writer writer);
+    void saveParameters(AsyncStorage.ModelDirectory writer) throws IOException;
 
     /**
      * Load the model parameters from a reader IN-PLACE.
-     * @param reader The reader to read from.
+     * If the operation fails, the model should be in a consistent state.
+     * @param reader The directory read from
      */
-    void loadParameters(Document.Reader reader);
+    void loadParameters(AsyncStorage.ModelDirectory reader) throws IOException;
 
     /**
      * Make a copy of the model.
@@ -47,11 +48,21 @@ public interface Model {
 
     /**
      * Predict the budget usage for the given time.
-     * @param time The time to predict.
-     * @return (E, (L, R)) where E is the expected budget usage, (L, R) is 0.9-confidence interval.
+     * @param reference The reference time, in milliseconds.
+     * @param time The time to predict, in milliseconds.
+     * @return (E, (L, R)) where E is the expected budget usage, (L, R) is 0.9-confidence interval, in cents.
      */
     CompletableFuture<ImmutablePair<ImmutableDoubleArray, Pair<ImmutableDoubleArray, ImmutableDoubleArray>>>
-    predictBudgetUsage(ImmutableLongArray time);
+    predictBudgetUsage(long reference, ImmutableLongArray time);
+
+    /**
+     * Predict the saved amount for the given time.
+     * @param reference The reference time, in milliseconds.
+     *                  time The time to predict, in milliseconds.
+     * @return (E, (L, R)) where E is the expected saved amount, (L, R) is 0.9-confidence interval, in cents.
+     */
+    CompletableFuture<ImmutablePair<ImmutableDoubleArray, Pair<ImmutableDoubleArray, ImmutableDoubleArray>>>
+    predictSavedAmount(long reference, ImmutableLongArray time);
 
     /**
      * Predict the categories and tags for the given transactions.
@@ -75,7 +86,10 @@ public interface Model {
      * @param categories The categories to predict.
      * @param startTime The start time, in milliseconds.
      * @param endTime The end time, in milliseconds.
-     * @return (O, C) where O is the overall budget, C is the budget for each category.
+     * @return ((O, C), (A, B)) where O is the overall budget, C is the budget for each category, A is the overall saving, B is the saving for each category.
+     *         For each category, only one of budget and saving is non-zero. It is unspecified behavior if both are non-zero.
+     *         All values are in cents.
      */
-    CompletableFuture<ImmutablePair<Long, ImmutableLongArray>> predictBudget(ImmutableList<String> categories, long startTime, long endTime);
+    CompletableFuture<ImmutablePair<ImmutablePair<Long, ImmutableLongArray>, ImmutablePair<Long, ImmutableLongArray>>>
+    predictGoals(ImmutableList<String> categories, long startTime, long endTime);
 }

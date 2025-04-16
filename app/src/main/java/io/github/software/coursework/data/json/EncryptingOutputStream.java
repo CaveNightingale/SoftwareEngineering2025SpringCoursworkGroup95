@@ -16,7 +16,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 
 @ParametersAreNonnullByDefault
-public class EncryptingOutputStream extends OutputStream {
+public final class EncryptingOutputStream extends OutputStream {
     private final OutputStream backing;
     private final Cipher cipher;
     private int base64Value = 0;
