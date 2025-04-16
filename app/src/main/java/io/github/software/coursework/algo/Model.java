@@ -87,6 +87,8 @@ public interface Model {
      * @param startTime The start time, in milliseconds.
      * @param endTime The end time, in milliseconds.
      * @return ((O, C), (A, B)) where O is the overall budget, C is the budget for each category, A is the overall saving, B is the saving for each category.
+     *         For each category, only one of budget and saving is non-zero. It is unspecified behavior if both are non-zero.
+     *         All values are in cents.
      */
     CompletableFuture<ImmutablePair<ImmutablePair<Long, ImmutableLongArray>, ImmutablePair<Long, ImmutableLongArray>>>
     predictGoals(ImmutableList<String> categories, long startTime, long endTime);

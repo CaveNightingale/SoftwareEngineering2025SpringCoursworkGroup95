@@ -461,22 +461,28 @@ public class MainView extends AnchorPane {
                         timeToPredict[i] = start + (i + 1) * day;
                     }
                 }
-                ImmutableList<String> categories = ImmutableList.copyOf(goal == null ? categoricalUse.keySet() : goal.byCategory().stream().map(Triple::getLeft).toList());
-                double[] categoricalUsed = new double[categories.size()];
-                for (int i = 0; i < categories.size(); i++) {
-                    categoricalUsed[i] = (categoricalUse.getOrDefault(categories.get(i), 0L)) / 100.0;
+                HashMap<String, Pair<Long, Long>> goalByCategory = new HashMap<>();
+                for (Triple<String, Long, Long> category : goal == null ? List.<Triple<String, Long, Long>>of() : goal.byCategory()) {
+                    goalByCategory.put(category.getLeft(), ImmutablePair.of(category.getMiddle(), category.getRight()));
                 }
-                double[] categoricalUsedGoalRemaining = new double[categories.size()];
-                double[] categoricalUsedProgress = new double[categories.size()];
+                ImmutableList<String> budgetCategories = ImmutableList.copyOf(goal == null ?
+                        categoricalUse.keySet() :
+                        goal.byCategory().stream().filter(e -> e.getMiddle() > 0).map(Triple::getLeft).toList());
+                double[] categoricalUsed = new double[budgetCategories.size()];
+                for (int i = 0; i < budgetCategories.size(); i++) {
+                    categoricalUsed[i] = (categoricalUse.getOrDefault(budgetCategories.get(i), 0L)) / 100.0;
+                }
+                double[] categoricalUsedGoalRemaining = new double[budgetCategories.size()];
+                double[] categoricalUsedProgress = new double[budgetCategories.size()];
                 if (goal != null) {
-                    for (int i = 0; i < categories.size(); i++) {
-                        categoricalUsedGoalRemaining[i] = (goal.byCategory().get(i).getMiddle()) / 100.0 - categoricalUsed[i];
+                    for (int i = 0; i < budgetCategories.size(); i++) {
+                        categoricalUsedGoalRemaining[i] = goalByCategory.get(budgetCategories.get(i)).getLeft() / 100.0 - categoricalUsed[i];
                         categoricalUsedProgress[i] = categoricalUsed[i] / (categoricalUsed[i] + categoricalUsedGoalRemaining[i]);
                     }
                 }
                 HeatmapRenderer usedHeatmap = new HeatmapRenderer(
                         goal == null ? ImmutableList.of("Used") : ImmutableList.of("Used", "Remaining", "Progress"),
-                        categories,
+                        budgetCategories,
                         goal == null ? ImmutableList.of(ImmutableDoubleArray.copyOf(categoricalUsed)) :
                                 ImmutableList.of(
                                         ImmutableDoubleArray.copyOf(categoricalUsed),
@@ -484,21 +490,24 @@ public class MainView extends AnchorPane {
                                         ImmutableDoubleArray.copyOf(categoricalUsedProgress)
                                 )
                 );
-                double[] categoricalSaved = new double[categories.size()];
-                for (int i = 0; i < categories.size(); i++) {
-                    categoricalSaved[i] = categoricalSave.getOrDefault(categories.get(i), 0L) / 100.0;
+                ImmutableList<String> savingCategories = ImmutableList.copyOf(goal == null ?
+                        categoricalSave.keySet() :
+                        goal.byCategory().stream().filter(e -> e.getRight() > 0).map(Triple::getLeft).toList());
+                double[] categoricalSaved = new double[savingCategories.size()];
+                for (int i = 0; i < savingCategories.size(); i++) {
+                    categoricalSaved[i] = categoricalSave.getOrDefault(savingCategories.get(i), 0L) / 100.0;
                 }
-                double[] categoricalSavedGoalRemaining = new double[categories.size()];
-                double[] categoricalSavedProgress = new double[categories.size()];
+                double[] categoricalSavedGoalRemaining = new double[savingCategories.size()];
+                double[] categoricalSavedProgress = new double[savingCategories.size()];
                 if (goal != null) {
-                    for (int i = 0; i < categories.size(); i++) {
-                        categoricalSavedGoalRemaining[i] = goal.byCategory().get(i).getRight()  / 100.0 - categoricalSaved[i];
+                    for (int i = 0; i < savingCategories.size(); i++) {
+                        categoricalSavedGoalRemaining[i] = goalByCategory.get(savingCategories.get(i)).getRight() / 100.0 - categoricalSaved[i];
                         categoricalSavedProgress[i] = categoricalSaved[i] / (categoricalSaved[i] + categoricalSavedGoalRemaining[i]);
                     }
                 }
                 HeatmapRenderer savedHeatmap = new HeatmapRenderer(
                         goal == null ? ImmutableList.of("Saved") : ImmutableList.of("Saved", "Remaining", "Progress"),
-                        categories,
+                        savingCategories,
                         goal == null ? ImmutableList.of(ImmutableDoubleArray.copyOf(categoricalSaved)) :
                                 ImmutableList.of(
                                         ImmutableDoubleArray.copyOf(categoricalSaved),
@@ -507,11 +516,11 @@ public class MainView extends AnchorPane {
                                 )
                 );
                 Platform.runLater(() -> {
-                    budgetHeatmap.setPrefHeight(20 * categories.size() + 50);
-                    budgetHeatmap.setMinHeight(20 * categories.size() + 50);
+                    budgetHeatmap.setPrefHeight(20 * budgetCategories.size() + 50);
+                    budgetHeatmap.setMinHeight(20 * budgetCategories.size() + 50);
                     budgetHeatmap.setRenderer(usedHeatmap);
-                    savingHeatmap.setPrefHeight(20 * categories.size() + 50);
-                    savingHeatmap.setMinHeight(20 * categories.size() + 50);
+                    savingHeatmap.setPrefHeight(20 * savingCategories.size() + 50);
+                    savingHeatmap.setMinHeight(20 * savingCategories.size() + 50);
                     savingHeatmap.setRenderer(savedHeatmap);
                 });
                 long finalStart = start;
@@ -701,7 +710,7 @@ public class MainView extends AnchorPane {
         private final double top;
         private final double bottom;
 
-        private double mouseX;
+        private double mouseX = Double.NaN;
 
         public SequentialPredictionRenderer(
                 ImmutableDoubleArray trainingSamples,
@@ -825,7 +834,7 @@ public class MainView extends AnchorPane {
                 restore();
             }
 
-            if (today > start && today < end) {
+            if (today >= start && today <= end) {
                 long x = (today - start) / day;
                 drawReference(x, bottom * cent, x, top * cent, Color.DARKCYAN.deriveColor(1, 1, 1, 0.5));
                 save();
@@ -841,18 +850,7 @@ public class MainView extends AnchorPane {
                 String date = LocalDate.ofEpochDay(start / day + (int) mouseX).format(formatter);
                 drawText(date, ALIGN_CENTER, ALIGN_START, fromDataX(mouseX), fromDataY(0) + 7.5);
                 restore();
-                int index = (int) mouseX;
-                String text;
-                if (index < trainingSamples.length()) {
-                    double value = trainingSamples.get(index);
-                    text = String.format("%.2f", value);
-                } else {
-                    double referenceValue = trainingSamples.get(trainingSamples.length() - 1);
-                    double value = predictedMean.get(index - trainingSamples.length()) + referenceValue;
-                    double upper = predictedUpperBound.get(index - trainingSamples.length()) + referenceValue;
-                    double lower = predictedLowerBound.get(index - trainingSamples.length()) + referenceValue;
-                    text = String.format("%.2f / %.2f / %.2f", lower, value, upper);
-                }
+                String text = getMouseHoverText();
                 save();
                 getGraphicsContext().setStroke(Color.BLACK.deriveColor(1, 1, 1, 0.5));
                 drawText(text, ALIGN_CENTER, ALIGN_END, fromDataX(mouseX), fromFracY(1) - 5);
@@ -860,9 +858,23 @@ public class MainView extends AnchorPane {
             }
         }
 
+        private String getMouseHoverText() {
+            int index = (int) mouseX;
+            if (index < trainingSamples.length()) {
+                double value = trainingSamples.get(index);
+                return String.format("%.2f", value);
+            } else {
+                double referenceValue = trainingSamples.get(trainingSamples.length() - 1);
+                double value = predictedMean.get(index - trainingSamples.length()) + referenceValue;
+                double upper = predictedUpperBound.get(index - trainingSamples.length()) + referenceValue;
+                double lower = predictedLowerBound.get(index - trainingSamples.length()) + referenceValue;
+                return String.format("%.2f / %.2f / %.2f", lower, value, upper);
+            }
+        }
+
         @Override
         public void onHover(double screenX, double screenY) {
-            mouseX = Math.round(toDataX(screenX));
+            mouseX = Double.isFinite(screenX) ? Math.round(toDataX(screenX)) : Double.NaN;
             if (mouseX < 0 || mouseX >= sequenceLength) {
                 mouseX = Double.NaN;
             }

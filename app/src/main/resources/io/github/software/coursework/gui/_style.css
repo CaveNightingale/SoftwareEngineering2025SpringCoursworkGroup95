@@ -240,3 +240,7 @@
     -fx-pref-width: 15em;
     -fx-min-width: 15em;
 }
+
+.setting-mode-toggle {
+    -fx-padding: 0 1em 0 0;
+}

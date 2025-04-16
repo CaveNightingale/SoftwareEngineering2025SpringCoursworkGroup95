@@ -195,7 +195,7 @@ public class EncryptionSetting extends VBox {
                 AccountManager.getManager().setDefaultAccount(null);
                 AccountManager.getManager().saveAccounts();
                 if (buttonType == yesButton) {
-                    Files.walkFileTree(Path.of(accountOriginal.path()), new FileVisitor<Path>() {
+                    Files.walkFileTree(Path.of(accountOriginal.path()), new FileVisitor<>() {
                         @Override
                         public @NonNull FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
                             return FileVisitResult.CONTINUE;

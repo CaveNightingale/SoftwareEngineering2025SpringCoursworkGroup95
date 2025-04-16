@@ -295,7 +295,7 @@ public class AddTransaction extends VBox {
         }
 
         predict = debounce(() -> {
-            if ((!tagPresent || !categoryPresent) && validate() == null && !getCategoryItems().isEmpty()) {
+            if ((!tagPresent || !categoryPresent) && validatePredictor() == null && !getCategoryItems().isEmpty()) {
                 CompletableFuture<ImmutablePair<ImmutableIntArray, Bitmask.View2D>> task = predictionTask = model.predictCategoriesAndTags(
                         ImmutableList.of(getTransaction()),
                         ImmutableList.copyOf(getCategoryItems()),
@@ -346,7 +346,7 @@ public class AddTransaction extends VBox {
         fireEvent(new SubmitEvent(this, this, false));
     }
 
-    private String validate() {
+    private String validatePredictor() {
         if (title.getText().isEmpty()) {
             return "Title is required";
         }
@@ -361,6 +361,17 @@ public class AddTransaction extends VBox {
         }
         if (time.getValue() == null) {
             return "Time is required";
+        }
+        return null;
+    }
+
+    private String validate() {
+        String predictorMessage = validatePredictor();
+        if (predictorMessage != null) {
+            return predictorMessage;
+        }
+        if (category.getValue() == null) {
+            return "Category is required";
         }
         return null;
     }

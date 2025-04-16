@@ -4,7 +4,6 @@ import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Region;
 import javafx.scene.paint.Paint;
 import javafx.scene.text.Font;
@@ -27,6 +26,12 @@ public class Chart extends Region {
             render();
         });
         canvas.setOnMouseMoved(event -> {
+            Renderer renderer = getRenderer();
+            if (renderer != null) {
+                renderer.onHover(event.getX(), event.getY());
+            }
+        });
+        canvas.setOnMouseEntered(event -> {
             Renderer renderer = getRenderer();
             if (renderer != null) {
                 renderer.onHover(event.getX(), event.getY());

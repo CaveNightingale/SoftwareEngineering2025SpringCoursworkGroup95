@@ -65,7 +65,7 @@ public final class NoSkill implements Model {
         double[] budgetConfidenceUpper = new double[time.length()];
         for (int i = 0; i < time.length(); i++) {
             budgetMean[i] = (double) (time.get(i) - reference) / 120000;
-            budgetConfidenceLower[i] = (double) (time.get(i) - reference) / 110000;
+            budgetConfidenceLower[i] = (double) (time.get(i) - reference) / 130000;
             budgetConfidenceUpper[i] = (double) (time.get(i) - reference) / 70000;
         }
         return CompletableFuture.completedFuture(
@@ -119,8 +119,11 @@ public final class NoSkill implements Model {
         long[] saving = new long[categories.size()];
         Random random = new Random();
         for (int i = 0; i < categories.size(); i++) {
-            budget[i] = random.nextInt(10000);
-            saving[i] = random.nextInt(20000);
+            if (random.nextBoolean()) {
+                budget[i] = random.nextLong(1000L);
+            } else {
+                saving[i] = random.nextLong(1000L);
+            }
         }
         return CompletableFuture.completedFuture(
                 ImmutablePair.of(
