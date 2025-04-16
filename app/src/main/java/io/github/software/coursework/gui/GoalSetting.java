@@ -208,7 +208,7 @@ public class GoalSetting extends VBox {
         long budget = (long) (goalBudget.getValue() * 100.0);
         long saving = (long) (goalSaving.getValue() * 100.0);
         ImmutableList.Builder<ImmutableTriple<String, Long, Long>> byCategory = ImmutableList.builder();
-        for (String category : categorical.keySet()) {
+        for (String category : getCategories()) {
             byCategory.add(ImmutableTriple.of(category, categorical.get(category).getLeft(), categorical.get(category).getRight()));
         }
         Goal goal = new Goal(start, end, budget, saving, byCategory.build());

@@ -69,10 +69,11 @@ public class Chart extends Region {
         private double dataPaddingRight = 50;
         private double dataPaddingTop = 25;
         private double dataPaddingBottom = 25;
-        private double dataLeftLimit = 0;
-        private double dataRightLimit = 1;
-        private double dataBottomLimit = 0;
-        private double dataTopLimit = 1;
+        private double xMin = 0;
+        private double xMax = 1;
+        private double yMin = 0;
+        private double yMax = 1;
+        private boolean invertY = true;
 
         public Canvas getCanvas() {
             return canvas;
@@ -122,20 +123,24 @@ public class Chart extends Region {
             this.dataPaddingBottom = dataPaddingBottom;
         }
 
-        public void setDataLeftLimit(double dataLeftLimit) {
-            this.dataLeftLimit = dataLeftLimit;
+        public void setXMin(double xMin) {
+            this.xMin = xMin;
         }
 
-        public void setDataRightLimit(double dataRightLimit) {
-            this.dataRightLimit = dataRightLimit;
+        public void setXMax(double xMax) {
+            this.xMax = xMax;
         }
 
-        public void setDataBottomLimit(double dataBottomLimit) {
-            this.dataBottomLimit = dataBottomLimit;
+        public void setYMin(double yMin) {
+            this.yMin = yMin;
         }
 
-        public void setDataTopLimit(double dataTopLimit) {
-            this.dataTopLimit = dataTopLimit;
+        public void setYMax(double yMax) {
+            this.yMax = yMax;
+        }
+
+        public boolean isYInverted() {
+            return invertY;
         }
 
         public double getDataPaddingLeft() {
@@ -154,20 +159,24 @@ public class Chart extends Region {
             return dataPaddingBottom;
         }
 
-        public double getDataLeftLimit() {
-            return dataLeftLimit;
+        public double getXMin() {
+            return xMin;
         }
 
-        public double getDataRightLimit() {
-            return dataRightLimit;
+        public double getXMax() {
+            return xMax;
         }
 
-        public double getDataBottomLimit() {
-            return dataBottomLimit;
+        public double getYMin() {
+            return yMin;
         }
 
-        public double getDataTopLimit() {
-            return dataTopLimit;
+        public double getYMax() {
+            return yMax;
+        }
+
+        public void setYInverted(boolean invertY) {
+            this.invertY = invertY;
         }
 
         public void setXPadding(double left, double right) {
@@ -181,13 +190,13 @@ public class Chart extends Region {
         }
 
         public void setXLimits(double left, double right) {
-            this.dataLeftLimit = left;
-            this.dataRightLimit = right;
+            this.xMin = left;
+            this.xMax = right;
         }
 
         public void setYLimits(double bottom, double top) {
-            this.dataTopLimit = top;
-            this.dataBottomLimit = bottom;
+            this.yMax = top;
+            this.yMin = bottom;
         }
 
         public void setXCategoricalLimit(int categoryCount) {
@@ -199,36 +208,38 @@ public class Chart extends Region {
         }
 
         public double fromDataX(double x) {
-            return (x - dataLeftLimit) / (dataRightLimit - dataLeftLimit) * (screenWidth - dataPaddingLeft - dataPaddingRight) + dataPaddingLeft;
+            return (x - xMin) / (xMax - xMin) * (screenWidth - dataPaddingLeft - dataPaddingRight) + dataPaddingLeft;
         }
 
         public double fromDataY(double y) {
-            return (1 - (y - dataBottomLimit) / (dataTopLimit - dataBottomLimit)) * (screenHeight - dataPaddingTop - dataPaddingBottom) + dataPaddingTop;
+            double frac = (y - yMin) / (yMax - yMin);
+            return (invertY ? 1 - frac : frac) * (screenHeight - dataPaddingTop - dataPaddingBottom) + dataPaddingTop;
         }
 
         public double toDataX(double x) {
-            return (x - dataPaddingLeft) / (screenWidth - dataPaddingLeft - dataPaddingRight) * (dataRightLimit - dataLeftLimit) + dataLeftLimit;
+            return (x - dataPaddingLeft) / (screenWidth - dataPaddingLeft - dataPaddingRight) * (xMax - xMin) + xMin;
         }
 
         // Notice the direction of the Y axis is inverted, to follow the convention of data visualization
         public double toDataY(double y) {
-            return (1 - (y - dataPaddingTop) / (screenHeight - dataPaddingTop - dataPaddingBottom)) * (dataTopLimit - dataBottomLimit) + dataBottomLimit;
+            double frac = (y - dataPaddingTop) / (screenHeight - dataPaddingTop - dataPaddingBottom);
+            return (invertY ? 1 - frac : frac) * (yMax - yMin) + yMin;
         }
 
         public double fracXToDataX(double x) {
-            return x * (dataRightLimit - dataLeftLimit) + dataLeftLimit;
+            return x * (xMax - xMin) + xMin;
         }
 
         public double fracYToDataY(double y) {
-            return y * (dataTopLimit - dataBottomLimit) + dataBottomLimit;
+            return y * (yMax - yMin) + yMin;
         }
 
         public double dataXToFracX(double x) {
-            return (x - dataLeftLimit) / (dataRightLimit - dataLeftLimit);
+            return (x - xMin) / (xMax - xMin);
         }
 
         public double dataYToFracY(double y) {
-            return (y - dataBottomLimit) / (dataTopLimit - dataBottomLimit);
+            return (y - yMin) / (yMax - yMin);
         }
 
         public double fromFracX(double x) {
@@ -257,11 +268,11 @@ public class Chart extends Region {
         }
 
         public double getXEps() {
-            return (dataRightLimit - dataLeftLimit) / 1000;
+            return (xMax - xMin) / 1000;
         }
 
         public double getYEps() {
-            return (dataTopLimit - dataBottomLimit) / 1000;
+            return (yMax - yMin) / 1000;
         }
 
         public void save() {
@@ -276,7 +287,7 @@ public class Chart extends Region {
             if (Math.abs(value) < getXEps()) {
                 return "0";
             }
-            double scale = Math.log10(dataRightLimit - dataLeftLimit);
+            double scale = Math.log10(xMax - xMin);
             int reserved = (int) Math.ceil(-scale) + 3;
             return formatDouble(value, reserved);
         }
@@ -285,7 +296,7 @@ public class Chart extends Region {
             if (Math.abs(value) < getYEps()) {
                 return "0";
             }
-            double scale = Math.log10(dataTopLimit - dataBottomLimit);
+            double scale = Math.log10(yMax - yMin);
             int reserved = (int) Math.ceil(-scale) + 3;
             return formatDouble(value, reserved);
         }
@@ -325,20 +336,22 @@ public class Chart extends Region {
                     fromFracY(0)
             );
             // Draw X axis ticks
+            int textYAlignment = invertY ? ALIGN_START : ALIGN_END;
+            int sign = invertY ? 1 : -1;
             for (Pair<Double, String> tick : ticks) {
-                gc.strokeLine(fromDataX(tick.getKey()), fromFracY(0), fromDataX(tick.getKey()), fromFracY(0) + 5);
-                drawText(tick.getValue(), ALIGN_CENTER, ALIGN_START, fromDataX(tick.getKey()), fromFracY(0) + 7.5);
+                gc.strokeLine(fromDataX(tick.getKey()), fromFracY(0), fromDataX(tick.getKey()), fromFracY(0) + 5 * sign);
+                drawText(tick.getValue(), ALIGN_CENTER, textYAlignment, fromDataX(tick.getKey()), fromFracY(0) + 7.5 * sign);
             }
             restore();
         }
 
         public void drawXAxis(double offset, double step) {
             ArrayList<Pair<Double, String>> ticks = new ArrayList<>();
-            double start = Math.ceil((dataLeftLimit - offset) / step) * step + offset;
-            if (Math.abs(start - step - dataLeftLimit) < getXEps()) {
+            double start = Math.ceil((xMin - offset) / step) * step + offset;
+            if (Math.abs(start - step - xMin) < getXEps()) {
                 start -= step;
             }
-            for (double i = start; i - dataRightLimit < getYEps(); i += step) {
+            for (double i = start; i - xMax < getYEps(); i += step) {
                 ticks.add(Pair.of(i, formatXDouble(i)));
             }
             drawXAxis(ticks);
@@ -372,11 +385,11 @@ public class Chart extends Region {
 
         public void drawYAxis(double offset, double step) {
             ArrayList<Pair<Double, String>> ticks = new ArrayList<>();
-            double start = Math.ceil((dataBottomLimit - offset) / step) * step + offset;
-            if (Math.abs(start - step - dataBottomLimit) < getYEps()) {
+            double start = Math.ceil((yMin - offset) / step) * step + offset;
+            if (Math.abs(start - step - yMin) < getYEps()) {
                 start -= step;
             }
-            for (double i = start; i - dataTopLimit < getYEps(); i += step) {
+            for (double i = start; i - yMax < getYEps(); i += step) {
                 ticks.add(Pair.of(i, formatYDouble(i)));
             }
             drawYAxis(ticks);
@@ -400,36 +413,36 @@ public class Chart extends Region {
             if (Math.abs(dx) < getXEps() && Math.abs(dy) < getYEps()) {
                 return null;
             }
-            if (x0 < dataLeftLimit) {
-                y0 += (dataLeftLimit - x0) * dy / dx;
-                x0 = dataLeftLimit;
-            } else if (x0 > dataRightLimit) {
-                y0 += (dataRightLimit - x0) * dy / dx;
-                x0 = dataRightLimit;
+            if (x0 < xMin) {
+                y0 += (xMin - x0) * dy / dx;
+                x0 = xMin;
+            } else if (x0 > xMax) {
+                y0 += (xMax - x0) * dy / dx;
+                x0 = xMax;
             }
-            if (y0 < dataBottomLimit) {
-                x0 += (dataBottomLimit - y0) * dx / dy;
-                y0 = dataBottomLimit;
-            } else if (y0 > dataTopLimit) {
-                x0 += (dataTopLimit - y0) * dx / dy;
-                y0 = dataTopLimit;
+            if (y0 < yMin) {
+                x0 += (yMin - y0) * dx / dy;
+                y0 = yMin;
+            } else if (y0 > yMax) {
+                x0 += (yMax - y0) * dx / dy;
+                y0 = yMax;
             }
-            if (x1 < dataLeftLimit) {
-                y1 += (dataLeftLimit - x1) * dy / dx;
-                x1 = dataLeftLimit;
-            } else if (x1 > dataRightLimit) {
-                y1 += (dataRightLimit - x1) * dy / dx;
-                x1 = dataRightLimit;
+            if (x1 < xMin) {
+                y1 += (xMin - x1) * dy / dx;
+                x1 = xMin;
+            } else if (x1 > xMax) {
+                y1 += (xMax - x1) * dy / dx;
+                x1 = xMax;
             }
-            if (y1 < dataBottomLimit) {
-                x1 += (dataBottomLimit - y1) * dx / dy;
-                y1 = dataBottomLimit;
-            } else if (y1 > dataTopLimit) {
-                x1 += (dataTopLimit - y1) * dx / dy;
-                y1 = dataTopLimit;
+            if (y1 < yMin) {
+                x1 += (yMin - y1) * dx / dy;
+                y1 = yMin;
+            } else if (y1 > yMax) {
+                x1 += (yMax - y1) * dx / dy;
+                y1 = yMax;
             }
-            if (x0 < dataLeftLimit || x0 > dataRightLimit || y0 < dataBottomLimit || y0 > dataTopLimit ||
-                    x1 < dataLeftLimit || x1 > dataRightLimit || y1 < dataBottomLimit || y1 > dataTopLimit) {
+            if (x0 < xMin || x0 > xMax || y0 < yMin || y0 > yMax ||
+                    x1 < xMin || x1 > xMax || y1 < yMin || y1 > yMax) {
                 return null;
             }
             return Pair.of(Pair.of(x0, y0), Pair.of(x1, y1));
@@ -465,7 +478,7 @@ public class Chart extends Region {
             gc.setStroke(paint);
             gc.setLineWidth(width);
             for (int i = 0; i < x.length; i++) {
-                if (x[i] < dataLeftLimit || x[i] > dataRightLimit || y[i] < dataBottomLimit || y[i] > dataTopLimit) {
+                if (x[i] < xMin || x[i] > xMax || y[i] < yMin || y[i] > yMax) {
                     continue;
                 }
                 gc.strokeOval(
@@ -549,11 +562,11 @@ public class Chart extends Region {
             for (int i = 0; i < list.size(); i++) {
                 Pair<Double, Double> a = list.get(i);
                 Pair<Double, Double> b = list.get((i + 1) % list.size());
-                if (a.getLeft() > dataLeftLimit) {
+                if (a.getLeft() > xMin) {
                     clipped.add(a);
                 }
                 Pair<Double, Double> c = segmentLineIntersection(a, b,
-                        Pair.of(dataLeftLimit, dataBottomLimit), Pair.of(dataLeftLimit, dataTopLimit));
+                        Pair.of(xMin, yMin), Pair.of(xMin, yMax));
                 if (c != null) {
                     clipped.add(c);
                 }
@@ -566,11 +579,11 @@ public class Chart extends Region {
             for (int i = 0; i < list.size(); i++) {
                 Pair<Double, Double> a = list.get(i);
                 Pair<Double, Double> b = list.get((i + 1) % list.size());
-                if (a.getLeft() < dataRightLimit) {
+                if (a.getLeft() < xMax) {
                     clipped.add(a);
                 }
                 Pair<Double, Double> c = segmentLineIntersection(a, b,
-                        Pair.of(dataRightLimit, dataBottomLimit), Pair.of(dataRightLimit, dataTopLimit));
+                        Pair.of(xMax, yMin), Pair.of(xMax, yMax));
                 if (c != null) {
                     clipped.add(c);
                 }
@@ -583,11 +596,11 @@ public class Chart extends Region {
             for (int i = 0; i < list.size(); i++) {
                 Pair<Double, Double> a = list.get(i);
                 Pair<Double, Double> b = list.get((i + 1) % list.size());
-                if (a.getRight() < dataTopLimit) {
+                if (a.getRight() < yMax) {
                     clipped.add(a);
                 }
                 Pair<Double, Double> c = segmentLineIntersection(a, b,
-                        Pair.of(dataLeftLimit, dataTopLimit), Pair.of(dataRightLimit, dataTopLimit));
+                        Pair.of(xMin, yMax), Pair.of(xMax, yMax));
                 if (c != null) {
                     clipped.add(c);
                 }
@@ -600,11 +613,11 @@ public class Chart extends Region {
             for (int i = 0; i < list.size(); i++) {
                 Pair<Double, Double> a = list.get(i);
                 Pair<Double, Double> b = list.get((i + 1) % list.size());
-                if (a.getRight() > dataBottomLimit) {
+                if (a.getRight() > yMin) {
                     clipped.add(a);
                 }
                 Pair<Double, Double> c = segmentLineIntersection(a, b,
-                        Pair.of(dataLeftLimit, dataBottomLimit), Pair.of(dataRightLimit, dataBottomLimit));
+                        Pair.of(xMin, yMin), Pair.of(xMax, yMin));
                 if (c != null) {
                     clipped.add(c);
                 }
