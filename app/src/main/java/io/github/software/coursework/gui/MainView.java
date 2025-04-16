@@ -690,6 +690,8 @@ public class MainView extends AnchorPane {
         private final double top;
         private final double bottom;
 
+        private double mouseX;
+
         public SequentialPredictionRenderer(
                 ImmutableDoubleArray trainingSamples,
                 ImmutableDoubleArray predictedMean,
@@ -817,9 +819,44 @@ public class MainView extends AnchorPane {
                 drawReference(x, bottom * cent, x, top * cent, Color.DARKCYAN.deriveColor(1, 1, 1, 0.5));
                 save();
                 getGraphicsContext().setStroke(Color.DARKCYAN.deriveColor(1, 1, 1, 0.5));
-                drawText("Today", ALIGN_START, ALIGN_END, fromDataX(x), fromDataY(top * cent) - 5);
+                drawText("Today", ALIGN_CENTER, ALIGN_END, fromDataX(x), fromDataY(top * cent) - 5);
                 restore();
             }
+
+            if (Double.isFinite(mouseX)) {
+                drawReference(mouseX, fracYToDataY(0), mouseX, fracYToDataY(1), Color.BLACK.deriveColor(1, 1, 1, 0.5));
+                save();
+                getGraphicsContext().setStroke(Color.BLACK.deriveColor(1, 1, 1, 0.5));
+                String date = LocalDate.ofEpochDay(start / day + (int) mouseX).format(formatter);
+                drawText(date, ALIGN_CENTER, ALIGN_START, fromDataX(mouseX), fromDataY(0) + 7.5);
+                restore();
+                int index = (int) mouseX;
+                String text;
+                if (index < trainingSamples.length()) {
+                    double value = trainingSamples.get(index);
+                    text = String.format("%.2f", value);
+                } else {
+                    double referenceValue = trainingSamples.get(trainingSamples.length() - 1);
+                    double value = predictedMean.get(index - trainingSamples.length()) + referenceValue;
+                    double upper = predictedUpperBound.get(index - trainingSamples.length()) + referenceValue;
+                    double lower = predictedLowerBound.get(index - trainingSamples.length()) + referenceValue;
+                    text = String.format("%.2f / %.2f / %.2f", lower, value, upper);
+                }
+                save();
+                getGraphicsContext().setStroke(Color.BLACK.deriveColor(1, 1, 1, 0.5));
+                drawText(text, ALIGN_CENTER, ALIGN_END, fromDataX(mouseX), fromFracY(1) - 5);
+                restore();
+            }
+        }
+
+        @Override
+        public void onHover(double screenX, double screenY) {
+            mouseX = Math.round(toDataX(screenX));
+            if (mouseX < 0 || mouseX >= sequenceLength) {
+                mouseX = Double.NaN;
+            }
+            getGraphicsContext().clearRect(0, 0, getScreenWidth(), getScreenHeight());
+            render();
         }
     }
 
@@ -835,6 +872,9 @@ public class MainView extends AnchorPane {
         }
 
         private Color color(double percent) {
+            if (!Double.isFinite(percent)) {
+                return Color.LIGHTGRAY;
+            }
             return percent > 0 ? Color.WHITE.interpolate(Color.RED, percent) : Color.WHITE.interpolate(Color.GREEN, -percent);
         }
 

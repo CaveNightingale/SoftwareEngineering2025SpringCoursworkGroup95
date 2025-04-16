@@ -4,6 +4,7 @@ import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Region;
 import javafx.scene.paint.Paint;
 import javafx.scene.text.Font;
@@ -24,6 +25,18 @@ public class Chart extends Region {
             canvas.setWidth(newValue.getWidth());
             canvas.setHeight(newValue.getHeight());
             render();
+        });
+        canvas.setOnMouseMoved(event -> {
+            Renderer renderer = getRenderer();
+            if (renderer != null) {
+                renderer.onHover(event.getX(), event.getY());
+            }
+        });
+        canvas.setOnMouseExited(event -> {
+            Renderer renderer = getRenderer();
+            if (renderer != null) {
+                renderer.onHover(Double.NaN, Double.NaN);
+            }
         });
 
         rendererProperty().addListener((observable, oldValue, newValue) -> render());
@@ -623,6 +636,10 @@ public class Chart extends Region {
                 }
             }
             return clipped;
+        }
+
+        public void onHover(double screenX, double screenY) {
+            // Override this method to handle hover events
         }
     }
 }
