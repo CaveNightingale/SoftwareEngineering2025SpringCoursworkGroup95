@@ -91,7 +91,7 @@ public class GMModelCalculationTest {
 
         System.out.println("Generated component count: " + componentCount);
         System.out.println("Fitted component count: " + modelOutput.size());
-        System.out.println("Fitted Model BIC: " + bicScore);
+        System.out.println("Fitted Model LicklyHood: " + (bicScore - Math.log(samples) * (modelOutput.size() * 52 - 50)));
     }
 
     //

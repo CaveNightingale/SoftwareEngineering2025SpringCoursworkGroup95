@@ -62,6 +62,14 @@ public class EntityClassification {
             nGramProbability.put(nGrams, getProbability(accu, freq - accu));
         }
 
+        if (!Files.exists(Paths.get("build/Bayesian"))) {
+            try {
+                Files.createDirectories(Paths.get("build/Bayesian"));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
         String modelParametersDirectory = "build/Bayesian/" + fileFolderName + ".txt";
 
         try (FileWriter writer = new FileWriter(modelParametersDirectory, false)) {
