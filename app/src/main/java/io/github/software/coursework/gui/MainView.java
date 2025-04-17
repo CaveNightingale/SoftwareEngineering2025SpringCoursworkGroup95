@@ -52,6 +52,9 @@ public class MainView extends AnchorPane {
     private Tab settingsTab;
 
     @FXML
+    private TextField searchField; // FXML中的搜索框
+
+    @FXML
     private VBox settings;
 
     private Tab addTransactionTab;
@@ -181,6 +184,18 @@ public class MainView extends AnchorPane {
         loadEverything();
     }
 
+    @FXML
+    private void handleSearch() {
+        String searchQuery = searchField.getText().trim();  // 获取搜索框中的文本
+        if (searchQuery.isEmpty()) {
+            loadTransactions();  // 加载所有交易记录
+        } else {
+            pagination.setCurrentPageIndex(0);  // 搜索前回到第一页
+            transactionList.filterTransactions(searchQuery);  // 调用过滤方法
+        }
+    }
+
+
     public void openExternalTab(Tab externalTab) {
         if (tabPane.getTabs().contains(externalTab)) {
             tabPane.getSelectionModel().select(externalTab);
@@ -221,8 +236,7 @@ public class MainView extends AnchorPane {
                             items.add(ImmutablePair.of(transaction, entityNames.get(transaction.item().entity())));
                         }
                         Platform.runLater(() -> {
-                            transactionList.getItems().clear();
-                            transactionList.getItems().addAll(items);
+                            transactionList.setOriginalItems(items);
                         });
                     } catch (IOException e) {
                         logger.log(Level.SEVERE, "Cannot get the names for transactions", e);
