@@ -24,7 +24,7 @@ import static java.lang.Math.*;
     The output is a parameter of a GMM model, including several 5-tuple pairs
     (mu_i, sigma_i, F_i, G_i, H_i), where mu and sigma represent the mean and
     variance of a component in the GMM model. F_i is a list of length 12, G_i is a
-    list of length 31, and H_i is a list of length 7. For each F_i_j, G_i_j，H_i_j，
+    list of length 31, and H_i is a list of length 7. For each F_i_j, G_i_j，H_i_j,
     Ensure that sigma i (F_i_j+G_i_j+H_i_j)=1
  */
 public class GMModelCalculation {
@@ -38,6 +38,7 @@ public class GMModelCalculation {
 
     public static List<List<Double>> GMModelCalculator(List<Pair<Double, Triple<Integer, Integer, Integer>>> params) {
         p = params;
+        t = new ArrayList<>();
 
         for (int i = 0; i < 13; i++) countMonth[i] = 0;
         for (int i = 0; i < 32; i++) countDay[i] = 0;
@@ -63,6 +64,8 @@ public class GMModelCalculation {
         List<List<Double>> tmpAnswer = new ArrayList<>();
         Double tmpScore;
 
+        System.out.println("params.size() = " + params.size());
+
         for (int k = 2; k <= min(20, params.size()); k++) {
             kMeans = kMeansPlus(k);
 
@@ -82,6 +85,8 @@ public class GMModelCalculation {
             if (tmpScore < Score) {
                 answer = new ArrayList<>(tmpAnswer);
             }
+
+            System.out.println("k = " + k + ", tmpScore = " + tmpScore + ", Score = " + Score);
         }
 
         return answer;
