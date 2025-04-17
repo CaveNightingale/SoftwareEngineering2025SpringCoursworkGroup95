@@ -21,7 +21,7 @@
         <TextField styleClass="add-transaction-field" fx:id="amount" onKeyTyped="#handlePredictorInput"/>
     </HBox>
     <HBox styleClass="add-transaction-row">
-        <Label text="Entity"/>
+        <Label text="Transaction Party"/>
         <Region HBox.hgrow="ALWAYS"/>
         <SearchableComboBox styleClass="add-transaction-field" fx:id="entity" onAction="#handlePredictorInput"/>
     </HBox>

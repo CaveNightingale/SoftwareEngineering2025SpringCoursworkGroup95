@@ -74,7 +74,7 @@
                 </ScrollPane>
             </VBox>
         </Tab>
-        <Tab closable="false" text="Entities" fx:id="entityTab">
+        <Tab closable="false" text="Transaction Parties" fx:id="entityTab">
             <VBox>
                 <ToolBar>
                     <Button text="Add" onAction="#handleAddEntity"/>

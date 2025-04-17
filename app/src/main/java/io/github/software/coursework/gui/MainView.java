@@ -36,6 +36,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.IntStream;
@@ -177,7 +178,7 @@ public class MainView extends AnchorPane {
             Reference<Entity> entity = event.getReference();
             tabPane.getSelectionModel().select(editEntityTabs.computeIfAbsent(entity, t -> {
                 AddEntity addEntity = new AddEntity(event.getEntity(), model);
-                Tab tab = new Tab("Edit entity: " + event.getEntity().name());
+                Tab tab = new Tab("Edit Transaction Party: " + event.getEntity().name());
                 tab.setContent(addEntity);
                 tab.setOnClosed(event1 -> {
                     editEntityTabs.remove(entity);
@@ -616,7 +617,7 @@ public class MainView extends AnchorPane {
             addTransaction = null;
             tabPane.getSelectionModel().select(transactionTab);
         });
-        addTransaction.setOnSubmit(event -> asyncStorage.transaction(table -> {
+        Runnable insert = () -> asyncStorage.transaction(table -> {
             try {
                 Reference<Transaction> ref = new Reference<>();
                 Transaction item = addTransaction.getTransaction();
@@ -634,6 +635,36 @@ public class MainView extends AnchorPane {
                 loadTags();
                 loadTransactions();
             });
+        });
+        addTransaction.setOnSubmit(event -> asyncStorage.transaction(table -> {
+            Transaction inserted = addTransaction.getTransaction();
+            try {
+                SequencedCollection<ReferenceItemPair<Transaction>> transactionThatDay = table.list(inserted.time() - 1, inserted.time(), 0, Integer.MAX_VALUE);
+                Transaction similar = transactionThatDay.stream()
+                        .map(ReferenceItemPair::item)
+                        .filter(item -> item.title().equals(inserted.title()) && item.amount() == inserted.amount() && item.entity().equals(inserted.entity()))
+                        .findFirst()
+                        .orElse(null);
+                if (similar != null) {
+                    Platform.runLater(() -> {
+                        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+                        alert.setTitle("Duplicated Transaction");
+                        alert.setHeaderText("A similar transaction already exists.");
+                        alert.setContentText("The existing transaction is " + similar.title());
+                        alert.showAndWait().ifPresent(response -> {
+                            if (response == ButtonType.OK) {
+                                insert.run();
+                            } else {
+                                addTransaction.setDisable(false);
+                            }
+                        });
+                    });
+                } else {
+                    insert.run();
+                }
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
         }));
         tabPane.getTabs().add(addTransactionTab);
         tabPane.getSelectionModel().select(addTransactionTab);
@@ -646,7 +677,7 @@ public class MainView extends AnchorPane {
             return;
         }
         addEntity = new AddEntity(null, model);
-        addEntityTab = new Tab("Add Entity");
+        addEntityTab = new Tab("Add New Transaction Party");
         addEntityTab.setContent(addEntity);
         addEntityTab.setOnClosed(event -> {
             addEntityTab = null;
