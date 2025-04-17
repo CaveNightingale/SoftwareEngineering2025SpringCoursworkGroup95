@@ -34,34 +34,54 @@ public class GMModelCalculationTest {
         List<Double>[] G = new List[31];
         List<Double>[] H = new List[7];
 
+        List<Double> tmpList;
+
         for (int i = 0; i < 12; i++) {
             F[i] = randomDistribution(rand, componentCount);
         }
         for (int i = 0; i < 31; i++) {
             G[i] = randomDistribution(rand, componentCount);
 
-            G[i].set(componentCount - 1, G[i].get(componentCount - 1) - 1);
         }
         for (int i = 0; i < 7; i++) {
             H[i] = randomDistribution(rand, componentCount);
 
-            H[i].set(componentCount - 1, H[i].get(componentCount - 1) - 1);
         }
 
+        List<List<Double>> answerGMModel = new ArrayList<>();
+
         for (int i = 0; i < componentCount; i++) {
+            List<Double> tmp = new ArrayList<>();
+
             double mu = 10 + rand.nextDouble() * 90; // 10~100 RMB
             double sigma = 1 + rand.nextDouble() * 10;
+
+            tmp.add(mu);
+            tmp.add(sigma);
 
             List<Double> f = new ArrayList<>();
             List<Double> g = new ArrayList<>();
             List<Double> h = new ArrayList<>();
 
-            for (int j = 0; j < 12; j++)
+            for (int j = 0; j < 12; j++) {
                 f.add(F[j].get(i));
-            for (int j = 0; j < 31; j++)
+
+                tmp.add(F[j].get(i));
+            }
+            for (int j = 0; j < 31; j++) {
                 g.add(G[j].get(i));
-            for (int j = 0; j < 7; j++)
+
+                tmp.add(G[j].get(i));
+            }
+            for (int j = 0; j < 7; j++) {
                 h.add(H[j].get(i));
+
+                tmp.add(H[j].get(i));
+            }
+
+            System.out.println("size = " + tmp.size());
+
+            answerGMModel.add(tmp);
 
             components.add(new GMMComponent(mu, sigma, f, g, h));
         }
@@ -91,7 +111,10 @@ public class GMModelCalculationTest {
 
         System.out.println("Generated component count: " + componentCount);
         System.out.println("Fitted component count: " + modelOutput.size());
-        System.out.println("Fitted Model LicklyHood: " + (bicScore - Math.log(samples) * (modelOutput.size() * 52 - 50)));
+        System.out.println("Fitted Model LicklyHood: " + (bicScore - Math.log(samples) * (modelOutput.size() * 3 - 1)));
+
+        Double AnsBICScore = g.BICCalculator(answerGMModel);
+        System.out.println("Ans Model LicklyHood: " + (AnsBICScore - Math.log(samples) * (answerGMModel.size() * 3 - 1)));
     }
 
     //

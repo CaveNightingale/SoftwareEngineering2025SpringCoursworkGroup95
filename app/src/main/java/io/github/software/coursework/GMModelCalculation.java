@@ -95,49 +95,50 @@ public class GMModelCalculation {
 
             if (tmpScore < Score) {
                 answer = new ArrayList<>(tmpAnswer);
+                Score = tmpScore;
             }
 
             System.out.println("k = " + k + ", tmpScore = " + tmpScore + ", Score = " + Score);
 
-            System.out.println(tmpAnswer);
+//            System.out.println(tmpAnswer);
 
-            Double sum = 0.0;
-
-            for (int j = 0; j < 12; j++) {
-                sum = 0.0;
-                for (int i = 0; i < k; i++)
-                    sum += tmpAnswer.get(i).get(j + 2);
-
-                if (1.0 - sum < 0.00000001) {
-
-                } else {
-                    System.out.println("j = " + j + ", sum = " + sum);
-                }
-            }
-
-            for (int j = 0; j < 31; j++) {
-                sum = 0.0;
-                for (int i = 0; i < k; i++)
-                    sum += tmpAnswer.get(i).get(j + 14);
-
-                if (sum < 0.00000001 && sum > -0.00000001) {
-
-                } else {
-                    System.out.println("Day j = " + j + ", sum = " + sum);
-                }
-            }
-
-            for (int j = 0; j < 7; j++) {
-                sum = 0.0;
-                for (int i = 0; i < k; i++)
-                    sum += tmpAnswer.get(i).get(j + 45);
-
-                if (sum < 0.00000001 && sum > -0.00000001) {
-
-                } else {
-                    System.out.println("Week j = " + j + ", sum = " + sum);
-                }
-            }
+//            Double sum = 0.0;
+//
+//            for (int j = 0; j < 12; j++) {
+//                sum = 0.0;
+//                for (int i = 0; i < k; i++)
+//                    sum += tmpAnswer.get(i).get(j + 2);
+//
+//                if (1.0 - sum < 0.00000001) {
+//
+//                } else {
+//                    System.out.println("j = " + j + ", sum = " + sum);
+//                }
+//            }
+//
+//            for (int j = 0; j < 31; j++) {
+//                sum = 0.0;
+//                for (int i = 0; i < k; i++)
+//                    sum += tmpAnswer.get(i).get(j + 14);
+//
+//                if (sum < 0.00000001 && sum > -0.00000001) {
+//
+//                } else {
+//                    System.out.println("Day j = " + j + ", sum = " + sum);
+//                }
+//            }
+//
+//            for (int j = 0; j < 7; j++) {
+//                sum = 0.0;
+//                for (int i = 0; i < k; i++)
+//                    sum += tmpAnswer.get(i).get(j + 45);
+//
+//                if (sum < 0.00000001 && sum > -0.00000001) {
+//
+//                } else {
+//                    System.out.println("Week j = " + j + ", sum = " + sum);
+//                }
+//            }
         }
 
         return answer;
@@ -235,7 +236,7 @@ public class GMModelCalculation {
     }
 
     public static Double BICCalculator(List<List<Double>> GMMParams) {
-        Double BIC = Math.log(p.size()) * (GMMParams.size() * 52 - 50);
+        Double BIC = Math.log(p.size()) * (GMMParams.size() * 3 - 1);
         Double lnL = 0.0;
 
         for (Pair<Double, Triple<Integer, Integer, Integer>> param : p) {
@@ -255,8 +256,8 @@ public class GMModelCalculation {
 //                System.out.println("GP = " + GP + ", W = " + W);
             }
 
-            if (P < 0.0 || P >= 1.0)
-                System.out.println("P = " + P);
+//            if (P < 0.0 || P >= 1.0)
+//                System.out.println("P = " + P);
 
             lnL += Math.log(P);
         }
