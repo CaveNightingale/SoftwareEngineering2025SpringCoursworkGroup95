@@ -13,6 +13,18 @@
     -fx-max-width: 20em;
 }
 
+.edit-item {
+    -fx-padding: 1em;
+    -fx-pref-width: 28em;
+    -fx-max-width: 28em;
+    -fx-pref-height: 4em;
+    -fx-alignment: center;
+}
+
+.focused-item {
+    -fx-background-color: #d0d0d0;
+}
+
 .transaction-item {
     -fx-border-style: dashed;
     -fx-border-width: 0 0 2px 0;
@@ -51,6 +63,7 @@
 
 .add-transaction-row, .add-entity-row {
     -fx-padding: 0.5em;
+    -fx-alignment: center;
 }
 
 .add-transaction-field, .add-entity-field {
@@ -120,4 +133,114 @@
 .space {
     -fx-pref-height: 1em;
     -fx-pref-width: 1em;
+}
+
+.setting-title {
+    -fx-font-weight: bold;
+    -fx-font-size: 2em;
+    -fx-padding: 1em;
+}
+
+.setting-line {
+    -fx-padding: 0.5em 2em 0.5em 2em;
+}
+
+.setting-field-name {
+    -fx-pref-width: 15em;
+    -fx-min-width: 15em;
+}
+
+.setting-account-field {
+    -fx-alignment: center-right;
+    -fx-pref-width: 25em;
+    -fx-min-width: 10em;
+}
+
+.setting-path-field {
+    -fx-alignment: center-right;
+    -fx-pref-width: 25em;
+}
+
+.setting-path-field-select {
+    -fx-pref-width: 5em;
+    -fx-min-width: 5em;
+}
+
+.setting-field {
+    -fx-alignment: center-right;
+}
+
+.setting-field-text {
+    -fx-min-width: 15em;
+    -fx-pref-width: 30em;
+    -fx-alignment: center-right;
+}
+
+.setting-field-button {
+    -fx-min-width: 15em;
+    -fx-pref-width: 30em;
+}
+
+.setting-require-restart-outer {
+    -fx-padding: 0.375em 1.375em 0.375em 1.375em;
+}
+
+.setting-require-restart {
+    -fx-border-width: 0.125em;
+    -fx-border-color: #ff0000;
+    -fx-border-style: dashed;
+    -fx-border-radius: 0.5em;
+}
+
+.setting-require-restart .setting-line {
+    -fx-padding: 0.5em 0.5em 0.5em 0.5em;
+}
+
+.setting-sub-form {
+    -fx-border-width: 1px;
+    -fx-border-color: #000000;
+    -fx-border-style: solid;
+    -fx-border-radius: 0.5em;
+}
+
+.setting-sub-form .setting-line {
+    -fx-padding: 0.5em;
+}
+
+.setting-sub-title {
+    -fx-font-weight: bold;
+    -fx-font-size: 1.6em;
+    -fx-padding: 0.5em;
+}
+
+.setting-field-password {
+    -fx-pref-width: 30em;
+    -fx-min-width: 15em;
+}
+
+.edit-item-content {
+    -fx-alignment: center;
+    -fx-pref-height: 1.5em;
+    -fx-padding: 0.5em;
+    -fx-border-radius: 0.25em;
+    -fx-border-color: #000000;
+    -fx-border-width: 2px;
+    -fx-border-style: dashed;
+}
+
+.add-transaction-tag {
+    -fx-padding: 0 0 0 1em;
+}
+
+.setting-tip {
+    -fx-text-fill: #999999;
+}
+
+.setting-field-half {
+    -fx-pref-width: 15em;
+    -fx-min-width: 15em;
+}
+
+.setting-mode-toggle {
+    -fx-padding: 0 1em 0 0;
 }

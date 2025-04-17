@@ -12,7 +12,7 @@ public record Entity(
         String address,
         String website,
         Type type
-) implements Item<Entity> {
+) implements Item {
     public enum Type {
         UNKNOWN,
         INDIVIDUAL,

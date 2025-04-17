@@ -21,6 +21,9 @@ dependencies {
     implementation "org.openjfx:javafx-graphics:21:${osName}"
     implementation "org.openjfx:javafx-fxml:21:${osName}"
 
+    // ControlsFX
+    implementation 'org.controlsfx:controlsfx:11.2.2'
+
     // Commons
     implementation 'org.apache.commons:commons-csv:1.13.0'
     implementation 'org.apache.commons:commons-lang3:3.17.0'

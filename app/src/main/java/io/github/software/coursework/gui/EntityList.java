@@ -11,6 +11,7 @@ import javafx.collections.ObservableList;
 import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.event.EventType;
+import javafx.scene.input.KeyCode;
 import javafx.scene.layout.FlowPane;
 
 public class EntityList extends FlowPane {
@@ -42,22 +43,38 @@ public class EntityList extends FlowPane {
         itemsProperty().set(value);
     }
 
+    private EntityItem createItem(ReferenceItemPair<Entity> pair) {
+        EntityItem item = new EntityItem();
+        item.setFocusTraversable(true);
+        item.setEntity(pair.item());
+        item.setOnMouseClicked(event -> fireEvent(new EntityEditClickedEvent(pair.reference(), pair.item())));
+        item.setOnKeyReleased(event -> {
+            if (event.getCode() == KeyCode.ENTER) {
+                fireEvent(new EntityEditClickedEvent(pair.reference(), pair.item()));
+            }
+        });
+        item.focusedProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue) {
+                item.getStyleClass().add("focused-item");
+            } else {
+                item.getStyleClass().remove("focused-item");
+            }
+        });
+        return item;
+    }
+
     private void onListContentChange(ListChangeListener.Change<? extends ReferenceItemPair<Entity>> change) {
         while (change.next()) {
             if (change.wasAdded()) {
                 int index = 0;
                 for (ReferenceItemPair<Entity> pair : change.getAddedSubList()) {
-                    EntityItem item = new EntityItem();
-                    item.setEntity(pair.item());
-                    item.setOnMouseClicked(event -> fireEvent(new EntityEditClickedEvent(pair.reference(), pair.item())));
-                    getChildren().add(change.getFrom() + (index++), item);
+                    getChildren().add(change.getFrom() + (index++), createItem(pair));
                 }
             } else if (change.wasRemoved()) {
                 getChildren().remove(change.getFrom(), change.getFrom() + change.getRemovedSize());
             }
         }
     }
-
     public EntityList() {
         this.onEntityEditClicked.addListener((observable, oldValue, newValue) -> {
             if (oldValue != null) {
@@ -73,12 +90,7 @@ public class EntityList extends FlowPane {
                 oldValue.removeListener(this::onListContentChange);
             }
             if (newValue != null) {
-                newValue.forEach(pair -> {
-                    EntityItem item = new EntityItem();
-                    item.setEntity(pair.item());
-                    item.setOnMouseClicked(event -> fireEvent(new EntityEditClickedEvent(pair.reference(), pair.item())));
-                    getChildren().add(item);
-                });
+                newValue.forEach(pair -> getChildren().add(createItem(pair)));
                 newValue.addListener(this::onListContentChange);
             }
         });

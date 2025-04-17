@@ -9,15 +9,15 @@ import java.util.Comparator;
 
 /**
  * A set, stored in chunks, that supports adding, removing, and querying elements.
- * @param <T>
+ * @param <T> The type of the elements in the set.
  */
-public class ChunkedIndex<T extends Item<T>> implements AutoCloseable {
+public final class ChunkedIndex<T extends Item> implements AutoCloseable {
     private int splitThreshold = 512;
     private int mergeThreshold = 186;
     private final ArrayList<ChunkDescription<T>> chunkDescriptions;
     private final Directory directory;
     private final Comparator<T> comparator;
-    private final DeserializationConstructor<T> deserializationConstructor;
+    private final Deserialize<T> deserializationConstructor;
     private enum Sentinel {
         POSITIVE_INFINITY,
         NEGATIVE_INFINITY
@@ -37,7 +37,7 @@ public class ChunkedIndex<T extends Item<T>> implements AutoCloseable {
         return comparator.compare((T) a, (T) b);
     }
 
-    public ChunkedIndex(Directory directory, Comparator<T> comparator, DeserializationConstructor<T> deserializationConstructor) throws IOException {
+    public ChunkedIndex(Directory directory, Comparator<T> comparator, Deserialize<T> deserializationConstructor) throws IOException {
         this.directory = directory;
         this.comparator = comparator;
         this.deserializationConstructor = deserializationConstructor;
@@ -70,7 +70,7 @@ public class ChunkedIndex<T extends Item<T>> implements AutoCloseable {
     public void addSample(T item) throws IOException {
         if (chunkDescriptions.isEmpty()) {
             Reference<Chunk<T>> reference = new Reference<>();
-            Chunk<T> chunk = new Chunk<>(new ArrayList<T>());
+            Chunk<T> chunk = new Chunk<>(new ArrayList<>());
             chunk.items.add(item);
             directory.put(reference, chunk);
             chunkDescriptions.add(new ChunkDescription<>(1, item, item, reference));
@@ -205,10 +205,10 @@ public class ChunkedIndex<T extends Item<T>> implements AutoCloseable {
         directory.close();
     }
 
-    private record ChunkDescription<T extends Item<T>>(int count, T min, T max, Reference<Chunk<T>> reference) {
+    private record ChunkDescription<T extends Item>(int count, T min, T max, Reference<Chunk<T>> reference) {
     }
 
-    private record ChunkIndexWrapper<T extends Item<T>>(ArrayList<ChunkDescription<T>> chunkDescriptions) implements Item<ChunkIndexWrapper<T>> {
+    private record ChunkIndexWrapper<T extends Item>(ArrayList<ChunkDescription<T>> chunkDescriptions) implements Item {
 
         @Override
         public void serialize(Document.Writer writer) throws IOException {
@@ -228,29 +228,28 @@ public class ChunkedIndex<T extends Item<T>> implements AutoCloseable {
         }
 
         @SuppressWarnings("unchecked")
-        public static <T extends Item<T>> ChunkIndexWrapper<T> deserialize(Document.Reader reader, DeserializationConstructor<T> constructor) throws IOException {
-            ArrayList<ChunkDescription<T>> chunkDescriptions = new ArrayList<>();
+        public static <T extends Item> ChunkIndexWrapper<T> deserialize(Document.Reader reader, Deserialize<T> constructor) throws IOException {
             long schema = reader.readInteger("schema");
             if (schema != 1) {
                 throw new IOException("Unsupported schema version: " + schema);
             }
-            Document.Reader chunkDescriptionsReader = reader.readCompound("chunkDescriptions");
-            for (int i = 0; !chunkDescriptionsReader.isEnd(); i++) {
-                Document.Reader chunkReader = chunkDescriptionsReader.readCompound(i);
+            Deserialize<ChunkDescription<T>> chunkDeserialize = chunkReader -> {
                 int count = (int) chunkReader.readInteger("count");
                 T min = constructor.deserialize(chunkReader.readCompound("min"));
                 T max = constructor.deserialize(chunkReader.readCompound("max"));
                 Reference<Chunk<T>> reference = (Reference<Chunk<T>>) chunkReader.readReference("reference");
-                chunkDescriptions.add(new ChunkDescription<>(count, min, max, reference));
                 chunkReader.readEnd();
-            }
-            chunkDescriptionsReader.readEnd();
+                return new ChunkDescription<>(count, min, max, reference);
+            };
+            ArrayList<ChunkDescription<T>> chunkDescriptions = chunkDeserialize
+                    .asList(ArrayList::new)
+                    .deserialize(reader.readCompound("chunkDescriptions"));
             reader.readEnd();
             return new ChunkIndexWrapper<>(chunkDescriptions);
         }
     }
 
-    private record Chunk<T extends Item<T>>(ArrayList<T> items) implements Item<Chunk<T>> {
+    private record Chunk<T extends Item>(ArrayList<T> items) implements Item {
         @Override
         public void serialize(Document.Writer writer) throws IOException {
             for (int i = 0; i < items.size(); i++) {
@@ -259,13 +258,8 @@ public class ChunkedIndex<T extends Item<T>> implements AutoCloseable {
             writer.writeEnd();
         }
 
-        public static <T extends Item<T>> Chunk<T> deserialize(Document.Reader reader, DeserializationConstructor<T> constructor) throws IOException {
-            ArrayList<T> items = new ArrayList<>();
-            for (int i = 0; !reader.isEnd(); i++) {
-                items.add(constructor.deserialize(reader.readCompound(i)));
-            }
-            reader.readEnd();
-            return new Chunk<>(items);
+        public static <T extends Item> Chunk<T> deserialize(Document.Reader reader, Deserialize<T> constructor) throws IOException {
+            return new Chunk<>(constructor.asList(ArrayList::new).deserialize(reader));
         }
 
         public void add(T item, Comparator<T> comparator) {

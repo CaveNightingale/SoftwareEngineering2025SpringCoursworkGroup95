@@ -8,9 +8,7 @@ import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.lang.reflect.Array;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.security.InvalidAlgorithmParameterException;
@@ -19,7 +17,6 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
-import java.util.Arrays;
 import java.util.Base64;
 import java.util.Random;
 
@@ -31,6 +28,8 @@ public final class Encryption {
     static final String KEY_END = "\n--- END OF BUPT-QMUL 2025 SPRING SOFTWARE ENGINEERING COURSEWORK 95 SUBMISSION SECRET KEY ---\n";
     static final String DATA_START = "--- START OF BUPT-QMUL 2025 SPRING SOFTWARE ENGINEERING COURSEWORK 95 SUBMISSION AES ENCRYPTED DATA ---\n";
     static final String DATA_END = "\n--- END OF BUPT-QMUL 2025 SPRING SOFTWARE ENGINEERING COURSEWORK 95 SUBMISSION AES ENCRYPTED DATA ---\n";
+    static final String LOG_START = "--- START OF BUPT-QMUL 2025 SPRING SOFTWARE ENGINEERING COURSEWORK 95 SUBMISSION LOGGING ---\n";
+    static final String LOG_END = "\n--- END OF BUPT-QMUL 2025 SPRING SOFTWARE ENGINEERING COURSEWORK 95 SUBMISSION LOGGING ---\n";
 
     private static final int SALT_LENGTH = 16;
     private static final int ITERATION_COUNT = 65536;
