@@ -29,15 +29,41 @@ public class GMModelCalculationTest {
         Random rand = new Random();
         int componentCount = rand.nextInt(21) + 10;  // 10~30
         List<GMMComponent> components = new ArrayList<>();
+
+        List<Double>[] F = new List[12];
+        List<Double>[] G = new List[31];
+        List<Double>[] H = new List[7];
+
+        for (int i = 0; i < 12; i++) {
+            F[i] = randomDistribution(rand, componentCount);
+        }
+        for (int i = 0; i < 31; i++) {
+            G[i] = randomDistribution(rand, componentCount);
+
+            G[i].set(componentCount - 1, G[i].get(componentCount - 1) - 1);
+        }
+        for (int i = 0; i < 7; i++) {
+            H[i] = randomDistribution(rand, componentCount);
+
+            H[i].set(componentCount - 1, H[i].get(componentCount - 1) - 1);
+        }
+
         for (int i = 0; i < componentCount; i++) {
             double mu = 10 + rand.nextDouble() * 90; // 10~100 RMB
             double sigma = 1 + rand.nextDouble() * 10;
 
-            List<Double> F = randomDistribution(rand, 12);
-            List<Double> G = randomDistribution(rand, 31);
-            List<Double> H = randomDistribution(rand, 7);
+            List<Double> f = new ArrayList<>();
+            List<Double> g = new ArrayList<>();
+            List<Double> h = new ArrayList<>();
 
-            components.add(new GMMComponent(mu, sigma, F, G, H));
+            for (int j = 0; j < 12; j++)
+                f.add(F[j].get(i));
+            for (int j = 0; j < 31; j++)
+                g.add(G[j].get(i));
+            for (int j = 0; j < 7; j++)
+                h.add(H[j].get(i));
+
+            components.add(new GMMComponent(mu, sigma, f, g, h));
         }
 
         //

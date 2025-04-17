@@ -52,6 +52,16 @@ public class GMModelCalculation {
             t.add(param.getLeft());
         }
 
+//        for (int i = 1; i < 13; i++) {
+//            System.out.println("Month " + i + ": " + countMonth[i]);
+//        }
+//        for (int i = 1; i < 32; i++) {
+//            System.out.println("Day " + i + ": " + countDay[i]);
+//        }
+//        for (int i = 1; i < 8; i++) {
+//            System.out.println("Week " + i + ": " + countWeek[i]);
+//        }
+
         List<List<Double>> answer = new ArrayList<>();
         Double Score;
 
@@ -76,6 +86,7 @@ public class GMModelCalculation {
                 for (int j : kMeans[i]) {
                     tmpList.add(p.get(j));
                 }
+//                System.out.println("kMeans[i]size = " + kMeans[i].size());
 
                 tmpAnswer.add(gaussParamsCalculator(tmpList));
             }
@@ -87,6 +98,46 @@ public class GMModelCalculation {
             }
 
             System.out.println("k = " + k + ", tmpScore = " + tmpScore + ", Score = " + Score);
+
+            System.out.println(tmpAnswer);
+
+            Double sum = 0.0;
+
+            for (int j = 0; j < 12; j++) {
+                sum = 0.0;
+                for (int i = 0; i < k; i++)
+                    sum += tmpAnswer.get(i).get(j + 2);
+
+                if (1.0 - sum < 0.00000001) {
+
+                } else {
+                    System.out.println("j = " + j + ", sum = " + sum);
+                }
+            }
+
+            for (int j = 0; j < 31; j++) {
+                sum = 0.0;
+                for (int i = 0; i < k; i++)
+                    sum += tmpAnswer.get(i).get(j + 14);
+
+                if (sum < 0.00000001 && sum > -0.00000001) {
+
+                } else {
+                    System.out.println("Day j = " + j + ", sum = " + sum);
+                }
+            }
+
+            for (int j = 0; j < 7; j++) {
+                sum = 0.0;
+                for (int i = 0; i < k; i++)
+                    sum += tmpAnswer.get(i).get(j + 45);
+
+                if (sum < 0.00000001 && sum > -0.00000001) {
+
+                } else {
+                    System.out.println("Week j = " + j + ", sum = " + sum);
+                }
+            }
         }
 
         return answer;
@@ -197,7 +248,16 @@ public class GMModelCalculation {
                          + gm.get(44 + param.getRight().getRight());
 
                 P += GP * W;
+
+//                if (W < 0 || W > 1)
+//                        System.out.println("P = " + P + ", W = " + W);
+
+//                System.out.println("GP = " + GP + ", W = " + W);
             }
+
+            if (P < 0.0 || P >= 1.0)
+                System.out.println("P = " + P);
+
             lnL += Math.log(P);
         }
 
@@ -215,9 +275,9 @@ public class GMModelCalculation {
         for (int i = 0; i < 8; i++) countWeek1[i] = 0;
 
         for (Pair<Double, Triple<Integer, Integer, Integer>> param : params) {
-            countMonth[param.getRight().getLeft()]++;
-            countDay[param.getRight().getMiddle()]++;
-            countWeek[param.getRight().getRight()]++;
+            countMonth1[param.getRight().getLeft()]++;
+            countDay1[param.getRight().getMiddle()]++;
+            countWeek1[param.getRight().getRight()]++;
         }
 
         Double mean = 0.0, variance = 0.0;
