@@ -49,7 +49,7 @@ public class EntityClassificationTest {
         System.out.println("通过数据集 " + target + " 预测目标： " + classificationTarget);
 
         EntityClassification entityClassification = new EntityClassification();
-//        entityClassification.entityClassification("Dataset");
+        entityClassification.entityClassification("Dataset");
 
         Map<String, String> listedNames = new HashMap<>(); /// 在 Datasets 文件夹中出现的所有列表中的名字。
         Map<String, String> nGramsClassification = new HashMap<>(); /// nGrams 对应的类型。
