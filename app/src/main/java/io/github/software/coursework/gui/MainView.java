@@ -706,6 +706,14 @@ public class MainView extends AnchorPane {
         tabPane.getSelectionModel().select(settingsTab);
     }
 
+    @FXML
+    private void handleFeedback() {
+        MailLauncher.openMailClient(
+                "m.haleem@qmul.ac.uk",
+                "Feedback",
+                "Please write your valued comments.");
+    }
+
     public static final class SequentialPredictionRenderer extends Chart.Renderer {
         private final double cent = 0.01;
 

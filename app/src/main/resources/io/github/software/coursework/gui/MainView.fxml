@@ -32,6 +32,7 @@
                 <VBox>
                     <ToolBar>
                         <Region HBox.hgrow="ALWAYS"/>
+                        <Button text="Feedback" onAction="#handleFeedback"/>
                         <Button text="Settings" onAction="#handleSettings"/>
                     </ToolBar>
                     <HBox styleClass="model-title">
