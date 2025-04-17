@@ -11,9 +11,13 @@ import javafx.scene.text.Text;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.text.DecimalFormat;
-import java.util.Date;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
+import java.text.NumberFormat;
+import java.util.Locale;
+
 
 public class TransactionItem extends AnchorPane {
     private static final DecimalFormat AMOUNT_FORMAT = new DecimalFormat("+0.00;-0.00");
@@ -59,10 +63,21 @@ public class TransactionItem extends AnchorPane {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+        NumberFormat currencyFormat = NumberFormat.getCurrencyInstance(Locale.getDefault());
         transaction.addListener((observable, oldValue, newValue) -> {
             title.setText(newValue.getLeft().title());
-            amount.setText(AMOUNT_FORMAT.format(BigDecimal.valueOf(newValue.getLeft().amount()).divide(BigDecimal.valueOf(100))));
-            time.setText(new Date(newValue.getLeft().time()).toString());
+            double amountValue = newValue.getLeft().amount() / 100.0;
+            String formatted = currencyFormat.format(Math.abs(amountValue));
+            if (amountValue >= 0) {
+                formatted = "+" + formatted;
+            } else {
+                formatted = "-" + formatted;
+            }
+            amount.setText(formatted);
+            Instant instant = Instant.ofEpochMilli(newValue.getLeft().time());
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+                    .withZone(ZoneOffset.UTC);
+            time.setText(formatter.format(instant));
             entity.setText(newValue.getRight());
             category.setText(newValue.getLeft().category());
             tags.getChildren().clear();

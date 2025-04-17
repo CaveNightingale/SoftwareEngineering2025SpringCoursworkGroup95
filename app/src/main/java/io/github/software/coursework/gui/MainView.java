@@ -29,7 +29,8 @@ import javafx.scene.text.Text;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
-
+import java.text.NumberFormat;
+import java.util.Locale;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -145,7 +146,7 @@ public class MainView extends AnchorPane {
                 addTransaction.setEntityItems(entityList.getItems());
                 addTransaction.setCategoryItems(categoriesEdit.getNames());
                 addTransaction.setTagItems(tagsEdit.getNames());
-                Tab tab = new Tab("Edit: " + event.getTransaction().title());
+                Tab tab = new Tab("Edit Transaction: " + event.getTransaction().title());
                 tab.setContent(addTransaction);
                 tab.setOnClosed(event1 -> {
                     editTransactionTabs.remove(transaction);
@@ -176,7 +177,7 @@ public class MainView extends AnchorPane {
             Reference<Entity> entity = event.getReference();
             tabPane.getSelectionModel().select(editEntityTabs.computeIfAbsent(entity, t -> {
                 AddEntity addEntity = new AddEntity(event.getEntity(), model);
-                Tab tab = new Tab("Edit: " + event.getEntity().name());
+                Tab tab = new Tab("Edit entity: " + event.getEntity().name());
                 tab.setContent(addEntity);
                 tab.setOnClosed(event1 -> {
                     editEntityTabs.remove(entity);
@@ -544,12 +545,15 @@ public class MainView extends AnchorPane {
                             "Budget"
                     );
                     Platform.runLater(() -> {
+                        NumberFormat currencyFormat = NumberFormat.getCurrencyInstance(Locale.getDefault());
                         BigDecimal used = new BigDecimal(finalTotalUsed).divide(BigDecimal.valueOf(100));
+                        String formattedUsed = currencyFormat.format(used);
                         if (goal == null) {
-                            budgetAmount.setText(used + " used");
+                            budgetAmount.setText(formattedUsed + " used");
                         } else {
-                            budgetAmount.setText(used + " / "
-                                    + new BigDecimal(goal.budget()).divide(BigDecimal.valueOf(100)) + " used");
+                            BigDecimal goalValue = new BigDecimal(goal.budget()).divide(BigDecimal.valueOf(100));
+                            String formattedGoal = currencyFormat.format(goalValue);
+                            budgetAmount.setText(formattedUsed + " / " + formattedGoal + " used");
                         }
                         budgetProgress.setRenderer(renderer);
                     });
@@ -570,12 +574,15 @@ public class MainView extends AnchorPane {
                             "Goal"
                     );
                     Platform.runLater(() -> {
+                        NumberFormat currencyFormat = NumberFormat.getCurrencyInstance(Locale.getDefault());
                         BigDecimal saved = new BigDecimal(finalTotalSaved).divide(BigDecimal.valueOf(100));
+                        String formattedSaved = formatSignedCurrency(saved, currencyFormat);
                         if (goal == null) {
-                            savedAmount.setText(saved + " saved");
+                            savedAmount.setText(formattedSaved + " saved");
                         } else {
-                            savedAmount.setText(saved + " / "
-                                    + new BigDecimal(goal.saving()).divide(BigDecimal.valueOf(100)) + " saved");
+                            BigDecimal goalValue = new BigDecimal(goal.saving()).divide(BigDecimal.valueOf(100));
+                            String formattedGoal = formatSignedCurrency(goalValue, currencyFormat);
+                            savedAmount.setText(formattedSaved + " / " + formattedGoal + " saved");
                         }
                         savingProgress.setRenderer(renderer);
                     });
@@ -584,6 +591,12 @@ public class MainView extends AnchorPane {
                 logger.log(Level.SEVERE, "Failed to load goal", e);
             }
         });
+    }
+
+    private String formatSignedCurrency(BigDecimal amount, NumberFormat formatter) {
+        String sign = amount.compareTo(BigDecimal.ZERO) >= 0 ? "+" : "-";
+        BigDecimal absAmount = amount.abs();
+        return sign + formatter.format(absAmount);
     }
 
     @FXML
