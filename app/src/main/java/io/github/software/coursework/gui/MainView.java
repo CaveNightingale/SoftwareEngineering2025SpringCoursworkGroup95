@@ -184,16 +184,55 @@ public class MainView extends AnchorPane {
         loadEverything();
     }
 
+    private void updatePagination(int totalItems) {
+        int pageCount = (int) Math.ceil((double) totalItems / pageSize);
+        pagination.setPageCount(Math.max(pageCount, 1));
+        pagination.setCurrentPageIndex(0); // 保证重置为第一页
+    }
+
+
     @FXML
     private void handleSearch() {
-        String searchQuery = searchField.getText().trim();  // 获取搜索框中的文本
-        if (searchQuery.isEmpty()) {
-            loadTransactions();  // 加载所有交易记录
-        } else {
-            pagination.setCurrentPageIndex(0);  // 搜索前回到第一页
-            transactionList.filterTransactions(searchQuery);  // 调用过滤方法
-        }
+        String searchQuery = searchField.getText().trim();
+        pagination.setCurrentPageIndex(0);
+
+        asyncStorage.transaction(transactionTable -> {
+            asyncStorage.entity(entityTable -> {
+                try {
+                    // 读取所有交易
+                    SequencedCollection<ReferenceItemPair<Transaction>> transactions =
+                            transactionTable.list(Long.MIN_VALUE, Long.MAX_VALUE, 0, Integer.MAX_VALUE);
+
+                    HashMap<Reference<Entity>, Entity> entityMap = new HashMap<>();
+                    ArrayList<ImmutablePair<ReferenceItemPair<Transaction>, Entity>> result = new ArrayList<>();
+
+                    for (ReferenceItemPair<Transaction> transaction : transactions) {
+                        Reference<Entity> ref = transaction.item().entity();
+                        if (!entityMap.containsKey(ref)) {
+                            entityMap.put(ref, entityTable.get(ref));
+                        }
+                        Entity entity = entityMap.get(ref);
+
+                        if (searchQuery.isEmpty() || transaction.item().title().contains(searchQuery)
+                                || (entity != null && entity.name().contains(searchQuery))) {
+                            result.add(ImmutablePair.of(transaction, entity));
+                        }
+                    }
+
+                    Platform.runLater(() -> {
+                        transactionList.setOriginalItems(result);
+                        updatePagination(result.size());
+                        transactionList.updateCurrentPage(0, pageSize); // 确保第一页内容显示
+                    });
+
+                } catch (IOException e) {
+                    logger.log(Level.SEVERE, "Failed to filter transactions", e);
+                }
+            });
+        });
     }
+
+
 
 
     public void openExternalTab(Tab externalTab) {
