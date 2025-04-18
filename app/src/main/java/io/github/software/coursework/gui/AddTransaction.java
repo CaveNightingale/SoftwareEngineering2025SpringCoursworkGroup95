@@ -24,7 +24,7 @@ public class AddTransaction extends VBox {
     private TextField title;
 
     @FXML
-    private TextArea description;
+    private TextArea note;
 
     @FXML
     private DatePicker time;
@@ -126,7 +126,7 @@ public class AddTransaction extends VBox {
     public Transaction getTransaction() {
         return new Transaction(
                 title.getText(),
-                description.getText(),
+               note.getText(),
                 time.getValue().toEpochDay() * 86400000,
                 new BigDecimal(amount.getText()).multiply(BigDecimal.valueOf(100)).longValue(),
                 category.getText(),
@@ -138,7 +138,7 @@ public class AddTransaction extends VBox {
     @SuppressWarnings("BigDecimalMethodWithoutRoundingCalled")
     public void setTransaction(ImmutablePair<Transaction, Entity> transaction) {
         title.setText(transaction.getLeft().title());
-        description.setText(transaction.getLeft().description());
+       note.setText(transaction.getLeft().description());
         time.setValue(LocalDate.ofEpochDay(transaction.getLeft().time() / 86400000));
         amount.setText(BigDecimal.valueOf(transaction.getLeft().amount()).divide(BigDecimal.valueOf(100)).toString());
         entity.setValue(new ReferenceItemPair<>(transaction.getLeft().entity(), transaction.getRight()));
