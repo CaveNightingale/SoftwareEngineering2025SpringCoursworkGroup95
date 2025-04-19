@@ -60,7 +60,8 @@
             <VBox>
                 <ToolBar>
                     <Button text="Add" onAction="#handleAddTransaction"/>
-                    <Button text="CSV" onAction="#handleExportCSV"/>
+                    <Button text="exportCSV" onAction="#handleExportCSV"/>
+                    <Button text="importCSV" onAction="#handleImportCSV"/>
                     <Region HBox.hgrow="ALWAYS"/>
                     <TextField fx:id="searchField" promptText="Search transactions..." onAction="#handleSearch"/>
                     <Pagination fx:id="pagination"/>

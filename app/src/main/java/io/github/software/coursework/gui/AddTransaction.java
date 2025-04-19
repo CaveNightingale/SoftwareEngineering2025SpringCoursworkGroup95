@@ -21,25 +21,25 @@ import java.time.LocalDate;
 
 public class AddTransaction extends VBox {
     @FXML
-    private TextField title;
+    TextField title;
 
     @FXML
     private TextArea description;
 
     @FXML
-    private DatePicker time;
+    DatePicker time;
 
     @FXML
-    private TextField amount;
+    TextField amount;
 
     @FXML
-    private ComboBox<ReferenceItemPair<Entity>> entity;
+    ComboBox<ReferenceItemPair<Entity>> entity;
 
     @FXML
-    private TextField category;
+    TextField category;
 
     @FXML
-    private TextField tags;
+    TextField tags;
 
     @FXML
     private Label message;

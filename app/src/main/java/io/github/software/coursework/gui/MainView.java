@@ -1,5 +1,6 @@
 package io.github.software.coursework.gui;
 
+import com.google.common.collect.ImmutableList;
 import io.github.software.coursework.data.AsyncStorage;
 import io.github.software.coursework.data.Reference;
 import io.github.software.coursework.data.ReferenceItemPair;
@@ -16,15 +17,21 @@ import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.VBox;
+import javafx.stage.FileChooser;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Objects;
-import java.util.SequencedCollection;
+import java.io.*;
+import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import static io.github.software.coursework.data.schema.Entity.Type.UNKNOWN;
 
 public class MainView extends AnchorPane {
     private static final Logger logger = Logger.getLogger("MainView");
@@ -155,9 +162,18 @@ public class MainView extends AnchorPane {
             }));
         });
 
-        pagination.currentPageIndexProperty().addListener((observable, oldValue, newValue) -> {
-            if (!Objects.equals(oldValue, newValue)) {
-                loadTransactions();
+        // 搜索框添加监听（清空时重置）
+        searchField.textProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal.isEmpty()) {
+                currentSearchQuery = "";
+                pagination.setCurrentPageIndex(0);
+                loadTransactions(); // 恢复原始加载
+            }
+        });
+
+        pagination.currentPageIndexProperty().addListener((obs, oldVal, newVal) -> {
+            if (!Objects.equals(oldVal, newVal)) {
+                loadFilteredTransactions(); // 改用带过滤的加载方法
             }
         });
 
@@ -184,17 +200,65 @@ public class MainView extends AnchorPane {
         loadEverything();
     }
 
+    private String currentSearchQuery = "";
+
     private void updatePagination(int totalItems) {
         int pageCount = (int) Math.ceil((double) totalItems / pageSize);
         pagination.setPageCount(Math.max(pageCount, 1));
         pagination.setCurrentPageIndex(0); // 保证重置为第一页
     }
 
+    private void loadFilteredTransactions() {
+        int page = pagination.getCurrentPageIndex();
+
+        asyncStorage.transaction(transactionTable -> {
+            asyncStorage.entity(entityTable -> {
+                try {
+                    // 读取所有交易（带分页）
+                    SequencedCollection<ReferenceItemPair<Transaction>> transactions =
+                            transactionTable.list(Long.MIN_VALUE, Long.MAX_VALUE, page * pageSize, pageSize);
+
+                    HashMap<Reference<Entity>, Entity> entityMap = new HashMap<>();
+                    ArrayList<ImmutablePair<ReferenceItemPair<Transaction>, Entity>> result = new ArrayList<>();
+
+                    for (ReferenceItemPair<Transaction> transaction : transactions) {
+                        Reference<Entity> ref = transaction.item().entity();
+                        if (!entityMap.containsKey(ref)) {
+                            entityMap.put(ref, entityTable.get(ref));
+                        }
+                        Entity entity = entityMap.get(ref);
+
+                        // 应用搜索过滤
+                        boolean matches = currentSearchQuery.isEmpty() ||
+                                transaction.item().title().contains(currentSearchQuery) ||
+                                (entity != null && entity.name().contains(currentSearchQuery));
+
+                        if (matches) {
+                            result.add(ImmutablePair.of(transaction, entity));
+                        }
+                    }
+
+                    Platform.runLater(() -> {
+                        transactionList.setOriginalItems(result);
+                        // 注意：不再重置分页，保持当前页
+                        transactionList.updateCurrentPage(0, pageSize);
+                    });
+
+                } catch (IOException e) {
+                    logger.log(Level.SEVERE, "Failed to filter transactions", e);
+                }
+            });
+        });
+    }
 
     @FXML
     private void handleSearch() {
         String searchQuery = searchField.getText().trim();
+        currentSearchQuery = searchQuery; // 保存当前搜索词
+
+        // 重置到第一页
         pagination.setCurrentPageIndex(0);
+        loadFilteredTransactions();
 
         asyncStorage.transaction(transactionTable -> {
             asyncStorage.entity(entityTable -> {
@@ -352,6 +416,135 @@ public class MainView extends AnchorPane {
         tabPane.getTabs().add(addEntityTab);
         tabPane.getSelectionModel().select(addEntityTab);
     }
+
+
+    @FXML
+    private void handleImportCSV() {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("CSV Files", "*.csv"));
+        File file = fileChooser.showOpenDialog(this.getScene().getWindow());
+        if (file == null) return;
+
+        try {
+            List<String> lines = Files.readAllLines(file.toPath(), StandardCharsets.UTF_8);
+            if (lines.size() <= 3) return; // 跳过表头
+
+            asyncStorage.entity(entityTable -> {
+                asyncStorage.transaction(transactionTable -> {
+                    try {
+                        // 预加载现有实体到内存
+                        Map<String, ReferenceItemPair<Entity>> entityMap = new HashMap<>();
+                        for (ReferenceItemPair<Entity> pair : entityTable.list(0, Integer.MAX_VALUE)) {
+                            entityMap.put(pair.item().name(), pair); // 使用原始名称作为key
+                        }
+
+                        List<ImmutablePair<Transaction, Reference<Entity>>> batch = new ArrayList<>();
+
+                        for (int i = 3; i < lines.size(); i++) { // 从第4行开始
+                            String line = lines.get(i);
+                            String[] fields = line.split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", -1);
+                            if (fields.length < 9) continue;
+
+                            try {
+                                // 1. 解析交易基本信息
+                                String summary = fields[1].trim().replaceAll("^\"|\"$", "");
+                                String dateStr = fields[4].trim();
+                                String amountStr = fields[5].trim().replaceAll("[^\\d.-]", "");
+                                String entityField = fields[8].trim();
+
+                                if (amountStr.isEmpty() || dateStr.isEmpty()) continue;
+
+                                // 2. 解析金额
+                                long amountInCents = new BigDecimal(amountStr)
+                                        .multiply(BigDecimal.valueOf(100))
+                                        .longValueExact();
+
+                                // 3. 解析日期
+                                LocalDate date = LocalDate.parse(dateStr, DateTimeFormatter.BASIC_ISO_DATE);
+                                long timestamp = date.atStartOfDay(ZoneId.systemDefault())
+                                        .toInstant()
+                                        .toEpochMilli();
+
+                                // 4. 解析实体信息（保留*号）
+                                String entityName = entityField.contains("/")
+                                        ? entityField.split("/")[1].trim() // 保留原始带*的户名
+                                        : entityField.trim();
+
+                                // 5. 查找或创建实体（使用原始带*的名称）
+                                ReferenceItemPair<Entity> entityPair = entityMap.computeIfAbsent(
+                                        entityName, // 使用原始名称（包含*）作为key
+                                        k -> {
+                                            Entity newEntity = new Entity(
+                                                    entityName, // 存储带*的原始名称
+                                                    "", "", "", "",
+                                                    UNKNOWN
+                                            );
+                                            Reference<Entity> ref = new Reference<>();
+                                            try {
+                                                entityTable.put(ref, AsyncStorage.Sensitivity.NORMAL, newEntity);
+                                            } catch (IOException e) {
+                                                throw new UncheckedIOException(e);
+                                            }
+                                            return new ReferenceItemPair<>(ref, newEntity);
+                                        }
+                                );
+
+                                // 6. 创建交易对象
+                                Transaction transaction = new Transaction(
+                                        summary,
+                                        "",
+                                        timestamp,
+                                        amountInCents,
+                                        "", // 未知，后续使用ai分类
+                                        entityPair.reference(),
+                                        ImmutableList.of()
+                                );
+
+                                batch.add(ImmutablePair.of(transaction, entityPair.reference()));
+
+                            } catch (Exception e) {
+                                logger.log(Level.WARNING, "Skipping malformed line: " + line, e);
+                            }
+                        }
+
+                        // 批量添加交易
+                        for (ImmutablePair<Transaction, Reference<Entity>> pair : batch) {
+                            transactionTable.put(new Reference<>(), AsyncStorage.Sensitivity.NORMAL, pair.left);
+                        }
+
+                        Platform.runLater(() -> {
+                            showAlert(Alert.AlertType.INFORMATION, "Import Successful",
+                                    "CSV Import Complete",
+                                    String.format("Imported %d transactions", batch.size()));
+                            loadEverything();
+                        });
+
+                    } catch (Exception e) {
+                        Platform.runLater(() ->
+                                showAlert(Alert.AlertType.ERROR, "Error",
+                                        "Import Failed",
+                                        "Error processing CSV: " + e.getMessage()));
+                        logger.log(Level.SEVERE, "CSV import failed", e);
+                    }
+                });
+            });
+        } catch (IOException e) {
+            showAlert(Alert.AlertType.ERROR, "Error",
+                    "File Read Error",
+                    "Could not read file: " + e.getMessage());
+        }
+    }
+
+    // 弹窗封装
+    private void showAlert(Alert.AlertType type, String title, String header, String content) {
+        Alert alert = new Alert(type);
+        alert.setTitle(title);
+        alert.setHeaderText(header);
+        alert.setContentText(content);
+        alert.show();
+    }
+
+
 
     @FXML
     private void handleExportCSV() {
