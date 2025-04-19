@@ -62,7 +62,7 @@
                     <Button text="Add" onAction="#handleAddTransaction"/>
                     <Button text="CSV" onAction="#handleExportCSV"/>
                     <Region HBox.hgrow="ALWAYS"/>
-                    <!-- is "save" button needed? -->
+                    <TextField fx:id="searchField" promptText="Search transactions..." onAction="#handleSearch"/>
                     <Pagination fx:id="pagination"/>
                 </ToolBar>
                 <ScrollPane fitToWidth="true" fitToHeight="true" VBox.vgrow="ALWAYS" vbarPolicy="ALWAYS">
