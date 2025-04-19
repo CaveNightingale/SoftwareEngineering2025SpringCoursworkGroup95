@@ -113,19 +113,14 @@ public class TransactionList extends VBox {
         getItems().addAll(items);
     }
 
-    public void filterTransactions(String searchQuery) {
+    public void updateCurrentPage(int pageIndex, int pageSize) {
+        int fromIndex = pageIndex * pageSize;
+        int toIndex = Math.min(fromIndex + pageSize, originalItems.size());
+
         ObservableList<ImmutablePair<ReferenceItemPair<Transaction>, Entity>> viewItems = getItems();
         viewItems.clear();
-
-        if (searchQuery.isEmpty()) {
-            viewItems.addAll(originalItems);
-        } else {
-            for (ImmutablePair<ReferenceItemPair<Transaction>, Entity> pair : originalItems) {
-                Transaction transaction = pair.getLeft().item();
-                if (transaction.title().toLowerCase().contains(searchQuery.toLowerCase())) {
-                    viewItems.add(pair);
-                }
-            }
+        if (fromIndex < toIndex) {
+            viewItems.addAll(originalItems.subList(fromIndex, toIndex));
         }
     }
 
