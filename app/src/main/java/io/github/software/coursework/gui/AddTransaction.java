@@ -11,6 +11,7 @@ import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.control.*;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import org.apache.commons.lang3.tuple.ImmutablePair;
@@ -18,28 +19,29 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 
 public class AddTransaction extends VBox {
     @FXML
-    TextField title;
+    private TextField title;
 
     @FXML
     private TextArea note;
 
     @FXML
-    DatePicker time;
+    private DatePicker time;
 
     @FXML
-    TextField amount;
+    private TextField amount;
 
     @FXML
-    ComboBox<ReferenceItemPair<Entity>> entity;
+    private ComboBox<ReferenceItemPair<Entity>> entity;
 
     @FXML
-    TextField category;
+    private TextField category;
 
     @FXML
-    TextField tags;
+    private TextField tags;
 
     @FXML
     private Label message;
@@ -51,7 +53,7 @@ public class AddTransaction extends VBox {
     private Button delete;
 
     @FXML
-    public Region deleteSpace;
+    private Region deleteSpace;
 
     private final ObjectProperty<EventHandler<SubmitEvent>> onSubmit = new SimpleObjectProperty<>();
 
@@ -89,6 +91,28 @@ public class AddTransaction extends VBox {
             throw new RuntimeException(e);
         }
 
+        // Real-time validation for 'amount' field
+        amount.textProperty().addListener((observable, oldValue, newValue) -> {
+            validateAmount(newValue);
+        });
+
+        // Real-time validation for 'time' field
+        time.valueProperty().addListener((observable, oldValue, newValue) -> {
+            validateTime(newValue);
+        });
+
+        // Listen to the text field of the DatePicker to catch invalid date input
+        TextField timeTextField = time.getEditor();
+        timeTextField.textProperty().addListener((observable, oldValue, newValue) -> {
+            if (!newValue.isEmpty() && !isValidDate(newValue)) {
+                message.setText("Invalid date format");
+                time.setStyle("-fx-border-color: red;");
+            } else {
+                message.setText(""); // Clear message when valid
+                time.setStyle(""); // Reset border color to default
+            }
+        });
+
         entity.setCellFactory(param -> new ListCell<>() {
             @Override
             protected void updateItem(ReferenceItemPair<Entity> item, boolean empty) {
@@ -123,10 +147,20 @@ public class AddTransaction extends VBox {
         });
     }
 
+    private boolean isValidDate(String dateStr) {
+        try {
+            // Attempt to parse the date string to LocalDate
+            LocalDate.parse(dateStr);
+            return true;
+        } catch (DateTimeParseException e) {
+            return false; // Invalid date
+        }
+    }
+
     public Transaction getTransaction() {
         return new Transaction(
                 title.getText(),
-               note.getText(),
+                note.getText(),
                 time.getValue().toEpochDay() * 86400000,
                 new BigDecimal(amount.getText()).multiply(BigDecimal.valueOf(100)).longValue(),
                 category.getText(),
@@ -138,7 +172,7 @@ public class AddTransaction extends VBox {
     @SuppressWarnings("BigDecimalMethodWithoutRoundingCalled")
     public void setTransaction(ImmutablePair<Transaction, Entity> transaction) {
         title.setText(transaction.getLeft().title());
-       note.setText(transaction.getLeft().description());
+        note.setText(transaction.getLeft().description());
         time.setValue(LocalDate.ofEpochDay(transaction.getLeft().time() / 86400000));
         amount.setText(BigDecimal.valueOf(transaction.getLeft().amount()).divide(BigDecimal.valueOf(100)).toString());
         entity.setValue(new ReferenceItemPair<>(transaction.getLeft().entity(), transaction.getRight()));
@@ -149,6 +183,31 @@ public class AddTransaction extends VBox {
         deleteSpace.setVisible(true);
         delete.setManaged(true);
         delete.setVisible(true);
+    }
+
+    // Amount validation logic
+    private void validateAmount(String newValue) {
+        if (newValue.isEmpty()) {
+            message.setText("Amount is required");
+            amount.setStyle("-fx-border-color: red;");
+        } else if (!newValue.matches("[+\\-]?\\d+(\\.\\d{0,2})?")) {
+            message.setText("Amount is invalid (Only digits and up to 2 decimal places allowed)");
+            amount.setStyle("-fx-border-color: red;");
+        } else {
+            message.setText(""); // Clear message when valid
+            amount.setStyle(""); // Reset border color to default
+        }
+    }
+
+    // Time validation logic
+    private void validateTime(LocalDate newValue) {
+        if (newValue == null) {
+            message.setText("Time is required");
+            time.setStyle("-fx-border-color: red;");
+        } else {
+            message.setText(""); // Clear message when valid
+            time.setStyle(""); // Reset border color to default
+        }
     }
 
     public void handleMouseClick() {
