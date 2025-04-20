@@ -5,6 +5,7 @@
 <?import javafx.scene.layout.*?>
 <?import org.controlsfx.control.ToggleSwitch?>
 <?import javafx.scene.web.WebView?>
+<?import org.controlsfx.control.SearchableComboBox?>
 <fx:root
         xmlns="http://javafx.com/javafx"
         xmlns:fx="http://javafx.com/fxml"
@@ -15,35 +16,38 @@
         <Label text="Title"/>
         <Region HBox.hgrow="ALWAYS"/>
         <Label fx:id="titleError" textFill="red" styleClass="add-transaction-error"/>
-        <TextField styleClass="add-transaction-field" fx:id="title"/>
+        <TextField styleClass="add-transaction-field" fx:id="title" onKeyTyped="#handlePredictorInput"/>
     </HBox>
-
     <HBox styleClass="add-transaction-row">
         <Label text="Amount"/>
         <Region HBox.hgrow="ALWAYS"/>
         <Label fx:id="amountError" textFill="red" styleClass="add-transaction-error"/>
-        <TextField styleClass="add-transaction-field" fx:id="amount"/>
+        <TextField styleClass="add-transaction-field" fx:id="amount" onKeyTyped="#handlePredictorInput"/>
     </HBox>
     <HBox styleClass="add-transaction-row">
-        <Label text="Entity"/>
+        <Label text="Transaction Party"/>
         <Region HBox.hgrow="ALWAYS"/>
-        <ComboBox styleClass="add-transaction-field" fx:id="entity"/>
+        <SearchableComboBox styleClass="add-transaction-field" fx:id="entity" onAction="#handlePredictorInput"/>
     </HBox>
     <HBox styleClass="add-transaction-row">
         <Label text="Time"/>
         <Region HBox.hgrow="ALWAYS"/>
         <Label fx:id="timeError" textFill="red" styleClass="add-transaction-error"/>
-        <DatePicker styleClass="add-transaction-field" fx:id="time"/>
+        <DatePicker styleClass="add-transaction-field" fx:id="time" onAction="#handlePredictorInput"/>
     </HBox>
     <HBox styleClass="add-transaction-row">
         <Label text="Category"/>
         <Region HBox.hgrow="ALWAYS"/>
-        <TextField styleClass="add-transaction-field" fx:id="category"/>
+        <SearchableComboBox styleClass="add-transaction-field" fx:id="category" onAction="#handleCategoryInput"/>
     </HBox>
-    <HBox styleClass="add-transaction-row">
+    <HBox styleClass="add-transaction-row" fx:id="tagsRow">
         <Label text="Tags"/>
         <Region HBox.hgrow="ALWAYS"/>
-        <TextField styleClass="add-transaction-field" fx:id="tags"/>
+        <Label text="Click to remove" visible="false" managed="false" fx:id="clickToRemove" styleClass="setting-tip"/>
+        <SearchableComboBox styleClass="add-transaction-field" fx:id="addTags"/>
+    </HBox>
+    <HBox styleClass="add-transaction-row" fx:id="auxTagsRow" visible="false" managed="false">
+        <Region HBox.hgrow="ALWAYS"/>
     </HBox>
     <HBox styleClass="add-transaction-row">
         <Label text="Note"/>
@@ -51,7 +55,7 @@
         <ToggleSwitch text="Preview" styleClass="add-transaction-note-preview" fx:id="previewSwitch"/>
         <StackPane styleClass="add-transaction-note">
             <WebView fx:id="notePreview" managed="false" visible="false"/>
-            <TextArea fx:id="note"/>
+            <TextArea fx:id="note" onKeyTyped="#handlePredictorInput"/>
         </StackPane>
     </HBox>
     <HBox styleClass="add-transaction-row">

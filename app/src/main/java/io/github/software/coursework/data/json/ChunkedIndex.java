@@ -17,7 +17,7 @@ public final class ChunkedIndex<T extends Item> implements AutoCloseable {
     private final ArrayList<ChunkDescription<T>> chunkDescriptions;
     private final Directory directory;
     private final Comparator<T> comparator;
-    private final DeserializationConstructor<T> deserializationConstructor;
+    private final Deserialize<T> deserializationConstructor;
     private enum Sentinel {
         POSITIVE_INFINITY,
         NEGATIVE_INFINITY
@@ -37,7 +37,7 @@ public final class ChunkedIndex<T extends Item> implements AutoCloseable {
         return comparator.compare((T) a, (T) b);
     }
 
-    public ChunkedIndex(Directory directory, Comparator<T> comparator, DeserializationConstructor<T> deserializationConstructor) throws IOException {
+    public ChunkedIndex(Directory directory, Comparator<T> comparator, Deserialize<T> deserializationConstructor) throws IOException {
         this.directory = directory;
         this.comparator = comparator;
         this.deserializationConstructor = deserializationConstructor;
@@ -228,23 +228,22 @@ public final class ChunkedIndex<T extends Item> implements AutoCloseable {
         }
 
         @SuppressWarnings("unchecked")
-        public static <T extends Item> ChunkIndexWrapper<T> deserialize(Document.Reader reader, DeserializationConstructor<T> constructor) throws IOException {
-            ArrayList<ChunkDescription<T>> chunkDescriptions = new ArrayList<>();
+        public static <T extends Item> ChunkIndexWrapper<T> deserialize(Document.Reader reader, Deserialize<T> constructor) throws IOException {
             long schema = reader.readInteger("schema");
             if (schema != 1) {
                 throw new IOException("Unsupported schema version: " + schema);
             }
-            Document.Reader chunkDescriptionsReader = reader.readCompound("chunkDescriptions");
-            for (int i = 0; !chunkDescriptionsReader.isEnd(); i++) {
-                Document.Reader chunkReader = chunkDescriptionsReader.readCompound(i);
+            Deserialize<ChunkDescription<T>> chunkDeserialize = chunkReader -> {
                 int count = (int) chunkReader.readInteger("count");
                 T min = constructor.deserialize(chunkReader.readCompound("min"));
                 T max = constructor.deserialize(chunkReader.readCompound("max"));
                 Reference<Chunk<T>> reference = (Reference<Chunk<T>>) chunkReader.readReference("reference");
-                chunkDescriptions.add(new ChunkDescription<>(count, min, max, reference));
                 chunkReader.readEnd();
-            }
-            chunkDescriptionsReader.readEnd();
+                return new ChunkDescription<>(count, min, max, reference);
+            };
+            ArrayList<ChunkDescription<T>> chunkDescriptions = chunkDeserialize
+                    .asList(ArrayList::new)
+                    .deserialize(reader.readCompound("chunkDescriptions"));
             reader.readEnd();
             return new ChunkIndexWrapper<>(chunkDescriptions);
         }
@@ -259,13 +258,8 @@ public final class ChunkedIndex<T extends Item> implements AutoCloseable {
             writer.writeEnd();
         }
 
-        public static <T extends Item> Chunk<T> deserialize(Document.Reader reader, DeserializationConstructor<T> constructor) throws IOException {
-            ArrayList<T> items = new ArrayList<>();
-            for (int i = 0; !reader.isEnd(); i++) {
-                items.add(constructor.deserialize(reader.readCompound(i)));
-            }
-            reader.readEnd();
-            return new Chunk<>(items);
+        public static <T extends Item> Chunk<T> deserialize(Document.Reader reader, Deserialize<T> constructor) throws IOException {
+            return new Chunk<>(constructor.asList(ArrayList::new).deserialize(reader));
         }
 
         public void add(T item, Comparator<T> comparator) {

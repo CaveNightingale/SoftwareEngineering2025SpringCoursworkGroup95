@@ -4,6 +4,9 @@ import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
+import io.github.software.coursework.algo.Model;
+import io.github.software.coursework.algo.NoSkill;
+import io.github.software.coursework.algo.PredictModel;
 import io.github.software.coursework.data.AsyncStorage;
 import io.github.software.coursework.data.json.EncryptedLogger;
 import io.github.software.coursework.data.json.Encryption;
@@ -41,6 +44,7 @@ public class App extends Application {
         launch(args);
     }
     private AsyncStorage storage;
+    private Model model;
 
     @Override
     public void start(Stage stage) {
@@ -61,11 +65,21 @@ public class App extends Application {
             }
             try {
                 storage = new JsonStorage(event.getAccount(), event.getPassword());
+                model = new PredictModel(storage);
+                storage.model(modelDirectory -> {
+                    try {
+                        model.loadParameters(modelDirectory);
+                    } catch (IOException e) {
+                        logger.log(Level.SEVERE, "Error during loading model.", e);
+                    }
+                });
             } catch (IOException ex) {
                 logger.log(Level.INFO, "Cannot decrypt", ex);
                 decryptionView.reportPasswordIncorrect();
                 return;
             }
+            stage.setWidth(800);
+            stage.setHeight(600);
             stage.setResizable(true);
             Scene mainScene = getScene(stage, event);
             stage.setScene(mainScene);
@@ -74,7 +88,7 @@ public class App extends Application {
     }
 
     private Scene getScene(Stage stage, DecryptionView.DecryptionSubmitEvent event) {
-        MainView mainView = new MainView(storage);
+        MainView mainView = new MainView(storage, model);
         EncryptionSetting encryptionSetting = new EncryptionSetting(event.getAccount(), event.getPassword());
         encryptionSetting.setOnRequestRestart(event1 -> {
             mainView.setDisable(true);
@@ -95,6 +109,7 @@ public class App extends Application {
                 }
                 Platform.runLater(() -> {
                     storage = null;
+                    model = null;
                     start(stage);
                 });
             });
@@ -157,9 +172,25 @@ public class App extends Application {
         return new Scene(mainView, 800, 600);
     }
 
+    private void saveModel() {
+        if (model != null) {
+            storage.model(modelDirectory -> {
+                try {
+                    model.saveParameters(modelDirectory);
+                } catch (IOException e) {
+                    logger.log(Level.SEVERE, "Error during saving", e);
+                    logger.log(Level.SEVERE, "The application will be closed immediately.");
+                    System.exit(1);
+                }
+            });
+        }
+    }
+
+    // TODO: Add manual save button and let user decide if the changes should be saved at exit
     @Override
     public void stop() throws Exception {
         super.stop();
+        saveModel();
         if (storage != null) {
             storage.close().get();
         }

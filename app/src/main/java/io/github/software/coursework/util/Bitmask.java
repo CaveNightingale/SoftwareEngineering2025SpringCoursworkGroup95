@@ -52,4 +52,8 @@ public final class Bitmask {
     public static View2DMutable view2DMutable(long[] data, int width) {
         return new View2DMutable(data, width);
     }
+
+    public static int size2d(int height, int width) {
+        return height * ((width + 63) / 64);
+    }
 }
