@@ -16,9 +16,11 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.layout.VBox;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 
+import java.util.List;
+
 public class TransactionList extends VBox {
     private final ObjectProperty<EventHandler<TransactionEditClickedEvent>> onTransactionEditClicked = new SimpleObjectProperty<>();
-
+    private final ObservableList<ImmutablePair<ReferenceItemPair<Transaction>, Entity>> originalItems = FXCollections.observableArrayList();
     public final ObjectProperty<EventHandler<TransactionEditClickedEvent>> onTransactionEditClickedProperty() {
         return onTransactionEditClicked;
     }
@@ -44,6 +46,7 @@ public class TransactionList extends VBox {
     public final void setItems(ObservableList<ImmutablePair<ReferenceItemPair<Transaction>, Entity>> value) {
         itemsProperty().set(value);
     }
+
 
     private TransactionItem createItem(ImmutablePair<ReferenceItemPair<Transaction>, Entity> pair) {
         TransactionItem item = new TransactionItem();
@@ -93,12 +96,34 @@ public class TransactionList extends VBox {
                 oldValue.removeListener(this::onListContentChange);
             }
             if (newValue != null) {
+                originalItems.clear();
+                originalItems.addAll(newValue);
                 newValue.forEach(pair -> getChildren().add(createItem(pair)));
                 newValue.addListener(this::onListContentChange);
             }
         });
         setItems(FXCollections.observableArrayList());
     }
+
+    public void setOriginalItems(List<ImmutablePair<ReferenceItemPair<Transaction>, Entity>> items) {
+        originalItems.clear();
+        originalItems.addAll(items);
+
+        getItems().clear();
+        getItems().addAll(items);
+    }
+
+    public void updateCurrentPage(int pageIndex, int pageSize) {
+        int fromIndex = pageIndex * pageSize;
+        int toIndex = Math.min(fromIndex + pageSize, originalItems.size());
+
+        ObservableList<ImmutablePair<ReferenceItemPair<Transaction>, Entity>> viewItems = getItems();
+        viewItems.clear();
+        if (fromIndex < toIndex) {
+            viewItems.addAll(originalItems.subList(fromIndex, toIndex));
+        }
+    }
+
 
     public static class TransactionEditClickedEvent extends Event {
         public static final EventType<TransactionEditClickedEvent> CLICKED = new EventType<>(Event.ANY, "TRANSACTION_EDIT_CLICKED");
