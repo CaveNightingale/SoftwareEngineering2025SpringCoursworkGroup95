@@ -40,6 +40,9 @@ public class AddTransaction extends VBox {
     @FXML
     private Label timeError;
 
+    @FXML
+    private Label titleError;
+
 
     @FXML
     private ComboBox<ReferenceItemPair<Entity>> entity;
@@ -112,7 +115,12 @@ public class AddTransaction extends VBox {
         time.getEditor().textProperty().addListener((observable, oldValue, newValue) -> {
             validateTime(null); // 传入null触发文本验证逻辑
         });
-        
+
+        title.textProperty().addListener((observable, oldValue, newValue) -> {
+            validateTitle(newValue);
+        });
+
+
         entity.setCellFactory(param -> new ListCell<>() {
             @Override
             protected void updateItem(ReferenceItemPair<Entity> item, boolean empty) {
@@ -227,7 +235,6 @@ public class AddTransaction extends VBox {
         }
     }
 
-
     // Time validation logic
     private void validateTime(LocalDate newValue) {
         if (newValue == null) {
@@ -250,15 +257,26 @@ public class AddTransaction extends VBox {
         }
     }
 
+    private void validateTitle(String newValue) {
+        if (newValue == null || newValue.trim().isEmpty()) {
+            titleError.setText("Title is required");
+            title.setStyle("-fx-border-color: red;");
+        } else {
+            titleError.setText("");
+            title.setStyle("");
+        }
+    }
+
 
     public void handleMouseClick() {
         boolean hasError = false;
         message.setText("");
 
+        validateTitle(title.getText());
         if (title.getText().isEmpty()) {
-            message.setText("Title is required");
             hasError = true;
         }
+
 
         if (amount.getText().isEmpty()) {
             amountError.setText("Amount is required");

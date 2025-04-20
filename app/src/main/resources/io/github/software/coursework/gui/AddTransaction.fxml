@@ -12,8 +12,10 @@
     <HBox styleClass="add-transaction-row">
         <Label text="Title"/>
         <Region HBox.hgrow="ALWAYS"/>
+        <Label fx:id="titleError" textFill="red" styleClass="add-transaction-error"/>
         <TextField styleClass="add-transaction-field" fx:id="title"/>
     </HBox>
+
     <HBox styleClass="add-transaction-row">
         <Label text="Amount"/>
         <Region HBox.hgrow="ALWAYS"/>
