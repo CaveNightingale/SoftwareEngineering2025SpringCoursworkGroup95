@@ -61,6 +61,17 @@
     -fx-pref-width: 30em;
 }
 
+.add-transaction-note-preview {
+    -fx-padding: 0 0.5em 0 0.5em;
+}
+
+.add-transaction-note {
+    -fx-pref-width: 30em;
+    -fx-pref-height: 25em;
+    -fx-min-height: 25em;
+    -fx-max-height: 25em;
+}
+
 .add-transaction-message, .add-entity-message {
     -fx-font-weight: bold;
     -fx-text-fill: #ff0000;

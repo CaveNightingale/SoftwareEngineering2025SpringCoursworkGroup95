@@ -48,8 +48,8 @@
     <HBox styleClass="add-transaction-row">
         <Label text="Note"/>
         <Region HBox.hgrow="ALWAYS"/>
-        <ToggleSwitch text="Preview" fx:id="previewSwitch"/>
-        <StackPane styleClass="add-transaction-field" >
+        <ToggleSwitch text="Preview" styleClass="add-transaction-note-preview" fx:id="previewSwitch"/>
+        <StackPane styleClass="add-transaction-note">
             <WebView fx:id="notePreview" managed="false" visible="false"/>
             <TextArea fx:id="note"/>
         </StackPane>
