@@ -98,40 +98,21 @@ public class AddTransaction extends VBox {
             throw new RuntimeException(e);
         }
 
-        // Real-time validation for 'amount' field
+        // 金额字段实时验证
         amount.textProperty().addListener((observable, oldValue, newValue) -> {
             validateAmount(newValue);
         });
 
-        // Real-time validation for 'time' field
+        // 日期选择器值变化验证
         time.valueProperty().addListener((observable, oldValue, newValue) -> {
             validateTime(newValue);
         });
 
-        // Listen to the text field of the DatePicker to catch invalid date input
-        TextField timeTextField = time.getEditor();
-        timeTextField.textProperty().addListener((observable, oldValue, newValue) -> {
-            if (!newValue.isEmpty()) {
-                if (isValidDate(newValue)) {
-                    message.setText("");
-                    time.setStyle("");
-                    try {
-                        // 统一转换为标准格式存储
-                        String normalized = normalizeDateString(newValue);
-                        time.setValue(LocalDate.parse(normalized));
-                    } catch (DateTimeParseException e) {
-                        // 理论上不会发生，因为已经校验过
-                    }
-                } else {
-                    message.setText("Invalid date format (e.g. yyyy-MM-dd or yyyy/M/d)");
-                    time.setStyle("-fx-border-color: red;");
-                }
-            } else {
-                message.setText("Date is required");
-                time.setStyle("-fx-border-color: red;");
-            }
+        // 日期文本框输入验证
+        time.getEditor().textProperty().addListener((observable, oldValue, newValue) -> {
+            validateTime(null); // 传入null触发文本验证逻辑
         });
-
+        
         entity.setCellFactory(param -> new ListCell<>() {
             @Override
             protected void updateItem(ReferenceItemPair<Entity> item, boolean empty) {
