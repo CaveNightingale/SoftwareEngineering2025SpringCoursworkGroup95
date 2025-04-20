@@ -79,7 +79,7 @@ public class EntityClassification {
 //
 //        String modelParametersDirectory = "build/Bayesian/" + fileFolderName + ".txt";
 //
-//        try (FileWriter writer = new FileWriter(modelParametersDirectory, false)) {
+//        try (FileWriter writer = new FileWriter(modelParametersDirectory, StandardCharsets.UTF_8)) {
 //            writer.write(""); // 写入空内容
 //
 //            for (Map.Entry<String, Double> entry : nGramProbability.entrySet()) {
@@ -116,13 +116,9 @@ public class EntityClassification {
 
                 System.out.println(line);
 
-                if (line == null) {
-                    break;
-                }
-
                 categories.add(line.replaceFirst("\\.txt$", ""));
             }
-        } catch (java.net.URISyntaxException e) {
+        } catch (URISyntaxException e) {
             e.printStackTrace();
         }
 
@@ -135,7 +131,8 @@ public class EntityClassification {
 //        System.out.println("read Text " + category);
         try  {
             Path path = Paths.get(EntityClassification.class.getResource(fileFolderName).toURI());
-            List<String> textByLines = Files.readAllLines(path, StandardCharsets.UTF_8);
+            List<String> textByLines = Files.readAllLines(path.resolve(category + ".txt"), StandardCharsets.UTF_8);
+
             Map<String, Integer> nGrams = new HashMap<>();
 
             for (String line : textByLines) {
@@ -166,18 +163,14 @@ public class EntityClassification {
             }
 
             return nGrams;
-        } catch (IOException e) {
-            e.printStackTrace();
-
-            return new HashMap<>();
-        } catch (URISyntaxException e) {
+        } catch (IOException | URISyntaxException e) {
             e.printStackTrace();
         }
 
         return new HashMap<>();
     }
 
-    public static Double getProbability(int x, int y, int len) {
+    public static double getProbability(int x, int y, int len) {
         double p = (len == 1) ? 0.98 : 0.8;
 
         BetaDistribution bd = new BetaDistribution(x + 1, y + 1);

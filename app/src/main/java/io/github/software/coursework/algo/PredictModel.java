@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 public final class PredictModel implements Model {
 
@@ -104,10 +105,10 @@ public final class PredictModel implements Model {
 
     }
 
-    public class day {
-        public static int m, d, w;
+    public class Day {
+        public int m, d, w;
 
-        public day(long time) {
+        public Day(long time) {
             Date date = new Date(time);
             m = date.getMonth();
             d = date.getDate();
@@ -144,7 +145,7 @@ public final class PredictModel implements Model {
                     long time = transaction.item().time();
                     double amount = transaction.item().amount() / 100.0;
                     String category = transaction.item().category();
-                    day d = new day(time);
+                    Day d = new Day(time);
 
                     if (!mapper.contains(category)) {
                         mapper.add(category);
@@ -192,12 +193,12 @@ public final class PredictModel implements Model {
         double[] budgetConfidenceUpper = new double[time.length()];
 
         double mean = 0.0, upper = 0.0, lower = 0.0;
-        day curDay;
+        Day curDay;
         Pair<Double, Pair<Double, Double>> p;
         for (long i = reference + 24 * 60 * 60 * 1000L, j = 0; j < time.length(); i += 24 * 60 * 60 * 1000L) {
-            curDay = new day(i);
+            curDay = new Day(i);
             for (Map.Entry<String, List<List<Double>>> gm : GMModelParameters.entrySet()) {
-                gaussMixtureModel.set(gm.getValue(), day.m, day.d, day.w);
+                gaussMixtureModel.set(gm.getValue(), curDay.m, curDay.d, curDay.w);
                 p = gaussMixtureModel.getMeanAndInterval();
                 mean += p.getLeft();
                 lower += p.getRight().getLeft();
@@ -230,12 +231,12 @@ public final class PredictModel implements Model {
         double[] budgetConfidenceUpper = new double[time.length()];
 
         double mean = 0.0, upper = 0.0, lower = 0.0;
-        day curDay;
+        Day curDay;
         Pair<Double, Pair<Double, Double>> p;
         for (long i = reference + 24 * 60 * 60 * 1000L, j = 0; j < time.length(); i += 24 * 60 * 60 * 1000L) {
-            curDay = new day(i);
+            curDay = new Day(i);
             for (Map.Entry<String, List<List<Double>>> gm : GMModelParameters.entrySet()) {
-                gaussMixtureModel.set(gm.getValue(), day.m, day.d, day.w);
+                gaussMixtureModel.set(gm.getValue(), curDay.m, curDay.d, curDay.w);
                 p = gaussMixtureModel.getMeanAndInterval();
                 mean += p.getLeft();
                 lower += p.getRight().getLeft();
@@ -263,8 +264,7 @@ public final class PredictModel implements Model {
 
     @Override
     public CompletableFuture<ImmutablePair<ImmutableIntArray, Bitmask.View2D>>
-                    predictCategoriesAndTags(ImmutableList<Transaction> transactions, ImmutableList<String> categories, ImmutableList<String> tags)
-                                    throws IllegalArgumentException {
+                    predictCategoriesAndTags(ImmutableList<Transaction> transactions, ImmutableList<String> categories, ImmutableList<String> tags) {
         Map<String, Integer> map1 = new HashMap<>(), map2 = new HashMap<>();
 
         for (int i = 0; i < categories.size(); i++) {
@@ -310,13 +310,15 @@ public final class PredictModel implements Model {
 
     @Override
     public CompletableFuture<ImmutableIntArray> predictEntityTypes(ImmutableList<Entity> entities) {
-        Map<String, Integer> map = new HashMap<>();
-        map.put("UNKNOWN", 0);
-        map.put("INDIVIDUAL", 1);
-        map.put("EDUCATION", 2);
-        map.put("GOVERNMENT", 3);
-        map.put("COMMERCIAL", 4);
-        map.put("NONPROFIT", 5);
+//        Map<String, Integer> map = new HashMap<>();
+//        map.put("UNKNOWN", 0);
+//        map.put("INDIVIDUAL", 1);
+//        map.put("EDUCATION", 2);
+//        map.put("GOVERNMENT", 3);
+//        map.put("COMMERCIAL", 4);
+//        map.put("NONPROFIT", 5);
+        Map<String, Integer> map = Arrays.stream(Entity.Type.values()).collect(Collectors.toMap(Enum::name, Enum::ordinal));
+
 
         Random random = new Random();
         int entityTypesCount = Entity.Type.values().length;

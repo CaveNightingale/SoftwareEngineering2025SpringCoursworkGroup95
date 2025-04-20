@@ -1,5 +1,6 @@
 package io.github.software.coursework;
 
+import org.apache.commons.lang3.tuple.Triple;
 import org.junit.jupiter.api.Test;
 
 import java.io.*;
@@ -30,7 +31,7 @@ public class EntityClassificationTest {
         System.out.println("通过数据集 " + target + " 预测目标： " + classificationTarget);
 
         EntityClassification entityClassification = new EntityClassification();
-        entityClassification.entityClassification("Categories1");
+        List<Triple<String, Double, String>> nGramMap = entityClassification.entityClassification("Categories1");
 
         Map<String, String> listedNames = new HashMap<>(); /// 在 Datasets 文件夹中出现的所有列表中的名字。
         Map<String, String> nGramsClassification = new HashMap<>(); /// nGrams 对应的类型。
@@ -67,21 +68,9 @@ public class EntityClassificationTest {
 
         System.out.println("listedNames read");
 
-        String projectRoot = System.getProperty("user.dir");
-        Path pathBayesian = Paths.get(projectRoot, "build", "Bayesian", target + ".txt");
-
-        byte[] allTexts = Files.readAllBytes(pathBayesian);
-        String bayesianText = new String(allTexts, StandardCharsets.UTF_8);
-        List<String> textByLines = bayesianText.lines().collect(Collectors.toList());
-
-        for (String line : textByLines) {
-            String[] parts = line.split("\t");
-            String nGram = parts[0];
-            Double probability = Double.parseDouble(parts[1]);
-            String classification = parts[2];
-
-            nGramsClassification.put(nGram, classification);
-            nGramsScore.put(nGram, probability);
+        for (Triple<String, Double, String> triple : nGramMap) {
+            nGramsScore.put(triple.getLeft(), triple.getMiddle());
+            nGramsClassification.put(triple.getLeft(), triple.getRight());
         }
 
         if (listedNames.containsKey(classificationTarget)) {

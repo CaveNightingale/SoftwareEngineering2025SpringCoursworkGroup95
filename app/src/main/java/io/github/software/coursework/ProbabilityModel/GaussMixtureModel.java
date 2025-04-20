@@ -38,7 +38,7 @@ public class GaussMixtureModel {
         }
     }
 
-    public Double getMean() {
+    public double getMean() {
         double sum = 0.0;
         for (Triple<Double, Double, Double> param : parameters) {
             sum += param.getLeft() * param.getRight();
@@ -46,7 +46,7 @@ public class GaussMixtureModel {
         return sum;
     }
 
-    public Double getIntegral(Double x) {
+    public double getIntegral(Double x) {
         double sum = 0.0;
 
         for (Triple<Double, Double, Double> param : parameters) {

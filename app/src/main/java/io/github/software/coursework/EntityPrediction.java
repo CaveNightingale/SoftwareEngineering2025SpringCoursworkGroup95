@@ -8,6 +8,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.*;
 import java.util.jar.JarException;
 import java.util.regex.Matcher;
@@ -62,10 +63,7 @@ public class EntityPrediction {
 
                 System.out.println("currentName: " + file.getName());
 
-                byte[] allTexts = Files.readAllBytes(file.toPath());
-
-                String reencodedText = new String(allTexts, StandardCharsets.UTF_8);
-                List<String> textByLines = reencodedText.lines().collect(Collectors.toList());
+                List<String> textByLines = Files.readAllLines(file.toPath(), StandardCharsets.UTF_8);
 
                 for (String line : textByLines) {
                     line = line.replaceFirst("^[1-9]\\d*\\.\\s+", "");
@@ -78,9 +76,7 @@ public class EntityPrediction {
 //                FileWriter writer = new FileWriter(file.toPath().toString(), false);
 //                writer.write("");
             }
-        } catch (java.net.URISyntaxException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
+        } catch (IOException | java.net.URISyntaxException e) {
             e.printStackTrace();
         }
 
@@ -125,7 +121,7 @@ public class EntityPrediction {
             System.out.println("目标不存在表中。");
         }
 
-        Double probability = 0.0;
+        double probability = 0.0;
 
         Random random = new Random();
         String classification = categories.get(random.nextInt(categories.size()));
@@ -175,34 +171,42 @@ public class EntityPrediction {
 
     public void saveParams() {
         try {
-            Map<String, BufferedWriter> Writers = new HashMap<>();
+            Map<String, BufferedWriter> writers = new HashMap<>();
 
             for (String category : categories) {
                 Path path = Paths.get(urlDataset.toURI()).resolve(category + ".txt");
 
-                if (Files.exists(path)) {
-                    FileWriter writer = new FileWriter(path.toString(), false);
-                    writer.write("");
+                Files.createDirectories(path.getParent());
+                if (!Files.exists(path)) {
+                    Files.createFile(path);
                 } else {
-                    File file = new File(path.toString());
-                    file.createNewFile();
+                    Files.newBufferedWriter(path, StandardCharsets.UTF_8, StandardOpenOption.TRUNCATE_EXISTING).close();
                 }
 
-                Writers.put(category, new BufferedWriter(new FileWriter(path.toString())));
+                BufferedWriter writer = Files.newBufferedWriter(
+                        path,
+                        StandardCharsets.UTF_8,
+                        StandardOpenOption.WRITE
+                );
+                writers.put(category, writer);
             }
 
             for (Map.Entry<String, String> entry : listedNames.entrySet()) {
-                Writers.get(entry.getValue()).write(entry.getKey() + "\n");
+                BufferedWriter writer = writers.get(entry.getValue());
+                if (writer != null) {
+                    writer.write(entry.getKey());
+                    writer.newLine();
+                }
             }
 
-            for (String category : categories) {
-                Writers.get(category).close();
+            for (BufferedWriter writer : writers.values()) {
+                writer.close();
             }
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (java.net.URISyntaxException e) {
+
+        } catch (IOException | java.net.URISyntaxException e) {
             e.printStackTrace();
         }
+
     }
 
     public void saveAndReload() {

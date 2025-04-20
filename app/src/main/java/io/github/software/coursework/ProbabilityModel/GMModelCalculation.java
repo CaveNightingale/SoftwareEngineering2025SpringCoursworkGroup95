@@ -149,11 +149,14 @@ public class GMModelCalculation {
         int ctops = 0;
         centers[ctops++] = t.get(0);
 
-        List<Double> G = new ArrayList();
+        double[] G = new double[t.size() + 10];
         for (int i = 1; i < k; i++) {
-            G.clear();
+            for (int j = 0; j < t.size() + 5; j++) {
+                G[j] = 0;
+            }
             Double Gsum = 0.0;
 
+            int x = 0;
             for (Double tValue : t) {
                 Double maxG = 0.0;
                 for (int j = 0; j < ctops; j++) {
@@ -163,17 +166,17 @@ public class GMModelCalculation {
                 }
 
                 Gsum += maxG;
-                G.add(maxG);
+                G[x] = maxG;
             }
 
-            G.set(0, G.get(0) / Gsum);
-            for (int j = 1; j < G.size(); j++) {
-                G.set(j, G.get(j) / Gsum + G.get(j - 1));
+            G[0] /= Gsum;
+            for (int j = 1; j < t.size(); j++) {
+                G[j] = G[j - 1] + G[j] / Gsum;
             }
 
             double random = Math.random();
-            for (int j = 0; j < G.size(); j++) {
-                if (G.get(j) > random) {
+            for (int j = 0; j < t.size(); j++) {
+                if (G[j] > random) {
                     centers[ctops++] = t.get(j);
                     break;
                 }
@@ -217,7 +220,7 @@ public class GMModelCalculation {
         List<Integer>[] re = new List[50];
 
         for (int i = 0; i < k; i++)
-            re[i] = new ArrayList();
+            re[i] = new ArrayList<>();
 
         for (int x = 0; x < t.size(); x++) {
             double i = t.get(x);
@@ -235,16 +238,16 @@ public class GMModelCalculation {
         return re;
     }
 
-    public Double BICCalculator(List<List<Double>> GMMParams) {
-        Double BIC = Math.log(p.size()) * (GMMParams.size() * 3 - 1);
-        Double lnL = 0.0;
+    public double BICCalculator(List<List<Double>> GMMParams) {
+        double BIC = Math.log(p.size()) * (GMMParams.size() * 3 - 1);
+        double lnL = 0.0;
 
         for (Pair<Double, Triple<Integer, Integer, Integer>> param : p) {
-            Double P = 0.0;
+            double P = 0.0;
             for (List<Double> gm : GMMParams) {
-                Double GP = Math.exp(-1.0 * Math.pow(param.getLeft() - gm.get(0), 2) /
+                double GP = Math.exp(-1.0 * Math.pow(param.getLeft() - gm.get(0), 2) /
                                     (2 * Math.pow(gm.get(1), 2))) / (2.0 * Math.pow(PI * 2.0, 0.5) * gm.get(1));
-                Double W = gm.get(1 + param.getRight().getLeft())
+                double W = gm.get(1 + param.getRight().getLeft())
                          + gm.get(13 + param.getRight().getMiddle())
                          + gm.get(44 + param.getRight().getRight());
 
@@ -297,17 +300,30 @@ public class GMModelCalculation {
 
         Double tmp1 = 0.0, tmp2 = 0.0;
         for (int i = 1; i < 13; i++) {
-            re.add(1.0 * countMonth1[i] / countMonth[i]);
-            tmp1 += 1.0 * countMonth1[i] / countMonth[i];
+            if (countMonth[i] != 0) {
+                re.add(1.0 * countMonth1[i] / countMonth[i]);
+                tmp1 += 1.0 * countMonth1[i] / countMonth[i];
+            } else {
+                re.add(0.0);
+            }
         }
         tmp1 /= 12.0;
         for (int i = 1; i < 32; i++) {
-            re.add(1.0 * countDay1[i] / countDay[i] - tmp1);
-            tmp2 += 1.0 * countDay1[i] / countDay[i] - tmp1;
+            if (countDay[i] != 0) {
+                re.add(1.0 * countDay1[i] / countDay[i] - tmp1);
+                tmp2 += 1.0 * countDay1[i] / countDay[i] - tmp1;
+            } else {
+                re.add(0.0 - tmp1);
+                tmp2 -= tmp1;
+            }
         }
         tmp2 /= 31.0;
         for (int i = 1; i < 8; i++) {
-            re.add(1.0 * countWeek1[i] / countWeek[i] - tmp1 - tmp2);
+            if (countWeek[i] != 0) {
+                re.add(1.0 * countWeek1[i] / countWeek[i] - tmp1 - tmp2);
+            } else {
+                re.add(0.0 - tmp1 - tmp2);
+            }
         }
 
         return re;
