@@ -50,7 +50,7 @@ public class MathTest {
     }
 
     public static void main2() {
-        String filePath = "app/src/test/java/io/github/software/coursework/Dataset/";
+        String filePath = "app/src/test/java/io/github/software/coursework/Categories1/";
         StringBuilder content = new StringBuilder();
 
         try (BufferedReader reader = new BufferedReader(

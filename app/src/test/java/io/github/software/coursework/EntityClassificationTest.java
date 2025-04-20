@@ -19,43 +19,24 @@ public class EntityClassificationTest {
     @Test
     public void aaa() throws IOException, URISyntaxException {
         EntityClassification classification = new EntityClassification();
-        classification.entityClassification("Dataset");
-
-//        try (BufferedReader dirReader = new BufferedReader(new InputStreamReader(
-//                Objects.requireNonNull(EntityClassification.class.getResourceAsStream("Dataset"))))) {
-//            while (true) {
-//                String line = dirReader.readLine();
-//                if (line == null) {
-//                    break;
-//                }
-//                try (InputStream reader = Objects.requireNonNull(EntityClassification.class.getResourceAsStream("Dataset/" + line))) {
-//                    System.out.println("===" + line + "===");
-//                    System.out.println(new String(reader.readAllBytes()));
-//                }
-//            }
-//        }
-//        URL url = EntityClassification.class.getResource("Dataset");
-//        Path url1 = Path.of(url.toURI()).resolve("Diet.txt");
-//        System.out.println(Files.readAllBytes(url1));
-//
-//        Files.writeString(Path.of("build/output.txt"), "62343");
+        classification.entityClassification("Categories1");
     }
 
     @Test
     public void bbb() throws IOException, URISyntaxException {
-        String target = "Dataset";
+        String target = "Categories1";
         String classificationTarget = "万顺叫车";
 
         System.out.println("通过数据集 " + target + " 预测目标： " + classificationTarget);
 
         EntityClassification entityClassification = new EntityClassification();
-        entityClassification.entityClassification("Dataset");
+        entityClassification.entityClassification("Categories1");
 
         Map<String, String> listedNames = new HashMap<>(); /// 在 Datasets 文件夹中出现的所有列表中的名字。
         Map<String, String> nGramsClassification = new HashMap<>(); /// nGrams 对应的类型。
         Map<String, Double> nGramsScore = new HashMap<>(); /// nGrams 对应的概率。
 
-        URL urlDataset = EntityClassification.class.getResource("Dataset");
+        URL urlDataset = EntityClassification.class.getResource("Categories1");
 
         File folder = Paths.get(urlDataset.toURI()).toFile();
 
@@ -67,7 +48,7 @@ public class EntityClassificationTest {
         List<String> catagories = new ArrayList<>();
 
         for (File file : files) {
-            String currentName = file.getName().replace(".txt", "");
+            String currentName = file.getName().replaceFirst("\\.txt$", "");
             catagories.add(currentName);
 
             System.out.println("currentName: " + file.getName());
@@ -154,5 +135,37 @@ public class EntityClassificationTest {
             System.out.println("匹配成功： 最大概率nGram：" + tmp + "，概率：" + probability + ",匹配结果：" + classification);
         }
 
+    }
+
+    @Test
+    public void ccc() {
+
+        EntityPrediction entityPrediction = new EntityPrediction("Categories1");
+        entityPrediction.loadNGram();
+
+        System.out.println(entityPrediction.predict("黄映杰"));
+        System.out.println(entityPrediction.predict("好好吃饭"));
+
+        entityPrediction.setCategory("瓦洛兰特", "aaa");
+        entityPrediction.setCategory("无印良品", "bbb");
+        entityPrediction.setCategory("无垠星环", "bbb");
+        entityPrediction.saveAndReload();
+
+
+        System.out.println(entityPrediction.predict("美团"));
+        System.out.println(entityPrediction.predict("无畏契约"));
+        System.out.println(entityPrediction.predict("掌上瓦洛兰特"));
+
+        entityPrediction.saveParams();
+    }
+
+    @Test
+    public void ddd() {
+        EntityPrediction entityPrediction1 = new EntityPrediction("Categories1");
+        entityPrediction1.loadNGram();
+        entityPrediction1.saveParams();
+        EntityPrediction entityPrediction2 = new EntityPrediction("Categories2");
+        entityPrediction2.loadNGram();
+        entityPrediction2.saveParams();
     }
 }

@@ -1,5 +1,5 @@
 // 文件：StudentExpenseSimulator.java
-package io.github.software.coursework;
+package io.github.software.coursework.ProbabilityModel;
 
 import java.time.LocalDate;
 import java.util.*;

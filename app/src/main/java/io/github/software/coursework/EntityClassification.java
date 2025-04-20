@@ -35,7 +35,11 @@ public class EntityClassification {
         Map<String, Integer> nGramAccuracy = new HashMap<>();
 
         for (String category : categories) {
-            System.out.println(category);
+//            System.out.println(category);
+
+            if (category.equalsIgnoreCase("UNKNOWN") || category.equalsIgnoreCase("INDIVIDUAL")) {
+                continue;
+            }
 
             Map<String, Integer> nGramMap = readText(fileFolderName, category);
 
@@ -59,7 +63,7 @@ public class EntityClassification {
         Map<String, Double> nGramProbability = new HashMap<>();
         for (String nGrams : nGramToCategory.keySet()) {
             int accu = nGramFrequency.get(nGrams), freq = nGramFrequency.get(nGrams);
-            nGramProbability.put(nGrams, getProbability(accu, freq - accu));
+            nGramProbability.put(nGrams, getProbability(accu, freq - accu, nGrams.length()));
         }
 
         if (!Files.exists(Paths.get("build/Bayesian"))) {
@@ -74,25 +78,17 @@ public class EntityClassification {
 
         try (FileWriter writer = new FileWriter(modelParametersDirectory, false)) {
             writer.write(""); // 写入空内容
-            System.out.println("Writing " + modelParametersDirectory);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        try (FileOutputStream fileStream = new FileOutputStream(modelParametersDirectory, false)) {
-
-            PrintStream printStream = new PrintStream(fileStream);
-            System.setOut(printStream);
 
             for (Map.Entry<String, Double> entry : nGramProbability.entrySet()) {
-                printStream.println(entry.getKey() + "\t" + entry.getValue() + "\t" + nGramToCategory.get(entry.getKey()));
+                writer.write(entry.getKey() + "\t" + entry.getValue() + "\t" + nGramToCategory.get(entry.getKey()) + "\n");
             }
 
-            printStream.close();
+            System.out.println("Writing " + modelParametersDirectory);
 
         } catch (IOException e) {
             e.printStackTrace();
         }
+
     }
 
     public static List<String> getCategories(String fileFolderName) {
@@ -100,19 +96,26 @@ public class EntityClassification {
 
         System.out.println(fileFolderName);
 
-        try (BufferedReader dirReader = new BufferedReader(new InputStreamReader(
-                Objects.requireNonNull(EntityClassification.class.getResourceAsStream(fileFolderName))))) {
+        try {
+            Path path = Paths.get(EntityClassification.class.getResource(fileFolderName).toURI());
+            File files = path.toFile();
 
-            while (true) {
-                String line = dirReader.readLine();
+            for (File file : files.listFiles()) {
+                if (!file.getName().endsWith(".txt")) {
+                    continue;
+                }
+
+                String line = file.getName();
+
+                System.out.println(line);
 
                 if (line == null) {
                     break;
                 }
 
-                categories.add(line.replaceFirst(".txt", ""));
+                categories.add(line.replaceFirst("\\.txt$", ""));
             }
-        } catch (IOException e) {
+        } catch (java.net.URISyntaxException e) {
             e.printStackTrace();
         }
 
@@ -122,9 +125,13 @@ public class EntityClassification {
     }
 
     public static Map<String, Integer> readText(String fileFolderName, String category) {
-        try (InputStream reader = Objects.requireNonNull(EntityClassification.class.getResourceAsStream(fileFolderName + "/" + category + ".txt"))) {
+//        System.out.println("read Text " + category);
+        try  {
+            Path path = Paths.get(EntityClassification.class.getResource(fileFolderName).toURI());
+            InputStream reader = Files.newInputStream(path.resolve(category + ".txt"));
+
             byte[] allText = reader.readAllBytes();
-            System.out.println(allText);
+//            System.out.println(allText);
 
             String content = new String(allText, StandardCharsets.UTF_8);
 
@@ -132,7 +139,7 @@ public class EntityClassification {
             Map<String, Integer> nGrams = new HashMap<>();
 
             for (String line : textByLines) {
-//                line = line.replaceFirst("^\\d+\\.", "");
+                line = line.replaceFirst("^[1-9]\\d*\\.\\s+", "");
 
                 line = line.replaceAll("[^\\u4e00-\\u9fa5a-zA-Z0-9]", "");
 
@@ -171,15 +178,21 @@ public class EntityClassification {
             e.printStackTrace();
 
             return new HashMap<>();
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
         }
+
+        return new HashMap<>();
     }
 
-    public static Double getProbability(Integer x, Integer y) {
+    public static Double getProbability(Integer x, Integer y, Integer len) {
+        double p = (len == 1) ? 0.98 : 0.8;
+
         BetaDistribution bd = new BetaDistribution(x + 1, y + 1);
         double l = 0.0, r = 1.0, mid;
         while (r - l > 0.00000001) {
             mid = (l + r) / 2;
-            if (1 - bd.cumulativeProbability(mid) < 0.95) {
+            if (1 - bd.cumulativeProbability(mid) < p) {
                 r = mid;
             } else {
                 l = mid;

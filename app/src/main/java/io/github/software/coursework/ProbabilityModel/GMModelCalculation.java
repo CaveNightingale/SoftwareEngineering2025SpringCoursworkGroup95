@@ -1,4 +1,4 @@
-package io.github.software.coursework;
+package io.github.software.coursework.ProbabilityModel;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
