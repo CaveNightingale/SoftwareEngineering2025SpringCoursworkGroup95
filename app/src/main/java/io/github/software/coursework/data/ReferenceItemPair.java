@@ -19,7 +19,7 @@ public record ReferenceItemPair<T extends Item>(Reference<T> reference, T item) 
     }
 
     @SuppressWarnings("unchecked")
-    public static <T extends Item> ReferenceItemPair<T> deserialize(Document.Reader reader, DeserializationConstructor<T> constructor) throws IOException {
+    public static <T extends Item> ReferenceItemPair<T> deserialize(Document.Reader reader, Deserialize<T> constructor) throws IOException {
         Reference<T> reference = (Reference<T>) reader.readReference("reference");
         T item = constructor.deserialize(reader.readCompound("item"));
         reader.readEnd();

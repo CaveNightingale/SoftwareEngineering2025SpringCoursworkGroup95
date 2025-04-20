@@ -5,6 +5,7 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <?import java.lang.*?>
+<?import org.controlsfx.control.SearchableComboBox?>
 <fx:root
         xmlns="http://javafx.com/javafx"
         xmlns:fx="http://javafx.com/fxml"
@@ -14,32 +15,32 @@
     <HBox styleClass="add-entity-row">
         <Label text="Name"/>
         <Region HBox.hgrow="ALWAYS"/>
-        <TextField styleClass="add-entity-field" fx:id="name"/>
+        <TextField styleClass="add-entity-field" fx:id="name" onKeyTyped="#handlePredictorInput"/>
     </HBox>
     <HBox styleClass="add-entity-row">
         <Label text="Telephone"/>
         <Region HBox.hgrow="ALWAYS"/>
-        <TextField styleClass="add-entity-field" fx:id="telephone"/>
+        <TextField styleClass="add-entity-field" fx:id="telephone" onKeyTyped="#handlePredictorInput"/>
     </HBox>
     <HBox styleClass="add-entity-row">
         <Label text="Email"/>
         <Region HBox.hgrow="ALWAYS"/>
-        <TextField styleClass="add-entity-field" fx:id="email"/>
+        <TextField styleClass="add-entity-field" fx:id="email" onKeyTyped="#handlePredictorInput"/>
     </HBox>
     <HBox styleClass="add-entity-row">
         <Label text="Address"/>
         <Region HBox.hgrow="ALWAYS"/>
-        <TextField styleClass="add-entity-field" fx:id="address"/>
+        <TextField styleClass="add-entity-field" fx:id="address" onKeyTyped="#handlePredictorInput"/>
     </HBox>
     <HBox styleClass="add-entity-row">
         <Label text="Website"/>
         <Region HBox.hgrow="ALWAYS"/>
-        <TextField styleClass="add-entity-field" fx:id="website"/>
+        <TextField styleClass="add-entity-field" fx:id="website" onKeyTyped="#handlePredictorInput"/>
     </HBox>
     <HBox styleClass="add-entity-row">
         <Label text="Type"/>
         <Region HBox.hgrow="ALWAYS"/>
-        <ComboBox styleClass="add-entity-field" fx:id="type" value="">
+        <SearchableComboBox styleClass="add-entity-field" fx:id="type" value="" onAction="#handleTypeInput">
             <items>
                 <FXCollections fx:factory="observableArrayList">
                     <String fx:value=""/>
@@ -50,7 +51,7 @@
                     <String fx:value="Non-profit"/>
                 </FXCollections>
             </items>
-        </ComboBox>
+        </SearchableComboBox>
     </HBox>
     <HBox styleClass="add-entity-row">
         <Region HBox.hgrow="ALWAYS"/>

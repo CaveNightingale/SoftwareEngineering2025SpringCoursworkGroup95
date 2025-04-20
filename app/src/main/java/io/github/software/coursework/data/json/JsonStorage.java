@@ -3,7 +3,9 @@ package io.github.software.coursework.data.json;
 import com.google.common.collect.ImmutableList;
 import io.github.software.coursework.data.*;
 import io.github.software.coursework.data.schema.Entity;
+import io.github.software.coursework.data.schema.Goal;
 import io.github.software.coursework.data.schema.Transaction;
+import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.io.File;
@@ -11,13 +13,12 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.SequencedCollection;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 public final class JsonStorage implements AsyncStorage {
     private static final Logger logger = Logger.getLogger(JsonStorage.class.getName());
@@ -194,16 +195,19 @@ public final class JsonStorage implements AsyncStorage {
         }
 
         @Override
-        public void put(Reference<Entity> key, Sensitivity sensitivity, @Nullable Entity value) throws IOException {
+        public @Nullable Entity put(Reference<Entity> key, Sensitivity sensitivity, @Nullable Entity value) throws IOException {
             ReferenceItemPair<Entity> queried = first(this.entityChunkedIndex.querySamples(new ReferenceItemPair<>(key, null), null, 0, 1));
+            Entity item = null;
             if (queried != null && queried.reference().equals(key)) { // Lower bound searching may return a different key
                 opLogger.log("REMOVE_ENTITY", sensitivity, queried);
                 this.entityChunkedIndex.removeSample(queried);
+                item = queried.item();
             }
             if (value != null) {
                 opLogger.log("ADD_ENTITY", sensitivity, new ReferenceItemPair<>(key, value));
                 this.entityChunkedIndex.addSample(new ReferenceItemPair<>(key, value));
             }
+            return item;
         }
 
         @Override
@@ -217,9 +221,63 @@ public final class JsonStorage implements AsyncStorage {
         }
     }
 
+    private static final class Counting extends HashMap<String, Long> implements Item {
+        public void increment(String key, long value) {
+            if (!containsKey(key)) {
+                logger.warning("Key " + key + " not found, probably these data are saved by an old version of the app. However, ignoring it.");
+                return;
+            }
+            put(key, get(key) + value);
+        }
+
+        public void increment(String key) {
+            increment(key, 1);
+        }
+
+        public void decrement(String key, long value) {
+            if (!containsKey(key)) {
+                logger.warning("Key " + key + " not found, probably these data are saved by an old version of the app. However, ignoring it.");
+                return;
+            }
+            put(key, get(key) - value);
+        }
+
+        public void decrement(String key) {
+            decrement(key, 1);
+        }
+
+        @Override
+        public void serialize(Document.Writer writer) throws IOException {
+            int i = 0;
+            for (Entry<String, Long> entry : entrySet()) {
+                Document.Writer entryWriter = writer.writeCompound(i++);
+                entryWriter.writeString("key", entry.getKey());
+                entryWriter.writeInteger("value", entry.getValue());
+                entryWriter.writeEnd();
+            }
+            writer.writeEnd();
+        }
+
+        public static Counting deserialize(Document.Reader reader) throws IOException {
+            Counting counting = new Counting();
+            for (int i = 0; !reader.isEnd(); i++) {
+                Document.Reader entryReader = reader.readCompound(i);
+                String key = entryReader.readString("key");
+                long value = entryReader.readInteger("value");
+                counting.put(key, value);
+                entryReader.readEnd();
+            }
+            reader.readEnd();
+            return counting;
+        }
+    }
+
     public final class JsonTransactionTable implements TransactionTable {
         private final ChunkedIndex<ReferenceItemPair<Transaction>> transactionIndex;
         private final ChunkedIndex<ReferenceItemPair<Transaction>> transactionIndexByTime;
+        private final Counting categoryCount;
+        private final Counting tagCount;
+        private final Directory directory;
 
         private JsonTransactionTable(Directory directory) throws IOException {
             this.transactionIndex = new ChunkedIndex<>(
@@ -228,6 +286,17 @@ public final class JsonStorage implements AsyncStorage {
             this.transactionIndexByTime = new ChunkedIndex<>(
                     directory.withNamespace("by-time"), Comparator.comparingLong((ReferenceItemPair<Transaction> a) -> a.item().time()).reversed(),
                     reader -> ReferenceItemPair.deserialize(reader, Transaction::deserialize));
+            Counting categoryCount = directory.get("category", Counting::deserialize);
+            if (categoryCount == null) {
+                categoryCount = new Counting();
+            }
+            this.categoryCount = categoryCount;
+            Counting tagCount = directory.get("tag", Counting::deserialize);
+            if (tagCount == null) {
+                tagCount = new Counting();
+            }
+            this.tagCount = tagCount;
+            this.directory = directory;
         }
 
         @Override
@@ -239,24 +308,138 @@ public final class JsonStorage implements AsyncStorage {
         }
 
         @Override
-        public void flush() throws IOException {
-            transactionIndexByTime.flush();
-            transactionIndex.flush();
+        public ImmutablePair<Set<String>, Set<String>> getCategories() throws IOException {
+            return ImmutablePair.of(
+                    categoryCount.keySet(),
+                    categoryCount.entrySet().stream().filter(e -> e.getValue() > 0).map(Map.Entry::getKey).collect(Collectors.toSet())
+            );
         }
 
         @Override
-        public void put(Reference<Transaction> key, Sensitivity sensitivity, @Nullable Transaction value) throws IOException {
+        public void addCategory(String category, Sensitivity sensitivity) throws IOException {
+            if (categoryCount.containsKey(category)) {
+                throw new SyntaxException("Category already exists");
+            } else {
+                categoryCount.put(category, 0L);
+                opLogger.log("ADD_CATEGORY", sensitivity, writer -> {
+                    writer.writeString("category", category);
+                    writer.writeEnd();
+                });
+                directory.put("category", categoryCount);
+            }
+        }
+
+        @Override
+        public void removeCategory(String category, Sensitivity sensitivity) throws IOException {
+            if (!categoryCount.containsKey(category)) {
+                throw new SyntaxException("Category does not exist");
+            } else if (categoryCount.get(category) > 0) {
+                throw new SyntaxException("Category is currently in use");
+            } else {
+                categoryCount.remove(category);
+                opLogger.log("REMOVE_CATEGORY", sensitivity, writer -> {
+                    writer.writeString("category", category);
+                    writer.writeEnd();
+                });
+            }
+        }
+
+        @Override
+        public ImmutablePair<Set<String>, Set<String>> getTags() throws IOException {
+            return ImmutablePair.of(
+                    tagCount.keySet(),
+                    tagCount.entrySet().stream().filter(e -> e.getValue() > 0).map(Map.Entry::getKey).collect(Collectors.toSet())
+            );
+        }
+
+        @Override
+        public void addTag(String tag, Sensitivity sensitivity) throws IOException {
+            if (tagCount.containsKey(tag)) {
+                throw new SyntaxException("Tag already exists");
+            } else {
+                tagCount.put(tag, 0L);
+                opLogger.log("ADD_TAG", sensitivity, writer -> {
+                    writer.writeString("tag", tag);
+                    writer.writeEnd();
+                });
+                directory.put("tag", tagCount);
+            }
+        }
+
+        @Override
+        public void removeTag(String tag, Sensitivity sensitivity) throws IOException {
+            if (!tagCount.containsKey(tag)) {
+                throw new SyntaxException("Tag does not exist");
+            } else if (tagCount.get(tag) > 0) {
+                throw new SyntaxException("Tag is currently in use");
+            } else {
+                tagCount.remove(tag);
+                opLogger.log("REMOVE_TAG", sensitivity, writer -> {
+                    writer.writeString("tag", tag);
+                    writer.writeEnd();
+                });
+            }
+        }
+
+        @Override
+        public @Nullable Goal getGoal() throws IOException {
+            try {
+                return Optional.ofNullable(directory.get("goal", Goal.Optional::deserialize))
+                        .map(Goal.Optional::goal).orElse(null);
+            } catch (NoSuchDocumentException ex) {
+                return null;
+            }
+        }
+
+        @Override
+        public void setGoal(@Nullable Goal goal, Sensitivity sensitivity) throws IOException {
+            Goal oldGoal = getGoal();
+            if (oldGoal != null) {
+                opLogger.log("RESET_GOAL", sensitivity, oldGoal);
+            }
+            if (goal == null) {
+                directory.put("goal", new Goal.Optional());
+            } else {
+                opLogger.log("SET_GOAL", sensitivity, goal);
+                directory.put("goal", new Goal.Optional(goal));
+            }
+        }
+
+        @Override
+        public void flush() throws IOException {
+            transactionIndexByTime.flush();
+            transactionIndex.flush();
+            directory.put("category", categoryCount);
+            directory.put("tag", tagCount);
+        }
+
+        @Override
+        public @Nullable Transaction put(Reference<Transaction> key, Sensitivity sensitivity, @Nullable Transaction value) throws IOException {
             ReferenceItemPair<Transaction> queried = first(this.transactionIndex.querySamples(new ReferenceItemPair<>(key, null), null, 0, 1));
+            Transaction item = null;
             if (queried != null && queried.reference().equals(key)) { // Lower bound searching may return a different key
                 opLogger.log("REMOVE_TRANSACTION", sensitivity, queried);
+                categoryCount.decrement(queried.item().category());
+                for (String tag : queried.item().tags()) {
+                    tagCount.decrement(tag);
+                }
                 this.transactionIndex.removeSample(queried);
                 this.transactionIndexByTime.removeSample(queried);
+                item = queried.item();
             }
             if (value != null) {
                 opLogger.log("ADD_TRANSACTION", sensitivity, new ReferenceItemPair<>(key, value));
+                categoryCount.increment(value.category());
+                for (String tag : value.tags()) {
+                    tagCount.increment(tag);
+                }
                 this.transactionIndex.addSample(new ReferenceItemPair<>(key, value));
                 this.transactionIndexByTime.addSample(new ReferenceItemPair<>(key, value));
             }
+            // Statistics is updated in every put() call
+            directory.put("category", categoryCount);
+            directory.put("tag", tagCount);
+            return item;
         }
 
         @Override
@@ -282,7 +465,7 @@ public final class JsonStorage implements AsyncStorage {
         }
 
         @Override
-        public <T extends Item> @Nullable T get(String name, DeserializationConstructor<T> constructor) throws IOException {
+        public <T extends Item> @Nullable T get(String name, Deserialize<T> constructor) throws IOException {
             return backing.get(name, constructor);
         }
 

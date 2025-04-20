@@ -3,7 +3,7 @@ package io.github.software.coursework.data.json;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import io.github.software.coursework.data.DeserializationConstructor;
+import io.github.software.coursework.data.Deserialize;
 import io.github.software.coursework.data.Directory;
 import io.github.software.coursework.data.Document;
 import io.github.software.coursework.data.Item;
@@ -106,7 +106,7 @@ public final class EncryptedDirectory implements Directory {
 
     @Override
     @SuppressWarnings("unchecked")
-    public <T extends Item> @Nullable T get(String name, DeserializationConstructor<T> constructor) throws IOException {
+    public <T extends Item> @Nullable T get(String name, Deserialize<T> constructor) throws IOException {
         if (buffer.containsKey(name)) {
             return (T) buffer.get(name);
         }

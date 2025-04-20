@@ -46,7 +46,7 @@ application {
     mainClass = 'io.github.software.coursework.App'
     applicationDefaultJvmArgs = [
         "--module-path=${configurations.runtimeClasspath.asPath}",
-        "--add-modules=javafx.controls,javafx.fxml"
+        "--add-modules=javafx.controls,javafx.fxml,java.desktop"
     ]
 }
 

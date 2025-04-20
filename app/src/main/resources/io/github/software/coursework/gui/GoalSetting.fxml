@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import io.github.software.coursework.gui.GoalSetting?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<fx:root
+        xmlns="http://javafx.com/javafx"
+        xmlns:fx="http://javafx.com/fxml"
+        type="io.github.software.coursework.gui.GoalSetting"
+>
+    <HBox styleClass="setting-title">
+        <Label text="Goal"/>
+    </HBox>
+    <HBox styleClass="setting-line">
+        <Region HBox.hgrow="ALWAYS"/>
+        <Button text="Auto" styleClass="setting-field-button" onAction="#handleAutoComplete"/>
+    </HBox>
+    <HBox styleClass="setting-line">
+        <Label text="Start" styleClass="setting-field-name"/>
+        <Region HBox.hgrow="ALWAYS"/>
+        <DatePicker styleClass="setting-field-text" fx:id="goalStart"/>
+    </HBox>
+    <HBox styleClass="setting-line">
+        <Label text="End" styleClass="setting-field-name"/>
+        <Region HBox.hgrow="ALWAYS"/>
+        <DatePicker styleClass="setting-field-text" fx:id="goalEnd"/>
+    </HBox>
+    <HBox styleClass="setting-line">
+        <Label text="Budget" styleClass="setting-field-name"/>
+        <Region HBox.hgrow="ALWAYS"/>
+        <Spinner styleClass="setting-field-text" editable="true" fx:id="goalBudget">
+            <valueFactory>
+                <SpinnerValueFactory.DoubleSpinnerValueFactory min="-1e18" max="1e18" initialValue="0" amountToStepBy="100"/>
+            </valueFactory>
+        </Spinner>
+    </HBox>
+    <HBox styleClass="setting-line">
+        <Label text="Saving" styleClass="setting-field-name"/>
+        <Region HBox.hgrow="ALWAYS"/>
+        <Spinner styleClass="setting-field-text" editable="true" fx:id="goalSaving">
+            <valueFactory>
+                <SpinnerValueFactory.DoubleSpinnerValueFactory min="-1e18" max="1e18" initialValue="0" amountToStepBy="100"/>
+            </valueFactory>
+        </Spinner>
+    </HBox>
+    <HBox styleClass="setting-line">
+        <Label text="Categorical Settings" styleClass="setting-field-name"/>
+        <Region HBox.hgrow="ALWAYS"/>
+        <Label text="Budget" styleClass="setting-field-half"/>
+        <Label text="Saving" styleClass="setting-field-half"/>
+    </HBox>
+    <VBox fx:id="categoryList">
+    </VBox>
+    <HBox styleClass="setting-line">
+        <Label text="Apply" styleClass="setting-field-name"/>
+        <Region HBox.hgrow="ALWAYS"/>
+        <Button styleClass="setting-field-button" text="Apply Changes" onAction="#handleApply"/>
+    </HBox>
+    <HBox styleClass="setting-line">
+        <Label text="Remove" styleClass="setting-field-name"/>
+        <Region HBox.hgrow="ALWAYS"/>
+        <Button styleClass="setting-field-button" text="Remove Goal" onAction="#handleRemove"/>
+    </HBox>
+</fx:root>
