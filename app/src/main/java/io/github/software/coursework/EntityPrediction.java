@@ -16,13 +16,13 @@ import java.util.stream.Collectors;
 
 public class EntityPrediction {
 
-    public static Map<String, String> listedNames;
-    public static Map<String, String> nGramsClassification;
-    public static Map<String, Double> nGramsScore;
-    public static List<String> categories;
-    public static String target;
-    public static int x;
-    public static URL urlDataset;
+    public Map<String, String> listedNames;
+    public Map<String, String> nGramsClassification;
+    public Map<String, Double> nGramsScore;
+    public List<String> categories;
+    public String target;
+    public int x;
+    public URL urlDataset;
 
     public EntityPrediction(String target) {
         this.target = target;
@@ -35,15 +35,15 @@ public class EntityPrediction {
         urlDataset = EntityClassification.class.getResource(target);
     }
 
-    public static boolean hasCategory(String category) {
+    public boolean hasCategory(String category) {
         return categories.contains(category);
     }
 
-    public static void loadNGram() {
+    public void loadNGram() {
         System.out.println("Loading N-Grams");
 
         EntityClassification entityClassification = new EntityClassification();
-        entityClassification.entityClassification(target);
+        List<Triple<String, Double, String>> nGramMap = entityClassification.entityClassification(target);
 
         try {
             System.out.println("Loading Names");
@@ -86,27 +86,32 @@ public class EntityPrediction {
 
         System.out.println("listedNames read");
 
-        String projectRoot = System.getProperty("user.dir");
-        Path pathBayesian = Paths.get(projectRoot, "build", "Bayesian", target + ".txt");
-
-        try {
-            byte[] allTexts = Files.readAllBytes(pathBayesian);
-            String bayesianText = new String(allTexts, StandardCharsets.UTF_8);
-            List<String> textByLines = bayesianText.lines().collect(Collectors.toList());
-
-            for (String line : textByLines) {
-                String[] parts = line.split("\t");
-                String nGram = parts[0];
-                Double probability = Double.parseDouble(parts[1]);
-                String classification = parts[2];
-
-                nGramsClassification.put(nGram, classification);
-                nGramsScore.put(nGram, probability);
-            }
-
-        } catch (IOException e) {
-            e.printStackTrace();
+        for (Triple<String, Double, String> triple : nGramMap) {
+            nGramsScore.put(triple.getLeft(), triple.getMiddle());
+            nGramsClassification.put(triple.getLeft(), triple.getRight());
         }
+
+//        String projectRoot = System.getProperty("user.dir");
+//        Path pathBayesian = Paths.get(projectRoot, "build", "Bayesian", target + ".txt");
+//
+//        try {
+//            byte[] allTexts = Files.readAllBytes(pathBayesian);
+//            String bayesianText = new String(allTexts, StandardCharsets.UTF_8);
+//            List<String> textByLines = bayesianText.lines().collect(Collectors.toList());
+//
+//            for (String line : textByLines) {
+//                String[] parts = line.split("\t");
+//                String nGram = parts[0];
+//                Double probability = Double.parseDouble(parts[1]);
+//                String classification = parts[2];
+//
+//                nGramsClassification.put(nGram, classification);
+//                nGramsScore.put(nGram, probability);
+//            }
+//
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
     }
 
     public Triple<String, String, Double> predict(String classificationTarget) {
@@ -168,7 +173,7 @@ public class EntityPrediction {
         return Triple.of(classification, tmp, probability);
     }
 
-    public static void saveParams() {
+    public void saveParams() {
         try {
             Map<String, BufferedWriter> Writers = new HashMap<>();
 
@@ -200,7 +205,7 @@ public class EntityPrediction {
         }
     }
 
-    public static void saveAndReload() {
+    public void saveAndReload() {
         saveParams();
 
         listedNames.clear();
@@ -219,7 +224,7 @@ public class EntityPrediction {
             categories.add(category);
         }
 
-        if (x == 1) {
+        if (x >= 1) {
             x = 0;
             saveAndReload();
         }

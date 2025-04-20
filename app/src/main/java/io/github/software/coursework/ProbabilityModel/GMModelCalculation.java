@@ -29,14 +29,14 @@ import static java.lang.Math.*;
  */
 public class GMModelCalculation {
 
-    public static List<Pair<Double, Triple<Integer, Integer, Integer>>> p;
-    public static int[] countMonth = new int[13];
-    public static int[] countDay = new int[32];
-    public static int[] countWeek = new int[8];
-    public static List<Double> t;
+    public List<Pair<Double, Triple<Integer, Integer, Integer>>> p;
+    public int[] countMonth = new int[13];
+    public int[] countDay = new int[32];
+    public int[] countWeek = new int[8];
+    public List<Double> t;
 
 
-    public static List<List<Double>> GMModelCalculator(List<Pair<Double, Triple<Integer, Integer, Integer>>> params) {
+    public List<List<Double>> GMModelCalculator(List<Pair<Double, Triple<Integer, Integer, Integer>>> params) {
         p = params;
         t = new ArrayList<>();
 
@@ -144,7 +144,7 @@ public class GMModelCalculation {
         return answer;
     }
 
-    public static List<Integer>[] kMeansPlus(int k) {
+    public List<Integer>[] kMeansPlus(int k) {
         Double[] centers = new Double[50];
         int ctops = 0;
         centers[ctops++] = t.get(0);
@@ -235,7 +235,7 @@ public class GMModelCalculation {
         return re;
     }
 
-    public static Double BICCalculator(List<List<Double>> GMMParams) {
+    public Double BICCalculator(List<List<Double>> GMMParams) {
         Double BIC = Math.log(p.size()) * (GMMParams.size() * 3 - 1);
         Double lnL = 0.0;
 
@@ -266,7 +266,7 @@ public class GMModelCalculation {
         return BIC;
     }
 
-    public static List<Double> gaussParamsCalculator(List<Pair<Double, Triple<Integer, Integer, Integer>>> params) {
+    public List<Double> gaussParamsCalculator(List<Pair<Double, Triple<Integer, Integer, Integer>>> params) {
         int[] countMonth1 = new int[13];
         int[] countDay1 = new int[32];
         int[] countWeek1 = new int[8];

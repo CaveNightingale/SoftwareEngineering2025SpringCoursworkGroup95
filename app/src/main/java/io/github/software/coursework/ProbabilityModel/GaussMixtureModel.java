@@ -12,7 +12,7 @@ import java.util.stream.IntStream;
 
 public class GaussMixtureModel {
 
-    public static List<Triple<Double, Double, Double>> parameters;
+    public List<Triple<Double, Double, Double>> parameters;
     public static NormalDistribution dist;
 
     public GaussMixtureModel() {
@@ -20,7 +20,7 @@ public class GaussMixtureModel {
         dist = new NormalDistribution(0, 1);
     }
 
-    public static void set(List<List<Double>> GMModelParam, int m, int d, int w) throws Exception {
+    public void set(List<List<Double>> GMModelParam, int m, int d, int w) {
         int month = 1 + m;
         int day = 13 + d;
         int week = 44 + w;
@@ -38,7 +38,7 @@ public class GaussMixtureModel {
         }
     }
 
-    public static Double getMean() {
+    public Double getMean() {
         double sum = 0.0;
         for (Triple<Double, Double, Double> param : parameters) {
             sum += param.getLeft() * param.getRight();
@@ -46,7 +46,7 @@ public class GaussMixtureModel {
         return sum;
     }
 
-    public static Double getIntegral(Double x) {
+    public Double getIntegral(Double x) {
         double sum = 0.0;
 
         for (Triple<Double, Double, Double> param : parameters) {
@@ -56,7 +56,7 @@ public class GaussMixtureModel {
         return sum;
     }
 
-    public static Pair<Double, Double> getInterval() {
+    public Pair<Double, Double> getInterval() {
         double l = -9999999.0, r = 9999999.0;
         double reL, reR, mid = 0;
         while (r - l > 0.0000001) {
@@ -84,7 +84,7 @@ public class GaussMixtureModel {
         return new ImmutablePair<>(Math.max(0, reL), Math.max(0, reR));
     }
 
-    public static Pair<Double, Pair<Double, Double>> getMeanAndInterval() {
+    public Pair<Double, Pair<Double, Double>> getMeanAndInterval() {
         return new ImmutablePair<>(getMean(), getInterval());
     }
 }

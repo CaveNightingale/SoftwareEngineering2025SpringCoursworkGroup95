@@ -5,41 +5,116 @@ import com.google.common.primitives.ImmutableDoubleArray;
 import com.google.common.primitives.ImmutableIntArray;
 import com.google.common.primitives.ImmutableLongArray;
 import io.github.software.coursework.EntityPrediction;
+import io.github.software.coursework.ProbabilityModel.GMModelCalculation;
 import io.github.software.coursework.ProbabilityModel.GaussMixtureModel;
 import io.github.software.coursework.data.AsyncStorage;
+import io.github.software.coursework.data.Document;
+import io.github.software.coursework.data.Item;
+import io.github.software.coursework.data.ReferenceItemPair;
 import io.github.software.coursework.data.schema.Entity;
 import io.github.software.coursework.data.schema.Transaction;
 import io.github.software.coursework.util.Bitmask;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.tuple.Triple;
+
+import java.util.Calendar;
+import java.util.Date;
 
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public final class PredictModel implements Model {
 
-    public static GaussMixtureModel gaussMixtureModel;
-    public static EntityPrediction entityPrediction1;
-    public static EntityPrediction entityPrediction2;
-    public static List<List<Double>> GMModelParameters;
+    public GaussMixtureModel gaussMixtureModel;
+    public EntityPrediction entityPrediction1;
+    public EntityPrediction entityPrediction2;
+    public Map<String, List<List<Double>>> GMModelParameters;
+    private final AsyncStorage storage;
 
-    public PredictModel() {
-        gaussMixtureModel = new GaussMixtureModel();
-        entityPrediction1 = new EntityPrediction("Categories1");
-        entityPrediction2 = new EntityPrediction("Categories2");
+    private record Parameters(Map<String, List<List<Double>>> parameters) implements Item {
+        public static Parameters deserialize(Document.Reader reader) throws IOException {
+            Map<String, List<List<Double>>> parameters = new HashMap<>();
+            for (int idx = 0; !reader.isEnd(); idx++) {
+                Document.Reader entryReader = reader.readCompound(idx);
+                String key = entryReader.readString("key");
+                ArrayList<List<Double>> value = new ArrayList<>();
+                Document.Reader valueReader = entryReader.readCompound("value");
+                for (int i = 0; !valueReader.isEnd(); i++) {
+                    ArrayList<Double> row = new ArrayList<>();
+                    Document.Reader rowReader = valueReader.readCompound(i);
+                    for (int j = 0; !rowReader.isEnd(); j++) {
+                        row.add(rowReader.readFloat(j));
+                    }
+                    rowReader.readEnd();
+                    value.add(row);
+                }
+                parameters.put(key, value);
+                valueReader.readEnd();
+                entryReader.readEnd();
+            }
+            reader.readEnd();
+            return new Parameters(parameters);
+        }
 
-        GMModelParameters = new ArrayList<>();
+        @Override
+        public void serialize(Document.Writer writer) throws IOException {
+            int idx = 0;
+            for (Map.Entry<String, List<List<Double>>> entry : parameters.entrySet()) {
+                Document.Writer entryWriter = writer.writeCompound(idx++);
+                entryWriter.writeString("key", entry.getKey());
+                Document.Writer valueWriter = writer.writeCompound("value");
+                int i = 0;
+                for (List<Double> l : entry.getValue()) {
+                    Document.Writer rowWriter = valueWriter.writeCompound(i++);
+                    int j = 0;
+                    for (Double d : l) {
+                        rowWriter.writeFloat(j++, d);
+                    }
+                    rowWriter.writeEnd();
+                }
+                valueWriter.writeEnd();
+                entryWriter.writeEnd();
+            }
+            writer.writeEnd();
+        }
     }
 
-    public PredictModel(List<List<Double>> GMModelParameters) {
+    public PredictModel(AsyncStorage storage) {
         gaussMixtureModel = new GaussMixtureModel();
         entityPrediction1 = new EntityPrediction("Categories1");
         entityPrediction2 = new EntityPrediction("Categories2");
 
-        this.GMModelParameters = new ArrayList<>();
-        for (List<Double> gm : GMModelParameters) {
-            GMModelParameters.add(new ArrayList<>(gm));
+        GMModelParameters = new HashMap<>();
+        this.storage = storage;
+    }
+
+    public PredictModel(Map<String, List<List<Double>>> GMModelParameters, AsyncStorage storage) {
+        gaussMixtureModel = new GaussMixtureModel();
+        entityPrediction1 = new EntityPrediction("Categories1");
+        entityPrediction2 = new EntityPrediction("Categories2");
+
+        this.GMModelParameters = new HashMap<>();
+        for (Map.Entry<String, List<List<Double>>> gm : GMModelParameters.entrySet()) {
+            GMModelParameters.put(gm.getKey(), gm.getValue());
+        }
+        this.storage = storage;
+
+    }
+
+    public class day {
+        public static int m, d, w;
+
+        public day(long time) {
+            Date date = new Date(time);
+            m = date.getMonth();
+            d = date.getDate();
+
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTime(date);
+            w = calendar.get(Calendar.DAY_OF_WEEK);
         }
     }
 
@@ -52,11 +127,55 @@ public final class PredictModel implements Model {
     @Override
     public void loadParameters(AsyncStorage.ModelDirectory reader) throws IOException {
 
+        loadTransactionsAndTrain();
+
+    }
+
+    public void loadTransactionsAndTrain() {
+        List<Pair<Double, Triple<Integer, Integer, Integer>>> transLists = new ArrayList<>();
+        List<Pair<String, Pair<Double, Triple<Integer, Integer, Integer>>>> arrLists = new ArrayList<>();
+        List<String> mapper = new ArrayList<>();
+        GMModelParameters.clear();
+
+        storage.transaction(table -> {
+            try {
+                SequencedCollection<ReferenceItemPair<Transaction>> transactions = table.list(Long.MIN_VALUE, Long.MAX_VALUE, 0, Integer.MAX_VALUE);
+                for (var transaction : transactions) {
+                    long time = transaction.item().time();
+                    double amount = transaction.item().amount() / 100.0;
+                    String category = transaction.item().category();
+                    day d = new day(time);
+
+                    if (!mapper.contains(category)) {
+                        mapper.add(category);
+                    }
+
+                    Pair<Double, Triple<Integer, Integer, Integer>> t = Pair.of(amount, Triple.of(d.m, d.d, d.w));
+                    arrLists.add(Pair.of(category, t));
+                }
+
+                GMModelCalculation calculation = new GMModelCalculation();
+
+                for (String category : mapper) {
+                    transLists.clear();
+                    for (Pair<String, Pair<Double, Triple<Integer, Integer, Integer>>> t : arrLists) {
+                        if (!t.getLeft().equalsIgnoreCase(category)) {
+                            continue;
+                        }
+                        transLists.add(t.getRight());
+                    }
+
+                    GMModelParameters.put(category, calculation.GMModelCalculator(transLists));
+                }
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
     }
 
     @Override
     public PredictModel fork() {
-        return new PredictModel(GMModelParameters);
+        return new PredictModel(GMModelParameters, storage);
     }
 
     ///  not done yet
@@ -65,18 +184,34 @@ public final class PredictModel implements Model {
         return CompletableFuture.completedFuture(null);
     }
 
-    ///  not done yet
     @Override
     public CompletableFuture<ImmutablePair<ImmutableDoubleArray, Pair<ImmutableDoubleArray, ImmutableDoubleArray>>>
                     predictBudgetUsage(long reference, ImmutableLongArray time) {
         double[] budgetMean = new double[time.length()];
         double[] budgetConfidenceLower = new double[time.length()];
         double[] budgetConfidenceUpper = new double[time.length()];
-        for (int i = 0; i < time.length(); i++) {
-            budgetMean[i] = (double) (time.get(i) - reference) / 85000;
-            budgetConfidenceLower[i] = (double) (time.get(i) - reference) / 100000;
-            budgetConfidenceUpper[i] = (double) (time.get(i) - reference) / 60000;
+
+        double mean = 0.0, upper = 0.0, lower = 0.0;
+        day curDay;
+        Pair<Double, Pair<Double, Double>> p;
+        for (long i = reference + 24 * 60 * 60 * 1000L, j = 0; j < time.length(); i += 24 * 60 * 60 * 1000L) {
+            curDay = new day(i);
+            for (Map.Entry<String, List<List<Double>>> gm : GMModelParameters.entrySet()) {
+                gaussMixtureModel.set(gm.getValue(), day.m, day.d, day.w);
+                p = gaussMixtureModel.getMeanAndInterval();
+                mean += p.getLeft();
+                lower += p.getRight().getLeft();
+                upper += p.getRight().getRight();
+            }
+
+            if (i == time.get((int)j)) {
+                budgetMean[(int)j] = mean * 100;
+                budgetConfidenceLower[(int)j] = lower * 100;
+                budgetConfidenceUpper[(int)j] = upper * 100;
+                j++;
+            }
         }
+
         return CompletableFuture.completedFuture(
                 ImmutablePair.of(
                         ImmutableDoubleArray.copyOf(budgetMean),
@@ -88,17 +223,33 @@ public final class PredictModel implements Model {
         );
     }
 
-    ///  not done yet
     @Override
     public CompletableFuture<ImmutablePair<ImmutableDoubleArray, Pair<ImmutableDoubleArray, ImmutableDoubleArray>>> predictSavedAmount(long reference, ImmutableLongArray time) {
         double[] budgetMean = new double[time.length()];
         double[] budgetConfidenceLower = new double[time.length()];
         double[] budgetConfidenceUpper = new double[time.length()];
-        for (int i = 0; i < time.length(); i++) {
-            budgetMean[i] = (double) (time.get(i) - reference) / 120000;
-            budgetConfidenceLower[i] = (double) (time.get(i) - reference) / 130000;
-            budgetConfidenceUpper[i] = (double) (time.get(i) - reference) / 70000;
+
+        double mean = 0.0, upper = 0.0, lower = 0.0;
+        day curDay;
+        Pair<Double, Pair<Double, Double>> p;
+        for (long i = reference + 24 * 60 * 60 * 1000L, j = 0; j < time.length(); i += 24 * 60 * 60 * 1000L) {
+            curDay = new day(i);
+            for (Map.Entry<String, List<List<Double>>> gm : GMModelParameters.entrySet()) {
+                gaussMixtureModel.set(gm.getValue(), day.m, day.d, day.w);
+                p = gaussMixtureModel.getMeanAndInterval();
+                mean += p.getLeft();
+                lower += p.getRight().getLeft();
+                upper += p.getRight().getRight();
+            }
+
+            if (i == time.get((int)j)) {
+                budgetMean[(int)j] = (double) (time.get((int)j) - reference) / 120000 - mean * 100;
+                budgetConfidenceLower[(int)j] = (double) (time.get((int)j) - reference) / 130000 - upper * 100;
+                budgetConfidenceUpper[(int)j] = (double) (time.get((int)j) - reference) / 70000 - lower * 100;
+                j++;
+            }
         }
+
         return CompletableFuture.completedFuture(
                 ImmutablePair.of(
                         ImmutableDoubleArray.copyOf(budgetMean),
@@ -189,7 +340,8 @@ public final class PredictModel implements Model {
 
     ///  not done yet
     @Override
-    public CompletableFuture<ImmutablePair<ImmutablePair<Long, ImmutableLongArray>, ImmutablePair<Long, ImmutableLongArray>>> predictGoals(ImmutableList<String> categories, long startTime, long endTime) {
+    public CompletableFuture<ImmutablePair<ImmutablePair<Long, ImmutableLongArray>, ImmutablePair<Long, ImmutableLongArray>>>
+                    predictGoals(ImmutableList<String> categories, long startTime, long endTime) {
         long[] budget = new long[categories.size()];
         long[] saving = new long[categories.size()];
         Random random = new Random();

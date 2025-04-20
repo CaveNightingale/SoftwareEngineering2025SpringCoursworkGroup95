@@ -12,6 +12,7 @@ import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.PrintStream;
 
+import org.apache.commons.lang3.tuple.Triple;
 import org.apache.commons.math3.distribution.BetaDistribution;
 
 import java.util.stream.Collectors;
@@ -25,7 +26,7 @@ import java.nio.charset.StandardCharsets;
 
 public class EntityClassification {
 
-    public static void entityClassification(String fileFolderName) {
+    public static List<Triple<String, Double, String>> entityClassification(String fileFolderName) {
         List<String> categories = getCategories(fileFolderName);
 
         System.out.println(categories);
@@ -66,29 +67,35 @@ public class EntityClassification {
             nGramProbability.put(nGrams, getProbability(accu, freq - accu, nGrams.length()));
         }
 
-        if (!Files.exists(Paths.get("build/Bayesian"))) {
-            try {
-                Files.createDirectories(Paths.get("build/Bayesian"));
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+        List<Triple<String, Double, String>> ret = new ArrayList<>();
+
+//        if (!Files.exists(Paths.get("build/Bayesian"))) {
+//            try {
+//                Files.createDirectories(Paths.get("build/Bayesian"));
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            }
+//        }
+//
+//        String modelParametersDirectory = "build/Bayesian/" + fileFolderName + ".txt";
+//
+//        try (FileWriter writer = new FileWriter(modelParametersDirectory, false)) {
+//            writer.write(""); // 写入空内容
+//
+//            for (Map.Entry<String, Double> entry : nGramProbability.entrySet()) {
+//                writer.write(entry.getKey() + "\t" + entry.getValue() + "\t" + nGramToCategory.get(entry.getKey()) + "\n");
+//            }
+//
+//            System.out.println("Writing " + modelParametersDirectory);
+//
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+        for (Map.Entry<String, Double> entry : nGramProbability.entrySet()) {
+            ret.add(Triple.of(entry.getKey(), entry.getValue(), nGramToCategory.get(entry.getKey())));
         }
 
-        String modelParametersDirectory = "build/Bayesian/" + fileFolderName + ".txt";
-
-        try (FileWriter writer = new FileWriter(modelParametersDirectory, false)) {
-            writer.write(""); // 写入空内容
-
-            for (Map.Entry<String, Double> entry : nGramProbability.entrySet()) {
-                writer.write(entry.getKey() + "\t" + entry.getValue() + "\t" + nGramToCategory.get(entry.getKey()) + "\n");
-            }
-
-            System.out.println("Writing " + modelParametersDirectory);
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
+        return ret;
     }
 
     public static List<String> getCategories(String fileFolderName) {
@@ -128,14 +135,7 @@ public class EntityClassification {
 //        System.out.println("read Text " + category);
         try  {
             Path path = Paths.get(EntityClassification.class.getResource(fileFolderName).toURI());
-            InputStream reader = Files.newInputStream(path.resolve(category + ".txt"));
-
-            byte[] allText = reader.readAllBytes();
-//            System.out.println(allText);
-
-            String content = new String(allText, StandardCharsets.UTF_8);
-
-            List<String> textByLines = content.lines().collect(Collectors.toList());
+            List<String> textByLines = Files.readAllLines(path, StandardCharsets.UTF_8);
             Map<String, Integer> nGrams = new HashMap<>();
 
             for (String line : textByLines) {
@@ -158,17 +158,9 @@ public class EntityClassification {
                 String lst = "";
                 for (String part : parts) {
                     if (lst != "") {
-                        if (nGrams.containsKey(lst + part)) {
-                            nGrams.put(lst + part, nGrams.get(lst + part) + 1);
-                        } else {
-                            nGrams.put(lst + part, 1);
-                        }
+                        nGrams.compute(lst + part, (key, count) -> count == null ? 1 : count + 1);
                     }
-                    if (nGrams.containsKey(part)) {
-                        nGrams.put(part, nGrams.get(part) + 1);
-                    } else {
-                        nGrams.put(part, 1);
-                    }
+                    nGrams.compute(part, (key, count) -> count == null ? 1 : count + 1);
                     lst = part;
                 }
             }
@@ -185,7 +177,7 @@ public class EntityClassification {
         return new HashMap<>();
     }
 
-    public static Double getProbability(Integer x, Integer y, Integer len) {
+    public static Double getProbability(int x, int y, int len) {
         double p = (len == 1) ? 0.98 : 0.8;
 
         BetaDistribution bd = new BetaDistribution(x + 1, y + 1);
