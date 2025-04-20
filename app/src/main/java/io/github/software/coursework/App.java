@@ -6,6 +6,7 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import io.github.software.coursework.algo.Model;
 import io.github.software.coursework.algo.NoSkill;
+import io.github.software.coursework.algo.PredictModel;
 import io.github.software.coursework.data.AsyncStorage;
 import io.github.software.coursework.data.json.EncryptedLogger;
 import io.github.software.coursework.data.json.Encryption;
@@ -64,7 +65,7 @@ public class App extends Application {
             }
             try {
                 storage = new JsonStorage(event.getAccount(), event.getPassword());
-                model = new NoSkill();
+                model = new PredictModel(storage);
                 storage.model(modelDirectory -> {
                     try {
                         model.loadParameters(modelDirectory);

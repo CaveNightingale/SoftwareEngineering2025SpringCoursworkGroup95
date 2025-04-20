@@ -364,11 +364,13 @@ public final class JsonStorage implements AsyncStorage {
             Counting categoryCount = directory.get("category", Counting::deserialize);
             if (categoryCount == null) {
                 categoryCount = new Counting(defaultCategories);
+                directory.put("category", categoryCount);
             }
             this.categoryCount = categoryCount;
             Counting tagCount = directory.get("tag", Counting::deserialize);
             if (tagCount == null) {
                 tagCount = new Counting(defaultTags);
+                directory.put("tag", tagCount);
             }
             this.tagCount = tagCount;
             this.directory = directory;
