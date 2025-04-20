@@ -18,9 +18,8 @@ import java.util.stream.Collectors;
 public class EntityClassificationTest {
 
     @Test
-    public void aaa() throws IOException, URISyntaxException {
-        EntityClassification classification = new EntityClassification();
-        classification.entityClassification("Categories1");
+    public void aaa() {
+        EntityClassification.entityClassification("Categories1");
     }
 
     @Test
@@ -30,8 +29,7 @@ public class EntityClassificationTest {
 
         System.out.println("通过数据集 " + target + " 预测目标： " + classificationTarget);
 
-        EntityClassification entityClassification = new EntityClassification();
-        List<Triple<String, Double, String>> nGramMap = entityClassification.entityClassification("Categories1");
+        List<Triple<String, Double, String>> nGramMap = EntityClassification.entityClassification("Categories1");
 
         Map<String, String> listedNames = new HashMap<>(); /// 在 Datasets 文件夹中出现的所有列表中的名字。
         Map<String, String> nGramsClassification = new HashMap<>(); /// nGrams 对应的类型。
@@ -56,7 +54,7 @@ public class EntityClassificationTest {
 
             byte[] allTexts = Files.readAllBytes(file.toPath());
             String reencodedText = new String(allTexts, StandardCharsets.UTF_8);
-            List<String> textByLines = reencodedText.lines().collect(Collectors.toList());
+            List<String> textByLines = reencodedText.lines().toList();
 
 //            System.out.println("reencoded text: " + reencodedText + "all text: " + allTexts);
 

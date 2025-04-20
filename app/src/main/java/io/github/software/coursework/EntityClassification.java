@@ -12,6 +12,8 @@ import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.PrintStream;
 
+import com.google.common.collect.ImmutableSet;
+import com.google.common.reflect.ClassPath;
 import org.apache.commons.lang3.tuple.Triple;
 import org.apache.commons.math3.distribution.BetaDistribution;
 
@@ -25,6 +27,17 @@ import java.nio.file.Files;
 import java.nio.charset.StandardCharsets;
 
 public class EntityClassification {
+
+    private static final ClassPath classPath;
+    private static final Set<ClassPath.ResourceInfo> resources;
+    static {
+        try {
+            classPath = ClassPath.from(EntityClassification.class.getClassLoader());
+            resources = classPath.getResources().stream().filter(r -> r.getResourceName().startsWith("io/github/software/coursework/")).collect(Collectors.toSet());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     public static List<Triple<String, Double, String>> entityClassification(String fileFolderName) {
         List<String> categories = getCategories(fileFolderName);
@@ -69,28 +82,6 @@ public class EntityClassification {
 
         List<Triple<String, Double, String>> ret = new ArrayList<>();
 
-//        if (!Files.exists(Paths.get("build/Bayesian"))) {
-//            try {
-//                Files.createDirectories(Paths.get("build/Bayesian"));
-//            } catch (IOException e) {
-//                e.printStackTrace();
-//            }
-//        }
-//
-//        String modelParametersDirectory = "build/Bayesian/" + fileFolderName + ".txt";
-//
-//        try (FileWriter writer = new FileWriter(modelParametersDirectory, StandardCharsets.UTF_8)) {
-//            writer.write(""); // 写入空内容
-//
-//            for (Map.Entry<String, Double> entry : nGramProbability.entrySet()) {
-//                writer.write(entry.getKey() + "\t" + entry.getValue() + "\t" + nGramToCategory.get(entry.getKey()) + "\n");
-//            }
-//
-//            System.out.println("Writing " + modelParametersDirectory);
-//
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
         for (Map.Entry<String, Double> entry : nGramProbability.entrySet()) {
             ret.add(Triple.of(entry.getKey(), entry.getValue(), nGramToCategory.get(entry.getKey())));
         }
@@ -103,23 +94,13 @@ public class EntityClassification {
 
         System.out.println(fileFolderName);
 
-        try {
-            Path path = Paths.get(EntityClassification.class.getResource(fileFolderName).toURI());
-            File files = path.toFile();
+        URL url = Objects.requireNonNull(EntityClassification.class.getResource(fileFolderName));
+        System.out.println("URL: " + url);
 
-            for (File file : files.listFiles()) {
-                if (!file.getName().endsWith(".txt")) {
-                    continue;
-                }
-
-                String line = file.getName();
-
-                System.out.println(line);
-
-                categories.add(line.replaceFirst("\\.txt$", ""));
+        for (ClassPath.ResourceInfo resource : resources) {
+            if (resource.getResourceName().startsWith("io/github/software/coursework/" + fileFolderName)) {
+                categories.add(resource.getResourceName().substring(resource.getResourceName().lastIndexOf('/') + 1).replaceFirst("\\.txt$", ""));
             }
-        } catch (URISyntaxException e) {
-            e.printStackTrace();
         }
 
         System.out.println(categories);
@@ -128,7 +109,7 @@ public class EntityClassification {
     }
 
     public static Map<String, Integer> readText(String fileFolderName, String category) {
-//        System.out.println("read Text " + category);
+        System.out.println("read Text " + category);
         try  {
             Path path = Paths.get(EntityClassification.class.getResource(fileFolderName).toURI());
             List<String> textByLines = Files.readAllLines(path.resolve(category + ".txt"), StandardCharsets.UTF_8);

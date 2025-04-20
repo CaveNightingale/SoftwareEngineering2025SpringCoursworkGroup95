@@ -1,21 +1,32 @@
 package io.github.software.coursework;
 
+import com.google.common.collect.ImmutableSet;
+import com.google.common.reflect.ClassPath;
 import org.apache.commons.lang3.tuple.Triple;
 
 import java.io.*;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.*;
-import java.util.jar.JarException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class EntityPrediction {
+
+    private static final ClassPath classPath;
+    private static final Set<ClassPath.ResourceInfo> resources;
+    static {
+        try {
+            classPath = ClassPath.from(EntityClassification.class.getClassLoader());
+            resources = classPath.getResources().stream().filter(r -> r.getResourceName().startsWith("io/github/software/coursework/")).collect(Collectors.toSet());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     public Map<String, String> listedNames;
     public Map<String, String> nGramsClassification;
@@ -43,41 +54,27 @@ public class EntityPrediction {
     public void loadNGram() {
         System.out.println("Loading N-Grams");
 
-        EntityClassification entityClassification = new EntityClassification();
-        List<Triple<String, Double, String>> nGramMap = entityClassification.entityClassification(target);
+        List<Triple<String, Double, String>> nGramMap = EntityClassification.entityClassification(target);
+//        System.out.println(nGramMap);
 
-        try {
-            System.out.println("Loading Names");
+        for (ClassPath.ResourceInfo resource : resources) {
+            if (resource.url().toString().startsWith(urlDataset.toString())) {
 
-            File folder = Paths.get(urlDataset.toURI()).toFile();
-
-            if (!folder.exists() || !folder.isDirectory()) {
-                throw new RuntimeException("Folder does not exist or is not a directory");
-            }
-
-            File[] files = folder.listFiles();
-
-            for (File file : files) {
-                String currentName = file.getName().replaceFirst("\\.txt$", "");
+                String fileName = resource.getResourceName();
+                String simpleName = fileName.substring(fileName.lastIndexOf("/") + 1);
+                String currentName = simpleName.replaceFirst("\\.txt$", "");
                 categories.add(currentName);
-
-                System.out.println("currentName: " + file.getName());
-
-                List<String> textByLines = Files.readAllLines(file.toPath(), StandardCharsets.UTF_8);
-
-                for (String line : textByLines) {
-                    line = line.replaceFirst("^[1-9]\\d*\\.\\s+", "");
-
-                    listedNames.put(line, currentName);
-
-                    System.out.println(line + " " + currentName);
+                try (InputStream inputStream = resource.url().openStream()) {
+                    byte[] bytes = inputStream.readAllBytes();
+                    for (String line : new String(bytes, StandardCharsets.UTF_8).split("\n")) {
+                        line = line.replaceFirst("^[1-9]\\d*\\.\\s+", "").replaceAll("\r", "");
+                        listedNames.put(line, currentName);
+                        System.out.println(line + " " + simpleName);
+                    }
+                } catch (IOException ex) {
+                    ex.printStackTrace();
                 }
-
-//                FileWriter writer = new FileWriter(file.toPath().toString(), false);
-//                writer.write("");
             }
-        } catch (IOException | java.net.URISyntaxException e) {
-            e.printStackTrace();
         }
 
         System.out.println("listedNames read");
@@ -87,27 +84,6 @@ public class EntityPrediction {
             nGramsClassification.put(triple.getLeft(), triple.getRight());
         }
 
-//        String projectRoot = System.getProperty("user.dir");
-//        Path pathBayesian = Paths.get(projectRoot, "build", "Bayesian", target + ".txt");
-//
-//        try {
-//            byte[] allTexts = Files.readAllBytes(pathBayesian);
-//            String bayesianText = new String(allTexts, StandardCharsets.UTF_8);
-//            List<String> textByLines = bayesianText.lines().collect(Collectors.toList());
-//
-//            for (String line : textByLines) {
-//                String[] parts = line.split("\t");
-//                String nGram = parts[0];
-//                Double probability = Double.parseDouble(parts[1]);
-//                String classification = parts[2];
-//
-//                nGramsClassification.put(nGram, classification);
-//                nGramsScore.put(nGram, probability);
-//            }
-//
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
     }
 
     public Triple<String, String, Double> predict(String classificationTarget) {
@@ -171,38 +147,21 @@ public class EntityPrediction {
 
     public void saveParams() {
         try {
-            Map<String, BufferedWriter> writers = new HashMap<>();
-
-            for (String category : categories) {
-                Path path = Paths.get(urlDataset.toURI()).resolve(category + ".txt");
-
-                Files.createDirectories(path.getParent());
-                if (!Files.exists(path)) {
-                    Files.createFile(path);
-                } else {
-                    Files.newBufferedWriter(path, StandardCharsets.UTF_8, StandardOpenOption.TRUNCATE_EXISTING).close();
-                }
-
-                BufferedWriter writer = Files.newBufferedWriter(
-                        path,
-                        StandardCharsets.UTF_8,
-                        StandardOpenOption.WRITE
-                );
-                writers.put(category, writer);
-            }
-
+            HashMap<String, StringBuilder> textByCategory = new HashMap<>();
             for (Map.Entry<String, String> entry : listedNames.entrySet()) {
-                BufferedWriter writer = writers.get(entry.getValue());
-                if (writer != null) {
-                    writer.write(entry.getKey());
-                    writer.newLine();
-                }
+                textByCategory.computeIfAbsent(entry.getValue(), k -> new StringBuilder()).append(entry.getKey()).append("\n");
             }
-
-            for (BufferedWriter writer : writers.values()) {
-                writer.close();
+            Map<String, BufferedWriter> writers = new HashMap<>();
+            // TODO: Rewrite this so that it works with compiled jar files
+            for (Map.Entry<String, StringBuilder> entry : textByCategory.entrySet()) {
+                Files.writeString(
+                        Paths.get(urlDataset.toURI()).resolve(entry.getKey() + ".txt"),
+                        entry.getValue(),
+                        StandardOpenOption.CREATE,
+                        StandardOpenOption.WRITE,
+                        StandardOpenOption.TRUNCATE_EXISTING
+                );
             }
-
         } catch (IOException | java.net.URISyntaxException e) {
             e.printStackTrace();
         }
