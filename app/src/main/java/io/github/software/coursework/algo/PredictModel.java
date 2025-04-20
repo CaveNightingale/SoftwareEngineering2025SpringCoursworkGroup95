@@ -85,7 +85,9 @@ public final class PredictModel implements Model {
         changedFlag = 0;
         gaussMixtureModel = new GaussMixtureModel();
         entityPrediction1 = new EntityPrediction("Categories1");
+        entityPrediction1.loadNGram();
         entityPrediction2 = new EntityPrediction("Categories2");
+        entityPrediction2.loadNGram();
 
         GMModelParameters = new HashMap<>();
         this.storage = storage;
@@ -95,12 +97,12 @@ public final class PredictModel implements Model {
         changedFlag = 0;
         gaussMixtureModel = new GaussMixtureModel();
         entityPrediction1 = new EntityPrediction("Categories1");
+        entityPrediction1.loadNGram();
         entityPrediction2 = new EntityPrediction("Categories2");
+        entityPrediction2.loadNGram();
 
         this.GMModelParameters = new HashMap<>();
-        for (Map.Entry<String, List<List<Double>>> gm : GMModelParameters.entrySet()) {
-            GMModelParameters.put(gm.getKey(), gm.getValue());
-        }
+        this.GMModelParameters.putAll(GMModelParameters);
         this.storage = storage;
 
     }
@@ -185,6 +187,7 @@ public final class PredictModel implements Model {
             changedFlag++;
             if (changedFlag == 2) {
                 loadTransactionsAndTrain();
+                changedFlag = 0;
             }
         }
 
@@ -218,9 +221,10 @@ public final class PredictModel implements Model {
             }
 
             if (i == time.get((int)j)) {
-                budgetMean[(int)j] = mean * 100;
-                budgetConfidenceLower[(int)j] = lower * 100;
-                budgetConfidenceUpper[(int)j] = upper * 100;
+                budgetMean[(int)j] = mean;
+                budgetConfidenceLower[(int)j] = lower;
+                budgetConfidenceUpper[(int)j] = upper;
+                System.out.println("Time: " + i + " " + time.get((int)j) + " " + mean + " " + lower + " " + upper);
                 j++;
             }
         }
@@ -256,9 +260,9 @@ public final class PredictModel implements Model {
             }
 
             if (i == time.get((int)j)) {
-                budgetMean[(int)j] = (double) (time.get((int)j) - reference) / 120000 - mean * 100;
-                budgetConfidenceLower[(int)j] = (double) (time.get((int)j) - reference) / 130000 - upper * 100;
-                budgetConfidenceUpper[(int)j] = (double) (time.get((int)j) - reference) / 70000 - lower * 100;
+                budgetMean[(int)j] = (double) (time.get((int)j) - reference) / 120000 - mean;
+                budgetConfidenceLower[(int)j] = (double) (time.get((int)j) - reference) / 130000 - upper;
+                budgetConfidenceUpper[(int)j] = (double) (time.get((int)j) - reference) / 70000 - lower;
                 j++;
             }
         }
@@ -277,58 +281,58 @@ public final class PredictModel implements Model {
     @Override
     public CompletableFuture<ImmutablePair<ImmutableIntArray, Bitmask.View2D>>
                     predictCategoriesAndTags(ImmutableList<Transaction> transactions, ImmutableList<String> categories, ImmutableList<String> tags) {
-        Map<String, Integer> map1 = new HashMap<>(), map2 = new HashMap<>();
+        CompletableFuture<ImmutablePair<ImmutableIntArray, Bitmask.View2D>> future = new CompletableFuture<>();
 
-        for (int i = 0; i < categories.size(); i++) {
-            map1.put(categories.get(i).toUpperCase(), i);
-        }
-        for (int i = 0; i < tags.size(); i++) {
-            map2.put(tags.get(i).toUpperCase(), i);
-        }
+        storage.entity(entity -> {
+            try {
+                Map<String, Integer> map1 = new HashMap<>(), map2 = new HashMap<>();
 
-        Random random = new Random();
-        int[] category = new int[transactions.size()];
-        for (int i = 0; i < transactions.size(); i++) {
-            String answer = entityPrediction2.predict(transactions.get(i).title() + transactions.get(i).entity().getClass().getName()).getLeft();
-            answer = answer.toUpperCase();
+                for (int i = 0; i < categories.size(); i++) {
+                    map1.put(categories.get(i).toUpperCase(), i);
+                }
+                for (int i = 0; i < tags.size(); i++) {
+                    map2.put(tags.get(i).toUpperCase(), i);
+                }
 
-            if (map1.containsKey(answer)) {
-                category[i] = map1.get(answer);
-            } else {
-                category[i] = random.nextInt(categories.size());
-            }
-        }
-        Bitmask.View2DMutable mask = Bitmask.view2DMutable(new long[Bitmask.size2d(tags.size(), transactions.size())], transactions.size());
-        for (int i = 0; i < transactions.size(); i++) {
-            for (int j = 0; j < tags.size(); j++) {
-                mask.set(j, i, false);
-            }
+                Random random = new Random();
+                int[] category = new int[transactions.size()];
+                for (int i = 0; i < transactions.size(); i++) {
+                    String answer = entityPrediction2.predict(transactions.get(i).title() + entity.get(transactions.get(i).entity()).name()).getLeft();
+                    answer = answer.toUpperCase();
 
-            String answer = entityPrediction1.predict(transactions.get(i).title() + transactions.get(i).entity().getClass().getName()).getLeft();
-            answer = answer.toUpperCase();
+                    if (map1.containsKey(answer)) {
+                        category[i] = map1.get(answer);
+                    } else {
+                        category[i] = random.nextInt(categories.size());
+                    }
+                }
+                Bitmask.View2DMutable mask = Bitmask.view2DMutable(new long[Bitmask.size2d(tags.size(), transactions.size())], transactions.size());
+                for (int i = 0; i < transactions.size(); i++) {
+                    for (int j = 0; j < tags.size(); j++) {
+                        mask.set(j, i, false);
+                    }
 
-            if (map2.containsKey(answer)) {
-                mask.set(map2.get(answer), i, true);
-            }
-        }
+                    String answer = entityPrediction1.predict(transactions.get(i).title() + entity.get(transactions.get(i).entity()).name()).getLeft();
+                    answer = answer.toUpperCase();
 
-        return CompletableFuture.completedFuture(
-                ImmutablePair.of(
+                    if (map2.containsKey(answer)) {
+                        mask.set(map2.get(answer), i, true);
+                    }
+                }
+                future.complete(ImmutablePair.of(
                         ImmutableIntArray.copyOf(category),
                         mask.view()
-                )
-        );
+                ));
+            } catch (IOException ex) {
+                future.completeExceptionally(ex);
+            }
+        });
+
+        return future;
     }
 
     @Override
     public CompletableFuture<ImmutableIntArray> predictEntityTypes(ImmutableList<Entity> entities) {
-//        Map<String, Integer> map = new HashMap<>();
-//        map.put("UNKNOWN", 0);
-//        map.put("INDIVIDUAL", 1);
-//        map.put("EDUCATION", 2);
-//        map.put("GOVERNMENT", 3);
-//        map.put("COMMERCIAL", 4);
-//        map.put("NONPROFIT", 5);
         Map<String, Integer> map = Arrays.stream(Entity.Type.values()).collect(Collectors.toMap(Enum::name, Enum::ordinal));
 
 
