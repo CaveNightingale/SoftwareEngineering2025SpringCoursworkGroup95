@@ -104,12 +104,24 @@ public class AddTransaction extends VBox {
         // Listen to the text field of the DatePicker to catch invalid date input
         TextField timeTextField = time.getEditor();
         timeTextField.textProperty().addListener((observable, oldValue, newValue) -> {
-            if (!newValue.isEmpty() && !isValidDate(newValue)) {
-                message.setText("Invalid date format");
-                time.setStyle("-fx-border-color: red;");
+            if (!newValue.isEmpty()) {
+                if (isValidDate(newValue)) {
+                    message.setText("");
+                    time.setStyle("");
+                    try {
+                        // 统一转换为标准格式存储
+                        String normalized = normalizeDateString(newValue);
+                        time.setValue(LocalDate.parse(normalized));
+                    } catch (DateTimeParseException e) {
+                        // 理论上不会发生，因为已经校验过
+                    }
+                } else {
+                    message.setText("Invalid date format (e.g. yyyy-MM-dd or yyyy/M/d)");
+                    time.setStyle("-fx-border-color: red;");
+                }
             } else {
-                message.setText(""); // Clear message when valid
-                time.setStyle(""); // Reset border color to default
+                message.setText("Date is required");
+                time.setStyle("-fx-border-color: red;");
             }
         });
 
@@ -147,13 +159,41 @@ public class AddTransaction extends VBox {
         });
     }
 
+    // 新增的辅助方法
+    private String normalizeDateString(String dateStr) {
+        String[] parts = dateStr.split("[/-]");
+        return String.format("%04d-%02d-%02d",
+                Integer.parseInt(parts[0]),
+                Integer.parseInt(parts[1]),
+                Integer.parseInt(parts[2]));
+    }
+
     private boolean isValidDate(String dateStr) {
+        // 先尝试直接解析
         try {
-            // Attempt to parse the date string to LocalDate
             LocalDate.parse(dateStr);
             return true;
-        } catch (DateTimeParseException e) {
-            return false; // Invalid date
+        } catch (DateTimeParseException e1) {
+            // 尝试替换斜杠为横杠
+            try {
+                LocalDate.parse(dateStr.replace('/', '-'));
+                return true;
+            } catch (DateTimeParseException e2) {
+                // 尝试更宽松的解析方式
+                try {
+                    String[] parts = dateStr.split("[/-]");
+                    if (parts.length == 3) {
+                        int year = Integer.parseInt(parts[0]);
+                        int month = Integer.parseInt(parts[1]);
+                        int day = Integer.parseInt(parts[2]);
+                        LocalDate.of(year, month, day);  // 这会验证日期是否有效
+                        return true;
+                    }
+                } catch (Exception e3) {
+                    return false;
+                }
+                return false;
+            }
         }
     }
 
@@ -191,7 +231,7 @@ public class AddTransaction extends VBox {
             message.setText("Amount is required");
             amount.setStyle("-fx-border-color: red;");
         } else if (!newValue.matches("[+\\-]?\\d+(\\.\\d{0,2})?")) {
-            message.setText("Amount is invalid ");
+            message.setText("Amount is invalid");
             amount.setStyle("-fx-border-color: red;");
         } else {
             message.setText(""); // Clear message when valid
@@ -202,11 +242,22 @@ public class AddTransaction extends VBox {
     // Time validation logic
     private void validateTime(LocalDate newValue) {
         if (newValue == null) {
-            message.setText("Time is required");
-            time.setStyle("-fx-border-color: red;");
+            String text = time.getEditor().getText();
+            if (!text.isEmpty()) {
+                if (isValidDate(text)) {
+                    message.setText("");
+                    time.setStyle("");
+                } else {
+                    message.setText("Invalid date format (e.g. yyyy-MM-dd or yyyy/M/d)");
+                    time.setStyle("-fx-border-color: red;");
+                }
+            } else {
+                message.setText("Date is required");
+                time.setStyle("-fx-border-color: red;");
+            }
         } else {
-            message.setText(""); // Clear message when valid
-            time.setStyle(""); // Reset border color to default
+            message.setText("");
+            time.setStyle("");
         }
     }
 
@@ -228,8 +279,18 @@ public class AddTransaction extends VBox {
             return;
         }
         if (time.getValue() == null) {
-            message.setText("Time is required");
-            return;
+            String text = time.getEditor().getText();
+            if (!text.isEmpty() && isValidDate(text)) {
+                try {
+                    time.setValue(LocalDate.parse(normalizeDateString(text)));
+                } catch (DateTimeParseException e) {
+                    message.setText("Invalid date format");
+                    return;
+                }
+            } else {
+                message.setText("Date is required");
+                return;
+            }
         }
         setDisable(true);
         fireEvent(new SubmitEvent(this, this, false));
