@@ -7,10 +7,7 @@ import com.google.common.primitives.ImmutableLongArray;
 import io.github.software.coursework.EntityPrediction;
 import io.github.software.coursework.ProbabilityModel.GMModelCalculation;
 import io.github.software.coursework.ProbabilityModel.GaussMixtureModel;
-import io.github.software.coursework.data.AsyncStorage;
-import io.github.software.coursework.data.Document;
-import io.github.software.coursework.data.Item;
-import io.github.software.coursework.data.ReferenceItemPair;
+import io.github.software.coursework.data.*;
 import io.github.software.coursework.data.schema.Entity;
 import io.github.software.coursework.data.schema.Transaction;
 import io.github.software.coursework.util.Bitmask;
@@ -34,6 +31,7 @@ public final class PredictModel implements Model {
     public EntityPrediction entityPrediction2;
     public Map<String, List<List<Double>>> GMModelParameters;
     private final AsyncStorage storage;
+    public int changedFlag;
 
     private record Parameters(Map<String, List<List<Double>>> parameters) implements Item {
         public static Parameters deserialize(Document.Reader reader) throws IOException {
@@ -84,6 +82,7 @@ public final class PredictModel implements Model {
     }
 
     public PredictModel(AsyncStorage storage) {
+        changedFlag = 0;
         gaussMixtureModel = new GaussMixtureModel();
         entityPrediction1 = new EntityPrediction("Categories1");
         entityPrediction2 = new EntityPrediction("Categories2");
@@ -93,6 +92,7 @@ public final class PredictModel implements Model {
     }
 
     public PredictModel(Map<String, List<List<Double>>> GMModelParameters, AsyncStorage storage) {
+        changedFlag = 0;
         gaussMixtureModel = new GaussMixtureModel();
         entityPrediction1 = new EntityPrediction("Categories1");
         entityPrediction2 = new EntityPrediction("Categories2");
@@ -179,9 +179,21 @@ public final class PredictModel implements Model {
         return new PredictModel(GMModelParameters, storage);
     }
 
-    ///  not done yet
     @Override
     public CompletableFuture<Void> trainOnUpdate(Update<Entity> entityUpdate, Update<Transaction> transactionUpdate) {
+        if (!transactionUpdate.oldItems().isEmpty() && !transactionUpdate.newItems().isEmpty()) {
+            changedFlag++;
+            if (changedFlag == 2) {
+                loadTransactionsAndTrain();
+            }
+        }
+
+        for (Map.Entry<Reference<Entity>, Entity> entry : entityUpdate.newItems().entrySet()) {
+            String name = entry.getValue().name();
+            String cate2 = entry.getValue().type().toString();
+
+            entityPrediction2.setCategory(name, cate2);
+        }
         return CompletableFuture.completedFuture(null);
     }
 
@@ -340,24 +352,34 @@ public final class PredictModel implements Model {
         );
     }
 
-    ///  not done yet
     @Override
     public CompletableFuture<ImmutablePair<ImmutablePair<Long, ImmutableLongArray>, ImmutablePair<Long, ImmutableLongArray>>>
                     predictGoals(ImmutableList<String> categories, long startTime, long endTime) {
         long[] budget = new long[categories.size()];
         long[] saving = new long[categories.size()];
+        long overallBudget = 0, overallSaving = 0;
         Random random = new Random();
         for (int i = 0; i < categories.size(); i++) {
-            if (random.nextBoolean()) {
-                budget[i] = random.nextLong(1000L);
+            if (GMModelParameters.containsKey(categories.get(i))) {
+                budget[i] = 0;
+                double curBudget = 0.0;
+                Day curDay;
+                for (long curTime = startTime; curTime <= endTime; curTime += 24 * 60 * 60 * 1000L) {
+                    curDay = new Day(curTime);
+                    gaussMixtureModel.set(GMModelParameters.get(categories.get(i)), curDay.m, curDay.d, curDay.w);
+                    curBudget += gaussMixtureModel.getMean();
+                }
+                budget[i] += (long)(curBudget * 100);
+                overallBudget += budget[i];
             } else {
-                saving[i] = random.nextLong(1000L);
+                saving[i] = ((endTime - startTime) / (24 * 60 * 60 * 1000L) + 1) * 20000L;
+                overallSaving += saving[i];
             }
         }
         return CompletableFuture.completedFuture(
                 ImmutablePair.of(
-                        ImmutablePair.of(random.nextLong(1000L), ImmutableLongArray.copyOf(budget)),
-                        ImmutablePair.of(random.nextLong(2000L), ImmutableLongArray.copyOf(saving))
+                        ImmutablePair.of(overallBudget, ImmutableLongArray.copyOf(budget)),
+                        ImmutablePair.of(overallSaving, ImmutableLongArray.copyOf(saving))
                 )
         );
     }
