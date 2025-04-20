@@ -202,3 +202,11 @@
     -fx-pref-width: 30em;
     -fx-min-width: 15em;
 }
+
+.add-transaction-error {
+    -fx-padding: 0 8 0 0;
+    -fx-text-fill: red;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold; 
+    -fx-translate-y: 6px;
+}

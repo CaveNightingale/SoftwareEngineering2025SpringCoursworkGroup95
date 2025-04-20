@@ -35,6 +35,13 @@ public class AddTransaction extends VBox {
     private TextField amount;
 
     @FXML
+    private Label amountError;
+
+    @FXML
+    private Label timeError;
+
+
+    @FXML
     private ComboBox<ReferenceItemPair<Entity>> entity;
 
     @FXML
@@ -228,16 +235,17 @@ public class AddTransaction extends VBox {
     // Amount validation logic
     private void validateAmount(String newValue) {
         if (newValue.isEmpty()) {
-            message.setText("Amount is required");
+            amountError.setText("Amount is required");
             amount.setStyle("-fx-border-color: red;");
         } else if (!newValue.matches("[+\\-]?\\d+(\\.\\d{0,2})?")) {
-            message.setText("Amount is invalid");
+            amountError.setText("Amount is invalid");
             amount.setStyle("-fx-border-color: red;");
         } else {
-            message.setText(""); // Clear message when valid
-            amount.setStyle(""); // Reset border color to default
+            amountError.setText("");
+            amount.setStyle("");
         }
     }
+
 
     // Time validation logic
     private void validateTime(LocalDate newValue) {
@@ -245,56 +253,78 @@ public class AddTransaction extends VBox {
             String text = time.getEditor().getText();
             if (!text.isEmpty()) {
                 if (isValidDate(text)) {
-                    message.setText("");
+                    timeError.setText("");
                     time.setStyle("");
                 } else {
-                    message.setText("Invalid date format (e.g. yyyy-MM-dd or yyyy/M/d)");
+                    timeError.setText("Invalid date format (e.g. yyyy-MM-dd or yyyy/M/d)");
                     time.setStyle("-fx-border-color: red;");
                 }
             } else {
-                message.setText("Date is required");
+                timeError.setText("Date is required");
                 time.setStyle("-fx-border-color: red;");
             }
         } else {
-            message.setText("");
+            timeError.setText("");
             time.setStyle("");
         }
     }
 
+
     public void handleMouseClick() {
+        boolean hasError = false;
+        message.setText("");
+
         if (title.getText().isEmpty()) {
             message.setText("Title is required");
-            return;
+            hasError = true;
         }
+
         if (amount.getText().isEmpty()) {
-            message.setText("Amount is required");
-            return;
+            amountError.setText("Amount is required");
+            amount.setStyle("-fx-border-color: red;");
+            hasError = true;
+        } else if (!amount.getText().matches("[+\\-]?\\d+(\\.\\d{0,2})?")) {
+            amountError.setText("Amount is invalid");
+            amount.setStyle("-fx-border-color: red;");
+            hasError = true;
+        } else {
+            amountError.setText("");
+            amount.setStyle("");
         }
-        if (!amount.getText().matches("[+\\-]?\\d+\\.?\\d{0,2}")) {
-            message.setText("Amount is invalid");
-            return;
-        }
+
         if (entity.getValue() == null) {
             message.setText("Entity is required");
-            return;
+            hasError = true;
         }
+
         if (time.getValue() == null) {
             String text = time.getEditor().getText();
             if (!text.isEmpty() && isValidDate(text)) {
                 try {
                     time.setValue(LocalDate.parse(normalizeDateString(text)));
+                    timeError.setText("");
+                    time.setStyle("");
                 } catch (DateTimeParseException e) {
-                    message.setText("Invalid date format");
-                    return;
+                    timeError.setText("Invalid date format");
+                    time.setStyle("-fx-border-color: red;");
+                    hasError = true;
                 }
             } else {
-                message.setText("Date is required");
-                return;
+                timeError.setText("Date is required");
+                time.setStyle("-fx-border-color: red;");
+                hasError = true;
             }
+        } else {
+            timeError.setText("");
+            time.setStyle("");
         }
+
+        if (hasError) return;
+
         setDisable(true);
         fireEvent(new SubmitEvent(this, this, false));
     }
+
 
     public void handleDelete() {
         fireEvent(new SubmitEvent(this, this, true));
