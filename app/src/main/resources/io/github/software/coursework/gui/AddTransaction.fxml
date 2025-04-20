@@ -3,6 +3,8 @@
 <?import io.github.software.coursework.gui.AddTransaction?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
+<?import org.controlsfx.control.ToggleSwitch?>
+<?import javafx.scene.web.WebView?>
 <fx:root
         xmlns="http://javafx.com/javafx"
         xmlns:fx="http://javafx.com/fxml"
@@ -46,7 +48,11 @@
     <HBox styleClass="add-transaction-row">
         <Label text="Note"/>
         <Region HBox.hgrow="ALWAYS"/>
-        <TextArea styleClass="add-transaction-field" fx:id="note"/>
+        <ToggleSwitch text="Preview" fx:id="previewSwitch"/>
+        <StackPane styleClass="add-transaction-field" >
+            <WebView fx:id="notePreview" managed="false" visible="false"/>
+            <TextArea fx:id="note"/>
+        </StackPane>
     </HBox>
     <HBox styleClass="add-transaction-row">
         <Region HBox.hgrow="ALWAYS"/>

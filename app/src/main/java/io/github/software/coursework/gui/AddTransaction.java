@@ -14,7 +14,12 @@ import javafx.scene.control.*;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
+import javafx.scene.web.WebView;
 import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.commonmark.node.Node;
+import org.commonmark.parser.Parser;
+import org.commonmark.renderer.html.HtmlRenderer;
+import org.controlsfx.control.ToggleSwitch;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -43,7 +48,6 @@ public class AddTransaction extends VBox {
     @FXML
     private Label titleError;
 
-
     @FXML
     private ComboBox<ReferenceItemPair<Entity>> entity;
 
@@ -64,6 +68,12 @@ public class AddTransaction extends VBox {
 
     @FXML
     private Region deleteSpace;
+
+    @FXML
+    private WebView notePreview;
+
+    @FXML
+    private ToggleSwitch previewSwitch;
 
     private final ObjectProperty<EventHandler<SubmitEvent>> onSubmit = new SimpleObjectProperty<>();
 
@@ -101,25 +111,16 @@ public class AddTransaction extends VBox {
             throw new RuntimeException(e);
         }
 
-        // 金额字段实时验证
-        amount.textProperty().addListener((observable, oldValue, newValue) -> {
-            validateAmount(newValue);
+        // 初始化Markdown预览
+        note.textProperty().addListener((observable, oldValue, newValue) -> {
+            updateMarkdownPreview(newValue);
         });
 
-        // 日期选择器值变化验证
-        time.valueProperty().addListener((observable, oldValue, newValue) -> {
-            validateTime(newValue);
-        });
-
-        // 日期文本框输入验证
-        time.getEditor().textProperty().addListener((observable, oldValue, newValue) -> {
-            validateTime(null); // 传入null触发文本验证逻辑
-        });
-
-        title.textProperty().addListener((observable, oldValue, newValue) -> {
-            validateTitle(newValue);
-        });
-
+        // 原有初始化逻辑
+        amount.textProperty().addListener((observable, oldValue, newValue) -> validateAmount(newValue));
+        time.valueProperty().addListener((observable, oldValue, newValue) -> validateTime(newValue));
+        time.getEditor().textProperty().addListener((observable, oldValue, newValue) -> validateTime(null));
+        title.textProperty().addListener((observable, oldValue, newValue) -> validateTitle(newValue));
 
         entity.setCellFactory(param -> new ListCell<>() {
             @Override
@@ -153,46 +154,78 @@ public class AddTransaction extends VBox {
                 this.addEventHandler(SubmitEvent.SUBMIT, newValue);
             }
         });
-    }
 
-    // 新增的辅助方法
-    private String normalizeDateString(String dateStr) {
-        String[] parts = dateStr.split("[/-]");
-        return String.format("%04d-%02d-%02d",
-                Integer.parseInt(parts[0]),
-                Integer.parseInt(parts[1]),
-                Integer.parseInt(parts[2]));
-    }
-
-    private boolean isValidDate(String dateStr) {
-        // 先尝试直接解析
-        try {
-            LocalDate.parse(dateStr);
-            return true;
-        } catch (DateTimeParseException e1) {
-            // 尝试替换斜杠为横杠
-            try {
-                LocalDate.parse(dateStr.replace('/', '-'));
-                return true;
-            } catch (DateTimeParseException e2) {
-                // 尝试更宽松的解析方式
-                try {
-                    String[] parts = dateStr.split("[/-]");
-                    if (parts.length == 3) {
-                        int year = Integer.parseInt(parts[0]);
-                        int month = Integer.parseInt(parts[1]);
-                        int day = Integer.parseInt(parts[2]);
-                        LocalDate.of(year, month, day);  // 这会验证日期是否有效
-                        return true;
-                    }
-                } catch (Exception e3) {
-                    return false;
-                }
-                return false;
+        this.previewSwitch.selectedProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue) {
+                notePreview.setVisible(true);
+                notePreview.setManaged(true);
+                note.setVisible(false);
+                note.setManaged(false);
+            } else {
+                notePreview.setVisible(false);
+                notePreview.setManaged(false);
+                note.setVisible(true);
+                note.setManaged(true);
             }
+        });
+    }
+
+    // MARK: Markdown预览方法
+    private void updateMarkdownPreview(String markdown) {
+        if (notePreview == null) return;
+
+        Parser parser = Parser.builder().build();
+        Node document = parser.parse(markdown);
+        HtmlRenderer renderer = HtmlRenderer.builder().build();
+        String html = renderer.render(document);
+
+        String styledHtml = "<html><head><style>"
+                + "body { font-family: sans-serif; margin: 10px; line-height: 1.5; }"
+                + "h1, h2, h3 { color: #333; }"
+                + "code { background: #f0f0f0; padding: 2px 5px; border-radius: 3px; }"
+                + "pre { background: #f8f8f8; padding: 10px; border-radius: 5px; }"
+                + "a { color: #0066cc; text-decoration: none; }"
+                + "</style></head><body>" + html + "</body></html>";
+
+        notePreview.getEngine().loadContent(styledHtml);
+    }
+
+    // MARK: 工具栏方法
+    @FXML
+    private void insertBold() {
+        wrapSelectionWith("**", "**");
+    }
+
+    @FXML
+    private void insertItalic() {
+        wrapSelectionWith("*", "*");
+    }
+
+    @FXML
+    private void insertLink() {
+        wrapSelectionWith("[", "](https://)");
+    }
+
+    @FXML
+    private void insertCode() {
+        wrapSelectionWith("`", "`");
+    }
+
+    private void wrapSelectionWith(String prefix, String suffix) {
+        int start = note.getSelection().getStart();
+        int end = note.getSelection().getEnd();
+        String selected = note.getSelectedText();
+
+        if (start == end) {
+            note.insertText(start, prefix + suffix);
+            note.positionCaret(start + prefix.length());
+        } else {
+            note.replaceText(start, end, prefix + selected + suffix);
+            note.selectRange(start, end + prefix.length() + suffix.length());
         }
     }
 
+    // MARK: 数据获取和设置方法
     public Transaction getTransaction() {
         return new Transaction(
                 title.getText(),
@@ -221,7 +254,7 @@ public class AddTransaction extends VBox {
         delete.setVisible(true);
     }
 
-    // Amount validation logic
+    // MARK: 验证方法
     private void validateAmount(String newValue) {
         if (newValue.isEmpty()) {
             amountError.setText("Amount is required");
@@ -235,7 +268,6 @@ public class AddTransaction extends VBox {
         }
     }
 
-    // Time validation logic
     private void validateTime(LocalDate newValue) {
         if (newValue == null) {
             String text = time.getEditor().getText();
@@ -267,7 +299,34 @@ public class AddTransaction extends VBox {
         }
     }
 
+    private boolean isValidDate(String dateStr) {
+        try {
+            LocalDate.parse(dateStr);
+            return true;
+        } catch (DateTimeParseException e1) {
+            try {
+                LocalDate.parse(dateStr.replace('/', '-'));
+                return true;
+            } catch (DateTimeParseException e2) {
+                try {
+                    String[] parts = dateStr.split("[/-]");
+                    if (parts.length == 3) {
+                        int year = Integer.parseInt(parts[0]);
+                        int month = Integer.parseInt(parts[1]);
+                        int day = Integer.parseInt(parts[2]);
+                        LocalDate.of(year, month, day);
+                        return true;
+                    }
+                } catch (Exception e3) {
+                    return false;
+                }
+                return false;
+            }
+        }
+    }
 
+    // MARK: 事件处理方法
+    @FXML
     public void handleMouseClick() {
         boolean hasError = false;
         message.setText("");
@@ -276,7 +335,6 @@ public class AddTransaction extends VBox {
         if (title.getText().isEmpty()) {
             hasError = true;
         }
-
 
         if (amount.getText().isEmpty()) {
             amountError.setText("Amount is required");
@@ -324,8 +382,16 @@ public class AddTransaction extends VBox {
         fireEvent(new SubmitEvent(this, this, false));
     }
 
-
+    @FXML
     public void handleDelete() {
         fireEvent(new SubmitEvent(this, this, true));
+    }
+
+    private String normalizeDateString(String dateStr) {
+        String[] parts = dateStr.split("[/-]");
+        return String.format("%04d-%02d-%02d",
+                Integer.parseInt(parts[0]),
+                Integer.parseInt(parts[1]),
+                Integer.parseInt(parts[2]));
     }
 }
