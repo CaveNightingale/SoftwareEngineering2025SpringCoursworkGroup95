@@ -191,7 +191,7 @@ public class AddTransaction extends VBox {
             message.setText("Amount is required");
             amount.setStyle("-fx-border-color: red;");
         } else if (!newValue.matches("[+\\-]?\\d+(\\.\\d{0,2})?")) {
-            message.setText("Amount is invalid (Only digits and up to 2 decimal places allowed)");
+            message.setText("Amount is invalid ");
             amount.setStyle("-fx-border-color: red;");
         } else {
             message.setText(""); // Clear message when valid
