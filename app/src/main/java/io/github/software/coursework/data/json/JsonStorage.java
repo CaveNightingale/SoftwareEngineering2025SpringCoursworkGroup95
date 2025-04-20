@@ -21,6 +21,73 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 public final class JsonStorage implements AsyncStorage {
+    private static final List<String> defaultCategories = List.of(
+            "Accommodation",
+            "Clothing",
+            "Communication",
+            "Diet",
+            "Education",
+            "Electronics",
+            "Entertainment",
+            "Hobby",
+            "Medical",
+            "Necessities",
+            "Transportation"
+    );
+
+    private static final List<String> defaultTags = List.of(
+            "Chinese New Year",
+            "Lantern Festival",
+            "Qingming Festival",
+            "Dragon Boat Festival",
+            "Qixi Festival",
+            "Mid-Autumn Festival",
+            "Double Ninth Festival",
+            "Winter Solstice",
+            "Laba Festival",
+            "Chinese New Year's Eve",
+            "Minor New Year (Little New Year)",
+            "Start of Spring (Lichun)",
+            "Shangsi Festival",
+            "Cold Food Festival",
+            "Mazu’s Birthday",
+            "Buddha’s Birthday",
+            "Ghost Festival",
+            "Zhongyuan Festival",
+            "Teachers’ Day (Mainland China)",
+            "Lichun Offering (Worshipping Spring Ox)",
+            "Valentine's Day",
+            "St. Patrick’s Day",
+            "April Fools’ Day",
+            "Easter",
+            "Earth Day",
+            "Mother's Day",
+            "Father's Day",
+            "Pride Day",
+            "Independence Day (US)",
+            "Halloween",
+            "Thanksgiving (US)",
+            "Christmas Eve",
+            "Christmas Day",
+            "New Year’s Eve",
+            "New Year’s Day",
+            "Black History Month Start",
+            "International Women’s Day",
+            "International Workers’ Day",
+            "International Friendship Day",
+            "618 Shopping Festival",
+            "Double 11 (Singles’ Day)",
+            "Double 12",
+            "Black Friday",
+            "Cyber Monday",
+            "Chinese Valentine's Day Sales",
+            "New Year’s Sales",
+            "Back-to-School Sales",
+            "National Day Golden Week Sales",
+            "Women’s Day Sales",
+            "Summer Mid-Year Sale"
+    );
+
     private static final Logger logger = Logger.getLogger(JsonStorage.class.getName());
 
     private JsonEntityTable entityTable;
@@ -222,6 +289,14 @@ public final class JsonStorage implements AsyncStorage {
     }
 
     private static final class Counting extends HashMap<String, Long> implements Item {
+        public Counting() {}
+
+        public Counting(Collection<String> keys) {
+            for (String key : keys) {
+                put(key, 0L);
+            }
+        }
+
         public void increment(String key, long value) {
             if (!containsKey(key)) {
                 logger.warning("Key " + key + " not found, probably these data are saved by an old version of the app. However, ignoring it.");
@@ -288,12 +363,12 @@ public final class JsonStorage implements AsyncStorage {
                     reader -> ReferenceItemPair.deserialize(reader, Transaction::deserialize));
             Counting categoryCount = directory.get("category", Counting::deserialize);
             if (categoryCount == null) {
-                categoryCount = new Counting();
+                categoryCount = new Counting(defaultCategories);
             }
             this.categoryCount = categoryCount;
             Counting tagCount = directory.get("tag", Counting::deserialize);
             if (tagCount == null) {
-                tagCount = new Counting();
+                tagCount = new Counting(defaultTags);
             }
             this.tagCount = tagCount;
             this.directory = directory;
