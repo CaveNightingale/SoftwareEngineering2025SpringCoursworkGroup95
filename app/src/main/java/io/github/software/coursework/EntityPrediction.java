@@ -69,7 +69,7 @@ public class EntityPrediction {
                     for (String line : new String(bytes, StandardCharsets.UTF_8).split("\n")) {
                         line = line.replaceFirst("^[1-9]\\d*\\.\\s+", "").replaceAll("\r", "");
                         listedNames.put(line, currentName);
-                        System.out.println(line + " " + simpleName);
+//                        System.out.println(line + " " + simpleName);
                     }
                 } catch (IOException ex) {
                     ex.printStackTrace();

@@ -43,43 +43,56 @@ public class GaussMixtureModel {
         for (Triple<Double, Double, Double> param : parameters) {
             sum += param.getLeft() * param.getRight();
         }
+
+        if (sum < 0.0)
+            sum = 0.0;
+
         return sum;
     }
 
-    public double getIntegral(Double x) {
+    public double getIntegral(double l, double r) {
         double sum = 0.0;
 
         for (Triple<Double, Double, Double> param : parameters) {
-            sum += param.getRight() * (dist.cumulativeProbability((x - param.getLeft()) / param.getMiddle()));
+            sum += param.getRight() * (dist.cumulativeProbability((r - param.getLeft()) / param.getMiddle())
+                                     - dist.cumulativeProbability((l - param.getLeft()) / param.getMiddle()));
         }
+
+        System.out.println("getIntegral: " + l + ", " + r + ", sum: " + sum);
 
         return sum;
     }
 
     public Pair<Double, Double> getInterval() {
-        double l = -9999999.0, r = 9999999.0;
+        double mean = getMean();
+        double l = -9999.0, r = mean;
         double reL, reR, mid = 0;
         while (r - l > 0.0000001) {
             mid = (l + r) / 2;
-            if (getIntegral(mid) < 0.05) {
-                l = mid;
-            } else {
+            if (getIntegral(mid, mean) < 0.45) {
                 r = mid;
+            } else {
+                l = mid;
             }
         }
 
         reL = mid;
-        l = -9999999.0;
-        r = 9999999.0;
+        l = mean;
+        r = 9999.0;
         while (r - l > 0.0000001) {
             mid = (l + r) / 2;
-            if (getIntegral(mid) < 0.95) {
+            if (getIntegral(mean, mid) < 0.45) {
                 l = mid;
             } else {
                 r = mid;
             }
         }
         reR = mid;
+
+        if (reR > mean * 2) reR = mean * 2;
+        if (reR < mean) reR = mean;
+        if (reL < mean * 0.5) reL = mean * 0.5;
+        if (reL > mean) reL = mean;
 
         return new ImmutablePair<>(Math.max(0, reL), Math.max(0, reR));
     }
