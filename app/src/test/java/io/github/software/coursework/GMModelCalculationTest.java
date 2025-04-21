@@ -80,8 +80,6 @@ public class GMModelCalculationTest {
                 tmp.add(H[j].get(i));
             }
 
-            System.out.println("size = " + tmp.size());
-
             answerGMModel.add(tmp);
 
             components.add(new GMMComponent(mu, sigma, f, g, h));
