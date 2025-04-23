@@ -44,8 +44,8 @@ public class GaussMixtureModel {
             sum += param.getLeft() * param.getRight();
         }
 
-        if (sum < 0.0)
-            sum = 0.0;
+//        if (sum < 0.0)
+//            sum = 0.0;
 
         return sum;
     }
@@ -89,10 +89,10 @@ public class GaussMixtureModel {
         }
         reR = mid;
 
-        if (reR > mean * 2) reR = mean * 2;
-        if (reR < mean) reR = mean;
-        if (reL < mean * 0.5) reL = mean * 0.5;
-        if (reL > mean) reL = mean;
+//        if (reR > mean * 2) reR = mean * 2;
+//        if (reR < mean) reR = mean;
+//        if (reL < mean * 0.5) reL = mean * 0.5;
+//        if (reL > mean) reL = mean;
 
         return new ImmutablePair<>(Math.max(0, reL), Math.max(0, reR));
     }

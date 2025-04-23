@@ -295,7 +295,8 @@ public class GMModelCalculation {
                 re.add(1.0 * countMonth1[i] / countMonth[i]);
                 tmp1 += 1.0 * countMonth1[i] / countMonth[i];
             } else {
-                re.add(0.0);
+                re.add(1.0);
+                tmp1 += 1.0;
             }
         }
         tmp1 /= 12.0;
@@ -304,8 +305,8 @@ public class GMModelCalculation {
                 re.add(1.0 * countDay1[i] / countDay[i] - tmp1);
                 tmp2 += 1.0 * countDay1[i] / countDay[i] - tmp1;
             } else {
-                re.add(0.0 - tmp1);
-                tmp2 -= tmp1;
+                re.add(1.0 - tmp1);
+                tmp2 += 1.0 - tmp1;
             }
         }
         tmp2 /= 31.0;
@@ -313,7 +314,7 @@ public class GMModelCalculation {
             if (countWeek[i] != 0) {
                 re.add(1.0 * countWeek1[i] / countWeek[i] - tmp1 - tmp2);
             } else {
-                re.add(0.0 - tmp1 - tmp2);
+                re.add(1.0 - tmp1 - tmp2);
             }
         }
 
