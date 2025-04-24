@@ -63,7 +63,7 @@ public class GMModelCalculation {
 //        }
 
         List<List<Double>> answer = new ArrayList<>();
-        Double Score;
+        double Score;
 
         answer.add(gaussParamsCalculator(params));
         Score = BICCalculator(answer);
@@ -72,7 +72,7 @@ public class GMModelCalculation {
         List<Pair<Double, Triple<Integer, Integer, Integer>>> tmpList = new ArrayList<>();
 
         List<List<Double>> tmpAnswer = new ArrayList<>();
-        Double tmpScore;
+        double tmpScore;
 
         System.out.println("params.size() = " + params.size());
 
@@ -100,52 +100,16 @@ public class GMModelCalculation {
 
             System.out.println("k = " + k + ", tmpScore = " + tmpScore + ", Score = " + Score);
 
-//            System.out.println(tmpAnswer);
-
-//            Double sum = 0.0;
-//
-//            for (int j = 0; j < 12; j++) {
-//                sum = 0.0;
-//                for (int i = 0; i < k; i++)
-//                    sum += tmpAnswer.get(i).get(j + 2);
-//
-//                if (1.0 - sum < 0.00000001) {
-//
-//                } else {
-//                    System.out.println("j = " + j + ", sum = " + sum);
-//                }
-//            }
-//
-//            for (int j = 0; j < 31; j++) {
-//                sum = 0.0;
-//                for (int i = 0; i < k; i++)
-//                    sum += tmpAnswer.get(i).get(j + 14);
-//
-//                if (sum < 0.00000001 && sum > -0.00000001) {
-//
-//                } else {
-//                    System.out.println("Day j = " + j + ", sum = " + sum);
-//                }
-//            }
-//
-//            for (int j = 0; j < 7; j++) {
-//                sum = 0.0;
-//                for (int i = 0; i < k; i++)
-//                    sum += tmpAnswer.get(i).get(j + 45);
-//
-//                if (sum < 0.00000001 && sum > -0.00000001) {
-//
-//                } else {
-//                    System.out.println("Week j = " + j + ", sum = " + sum);
-//                }
-//            }
         }
 
         return answer;
     }
 
     public List<Integer>[] kMeansPlus(int k) {
-        Double[] centers = new Double[50];
+        System.out.println("k = " + k);
+
+        double[] centers = new double[50];
+        for (int i = 0; i < 50; i++) { centers[i] = 0.0; }
         int ctops = 0;
         centers[ctops++] = t.get(0);
 
@@ -154,11 +118,11 @@ public class GMModelCalculation {
             for (int j = 0; j < t.size() + 5; j++) {
                 G[j] = 0;
             }
-            Double Gsum = 0.0;
+            double Gsum = 0.0;
 
             int x = 0;
-            for (Double tValue : t) {
-                Double maxG = 0.0;
+            for (double tValue : t) {
+                double maxG = 0.0;
                 for (int j = 0; j < ctops; j++) {
                     if (maxG < Math.pow(tValue - centers[j], 2)) {
                         maxG = Math.pow(tValue - centers[j], 2);
@@ -206,7 +170,7 @@ public class GMModelCalculation {
             }
 
             for (int i = 0; i < k; i++) {
-                if (centers[i] != g[i] / count[i]) {
+                if (Math.abs(centers[i] - g[i] / count[i]) > 0.000001) {
                     changed = true;
                     centers[i] = g[i] / count[i];
                 }
@@ -284,7 +248,7 @@ public class GMModelCalculation {
             countWeek1[param.getRight().getRight()]++;
         }
 
-        Double mean = 0.0, variance = 0.0;
+        double mean = 0.0, variance = 0.0;
         for (Pair<Double, Triple<Integer, Integer, Integer>> pair : params) {
             mean += pair.getLeft();
         }
@@ -294,11 +258,14 @@ public class GMModelCalculation {
         }
         variance /= params.size();
 
+        if (variance < 0.0)
+            variance = 0.0;
+
         List<Double> re = new ArrayList<>();
         re.add(mean);
         re.add(variance);
 
-        Double tmp1 = 0.0, tmp2 = 0.0;
+        double tmp1 = 0.0, tmp2 = 0.0;
         for (int i = 1; i < 13; i++) {
             if (countMonth[i] != 0) {
                 re.add(1.0 * countMonth1[i] / countMonth[i]);
