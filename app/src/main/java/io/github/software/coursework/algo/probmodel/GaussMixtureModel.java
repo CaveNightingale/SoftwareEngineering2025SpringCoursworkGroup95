@@ -1,4 +1,4 @@
-package io.github.software.coursework.ProbabilityModel;
+package io.github.software.coursework.algo.probmodel;
 
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
@@ -7,8 +7,6 @@ import org.apache.commons.math3.distribution.NormalDistribution;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Queue;
-import java.util.stream.IntStream;
 
 public class GaussMixtureModel {
 

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import io.github.software.coursework.gui.TransactionItem?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+<fx:root
+        xmlns="http://javafx.com/javafx"
+        xmlns:fx="http://javafx.com/fxml"
+        type="io.github.software.coursework.gui.TransactionItem"
+>
+    <AnchorPane
+            styleClass="transaction-item"
+            AnchorPane.leftAnchor="0.0"
+            AnchorPane.rightAnchor="0.0"
+    >
+        <VBox
+                styleClass="transaction-item-content"
+                AnchorPane.leftAnchor="0.0"
+                AnchorPane.rightAnchor="0.0"
+        >
+            <HBox styleClass="transaction-item-1st-row">
+                <Text fx:id="title" text="Transaction Item"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Text fx:id="amount" text="-1000.00"/>
+            </HBox>
+            <HBox styleClass="transaction-item-2nd-row">
+                <Text fx:id="entity" text="Peidong"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Text fx:id="time" text="2021-03-01 12:00:00"/>
+            </HBox>
+            <HBox styleClass="transaction-item-3rd-row">
+                <Text fx:id="category" text="Education"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <HBox fx:id="tags" styleClass="tags"/>
+            </HBox>
+        </VBox>
+    </AnchorPane>
+</fx:root>

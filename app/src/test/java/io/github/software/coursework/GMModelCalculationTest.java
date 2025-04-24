@@ -1,10 +1,11 @@
 package io.github.software.coursework;
 
-import io.github.software.coursework.ProbabilityModel.GMModelCalculation;
+import io.github.software.coursework.algo.probmodel.GMModelCalculation;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Triple;
 import org.apache.commons.lang3.tuple.ImmutableTriple;
+import org.junit.jupiter.api.Test;
 
 import java.util.*;
 
@@ -26,7 +27,8 @@ public class GMModelCalculationTest {
         }
     }
 
-    public static void main(String[] args) {
+    @Test
+    public void gMModedlCalculationTest() {
         Random rand = new Random();
         int componentCount = rand.nextInt(21) + 10;  // 10~30
         List<GMMComponent> components = new ArrayList<>();
