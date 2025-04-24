@@ -258,8 +258,8 @@ public class GMModelCalculation {
         }
         variance /= params.size();
 
-        if (variance < 0.0)
-            variance = 0.0;
+        if (variance == 0.0)
+            variance = 0.001;
 
         List<Double> re = new ArrayList<>();
         re.add(mean);
