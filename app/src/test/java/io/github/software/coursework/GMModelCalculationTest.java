@@ -28,7 +28,7 @@ public class GMModelCalculationTest {
     }
 
     @Test
-    public void gMModedlCalculationTest() {
+    public void gMModelCalculationTest() {
         Random rand = new Random();
         int componentCount = rand.nextInt(21) + 10;  // 10~30
         List<GMMComponent> components = new ArrayList<>();
