@@ -1,4 +1,4 @@
-package io.github.software.coursework.ProbabilityModel;
+package io.github.software.coursework.algo.probmodel;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
@@ -105,8 +105,6 @@ public class GMModelCalculation {
             }
 
             System.out.println("k = " + k + ", tmpScore = " + tmpScore + ", Score = " + Score);
-
-            System.out.println(tmpAnswer);
 
         }
 

@@ -1,4 +1,4 @@
-package io.github.software.coursework.ProbabilityModel;
+package io.github.software.coursework.algo.probmodel;
 
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
@@ -7,8 +7,6 @@ import org.apache.commons.math3.distribution.NormalDistribution;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Queue;
-import java.util.stream.IntStream;
 
 public class GaussMixtureModel {
 
@@ -44,8 +42,8 @@ public class GaussMixtureModel {
             sum += param.getLeft() * param.getRight();
         }
 
-//        if (sum < 0.0)
-//            sum = 0.0;
+        if (sum < 0.0)
+            sum = 0.0;
 
         return sum;
     }
@@ -65,7 +63,7 @@ public class GaussMixtureModel {
 
     public Pair<Double, Double> getInterval() {
         double mean = getMean();
-        double l = -9999.0, r = mean;
+        double l = -9999999.0, r = mean;
         double reL, reR, mid = 0;
         while (r - l > 0.0000001) {
             mid = (l + r) / 2;
@@ -78,7 +76,7 @@ public class GaussMixtureModel {
 
         reL = mid;
         l = mean;
-        r = 9999.0;
+        r = 9999999.0;
         while (r - l > 0.0000001) {
             mid = (l + r) / 2;
             if (getIntegral(mean, mid) < 0.45) {
