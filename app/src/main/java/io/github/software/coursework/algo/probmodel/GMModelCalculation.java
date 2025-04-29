@@ -44,12 +44,18 @@ public class GMModelCalculation {
         for (int i = 0; i < 32; i++) countDay[i] = 0;
         for (int i = 0; i < 8; i++) countWeek[i] = 0;
 
+//        int cnt = 0;
+
         for (Pair<Double, Triple<Integer, Integer, Integer>> param : params) {
             countMonth[param.getRight().getLeft()]++;
             countDay[param.getRight().getMiddle()]++;
             countWeek[param.getRight().getRight()]++;
 
             t.add(param.getLeft());
+
+//            cnt++;
+//            if (cnt % 100 == 0)
+//                System.out.println(param.getLeft());
         }
 
 //        for (int i = 1; i < 13; i++) {
@@ -86,7 +92,7 @@ public class GMModelCalculation {
                 for (int j : kMeans[i]) {
                     tmpList.add(p.get(j));
                 }
-//                System.out.println("kMeans[i]size = " + kMeans[i].size());
+                System.out.println("kMeans[i]size = " + kMeans[i].size());
 
                 tmpAnswer.add(gaussParamsCalculator(tmpList));
             }
@@ -102,6 +108,8 @@ public class GMModelCalculation {
 
         }
 
+        System.out.println("answer = " + answer);
+
         return answer;
     }
 
@@ -109,12 +117,14 @@ public class GMModelCalculation {
         System.out.println("k = " + k);
 
         double[] centers = new double[50];
-        for (int i = 0; i < 50; i++) { centers[i] = 0.0; }
         int ctops = 0;
         centers[ctops++] = t.get(0);
+        for (int i = 0; i < 50; i++) centers[i] = 0.0;
 
         double[] G = new double[t.size() + 10];
         for (int i = 1; i < k; i++) {
+            System.out.println("k = " + k + ", centers[" + i + "] = " + centers[i - 1]);
+
             for (int j = 0; j < t.size() + 5; j++) {
                 G[j] = 0;
             }
@@ -131,12 +141,15 @@ public class GMModelCalculation {
 
                 Gsum += maxG;
                 G[x] = maxG;
+                x++;
             }
 
             G[0] /= Gsum;
             for (int j = 1; j < t.size(); j++) {
                 G[j] = G[j - 1] + G[j] / Gsum;
             }
+
+            System.out.println(G[0] + ", " + G[1] + ", " + G[2]);
 
             double random = Math.random();
             for (int j = 0; j < t.size(); j++) {
@@ -145,6 +158,7 @@ public class GMModelCalculation {
                     break;
                 }
             }
+//            System.out.println("k = " + k + ", random = " + random + ", centers[" + (ctops - 1) + "] = " + centers[ctops - 1]);
         }
 
         int[] count = new int[50];
@@ -170,7 +184,7 @@ public class GMModelCalculation {
             }
 
             for (int i = 0; i < k; i++) {
-                if (Math.abs(centers[i] - g[i] / count[i]) > 0.000001) {
+                if (abs(centers[i] - g[i] / count[i]) > 0.0000001) {
                     changed = true;
                     centers[i] = g[i] / count[i];
                 }
@@ -179,7 +193,11 @@ public class GMModelCalculation {
             if (!changed) {
                 break;
             }
+
+//            System.out.println("changed.");
         }
+
+//        System.out.println("k = " + k + ", g = " + Arrays.toString(g));
 
         List<Integer>[] re = new List[50];
 
@@ -234,6 +252,11 @@ public class GMModelCalculation {
     }
 
     public List<Double> gaussParamsCalculator(List<Pair<Double, Triple<Integer, Integer, Integer>>> params) {
+
+//        if (params.size() < 10) {
+//            System.out.println("ERROR!!!!!! " + params.size() + " params is too short");
+//        }
+
         int[] countMonth1 = new int[13];
         int[] countDay1 = new int[32];
         int[] countWeek1 = new int[8];
@@ -258,8 +281,7 @@ public class GMModelCalculation {
         }
         variance /= params.size();
 
-        if (variance == 0.0)
-            variance = 0.001;
+        variance = max(variance, 0.001);
 
         List<Double> re = new ArrayList<>();
         re.add(mean);
