@@ -5,6 +5,7 @@ import com.google.common.primitives.ImmutableDoubleArray;
 import com.google.common.primitives.ImmutableIntArray;
 import com.google.common.primitives.ImmutableLongArray;
 import io.github.software.coursework.EntityPrediction;
+import io.github.software.coursework.TagPrediction;
 import io.github.software.coursework.algo.probmodel.GMModelCalculation;
 import io.github.software.coursework.algo.probmodel.GaussMixtureModel;
 import io.github.software.coursework.data.*;
@@ -31,6 +32,7 @@ public final class PredictModel implements Model {
     public Map<String, List<List<Double>>> GMModelParameters;
     private final AsyncStorage storage;
     public int changedFlag;
+    public TagPrediction tagPrediction;
 
     private record Parameters(Map<String, List<List<Double>>> parameters) implements Item {
         public static Parameters deserialize(Document.Reader reader) throws IOException {
@@ -87,6 +89,7 @@ public final class PredictModel implements Model {
         entityPrediction1.loadNGram();
         entityPrediction2 = new EntityPrediction("Categories2");
         entityPrediction2.loadNGram();
+        tagPrediction = new TagPrediction("Tags.txt");
 
         GMModelParameters = new HashMap<>();
         this.storage = storage;
@@ -99,6 +102,7 @@ public final class PredictModel implements Model {
         entityPrediction1.loadNGram();
         entityPrediction2 = new EntityPrediction("Categories2");
         entityPrediction2.loadNGram();
+        tagPrediction = new TagPrediction("Tags.txt");
 
         this.GMModelParameters = new HashMap<>();
         this.GMModelParameters.putAll(GMModelParameters);
@@ -111,7 +115,7 @@ public final class PredictModel implements Model {
 
         public Day(long time) {
             Date date = new Date(time);
-            m = date.getMonth();
+            m = date.getMonth() + 1;
             d = date.getDate();
 
             Calendar calendar = Calendar.getInstance();
@@ -307,15 +311,10 @@ public final class PredictModel implements Model {
                 }
                 Bitmask.View2DMutable mask = Bitmask.view2DMutable(new long[Bitmask.size2d(tags.size(), transactions.size())], transactions.size());
                 for (int i = 0; i < transactions.size(); i++) {
+                    Day tmpDay = new Day(transactions.get(i).time());
+                    System.out.println("new transaction date: " + tmpDay.m + " " + tmpDay.d + " " + tmpDay.w);
                     for (int j = 0; j < tags.size(); j++) {
-                        mask.set(j, i, false);
-                    }
-
-                    String answer = entityPrediction1.predict(transactions.get(i).title() + entity.get(transactions.get(i).entity()).name()).getLeft();
-                    answer = answer.toUpperCase();
-
-                    if (map2.containsKey(answer)) {
-                        mask.set(map2.get(answer), i, true);
+                        mask.set(j, i, tagPrediction.checkTag(tags.get(j), tmpDay.m, tmpDay.d));
                     }
                 }
                 future.complete(ImmutablePair.of(
