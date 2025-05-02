@@ -34,6 +34,11 @@ public final class PredictModel implements Model {
     public int changedFlag;
     public TagPrediction tagPrediction;
 
+    public double[] montSum = new double[1000];
+    public double[] montNext = new double[1000];
+    public double[] montAns = new double[1000];
+
+
     private record Parameters(Map<String, List<List<Double>>> parameters) implements Item {
         public static Parameters deserialize(Document.Reader reader) throws IOException {
             Map<String, List<List<Double>>> parameters = new HashMap<>();
@@ -210,6 +215,9 @@ public final class PredictModel implements Model {
         double[] budgetConfidenceLower = new double[time.length()];
         double[] budgetConfidenceUpper = new double[time.length()];
 
+        for (int i = 0; i < 1000; i++)
+            montSum[i] = montAns[i] = montNext[i] = 0.0;
+
         double mean = 0.0, upper = 0.0, lower = 0.0;
         Day curDay;
         Pair<Double, Pair<Double, Double>> p;
@@ -219,8 +227,20 @@ public final class PredictModel implements Model {
                 gaussMixtureModel.set(gm.getValue(), curDay.m, curDay.d, curDay.w);
                 p = gaussMixtureModel.getMeanAndInterval();
                 mean += p.getLeft();
-                lower += p.getRight().getLeft();
-                upper += p.getRight().getRight();
+//                lower += p.getRight().getLeft();
+//                upper += p.getRight().getRight();
+
+                for (int k = 0; k < 1000; k++)
+                    montNext[k] = gaussMixtureModel.getRandom();
+                for (int k = 0; k < 1000; k++)
+                    montAns[k] = montSum[(int)(Math.random() * 1000)] + montNext[(int)(Math.random() * 1000)];
+                for (int k = 0; k < 1000; k++)
+                    montSum[k] = montAns[k];
+                Arrays.sort(montSum);
+
+                lower = montSum[49];
+                upper = montSum[949];
+
             }
 
             if (i == time.get((int)j)) {
@@ -249,6 +269,9 @@ public final class PredictModel implements Model {
         double[] budgetConfidenceLower = new double[time.length()];
         double[] budgetConfidenceUpper = new double[time.length()];
 
+        for (int i = 0; i < 1000; i++)
+            montSum[i] = montAns[i] = montNext[i] = 0.0;
+
         double mean = 0.0, upper = 0.0, lower = 0.0;
         Day curDay;
         Pair<Double, Pair<Double, Double>> p;
@@ -258,8 +281,20 @@ public final class PredictModel implements Model {
                 gaussMixtureModel.set(gm.getValue(), curDay.m, curDay.d, curDay.w);
                 p = gaussMixtureModel.getMeanAndInterval();
                 mean += p.getLeft();
-                lower += p.getRight().getLeft();
-                upper += p.getRight().getRight();
+//                lower += p.getRight().getLeft();
+//                upper += p.getRight().getRight();
+
+                for (int k = 0; k < 1000; k++)
+                    montNext[k] = gaussMixtureModel.getRandom();
+                for (int k = 0; k < 1000; k++)
+                    montAns[k] = montSum[(int)(Math.random() * 1000)] + montNext[(int)(Math.random() * 1000)];
+                for (int k = 0; k < 1000; k++)
+                    montSum[k] = montAns[k];
+                Arrays.sort(montSum);
+
+                lower = montSum[49];
+                upper = montSum[949];
+
             }
 
             if (i == time.get((int)j)) {

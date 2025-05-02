@@ -61,6 +61,16 @@ public class GaussMixtureModel {
         return sum;
     }
 
+    public double getIntegral(double x) {
+        double sum = 0.0;
+
+        for (Triple<Double, Double, Double> param : parameters) {
+            sum += param.getRight() * (dist.cumulativeProbability((x - param.getLeft()) / param.getMiddle()));
+        }
+
+        return sum;
+    }
+
     public Pair<Double, Double> getInterval() {
         double mean = getMean();
         double l = -9999999.0, r = mean;
@@ -97,5 +107,23 @@ public class GaussMixtureModel {
 
     public Pair<Double, Pair<Double, Double>> getMeanAndInterval() {
         return new ImmutablePair<>(getMean(), getInterval());
+    }
+
+    public double getRandom() {
+        double random = Math.random();
+
+        double l = -9999999.0, r = 9999999.0, mid;
+
+        while (r - l > 0.0000001) {
+            mid = (l + r) / 2;
+
+            if (getIntegral(mid) > random) {
+                r = mid;
+            } else {
+                l = mid;
+            }
+        }
+
+        return l;
     }
 }
