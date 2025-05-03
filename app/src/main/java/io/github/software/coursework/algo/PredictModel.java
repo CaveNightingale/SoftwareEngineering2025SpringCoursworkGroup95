@@ -221,8 +221,12 @@ public final class PredictModel implements Model {
         double mean = 0.0, upper = 0.0, lower = 0.0;
         Day curDay;
         Pair<Double, Pair<Double, Double>> p;
-        for (long i = reference + 24 * 60 * 60 * 1000L, j = 0; j < time.length(); i += 24 * 60 * 60 * 1000L) {
+
+        for (long i = reference, j = 0; j < time.length(); i += 24 * 60 * 60 * 1000L) {
             curDay = new Day(i);
+
+            upper = lower = 0.0;
+
             for (Map.Entry<String, List<List<Double>>> gm : GMModelParameters.entrySet()) {
                 gaussMixtureModel.set(gm.getValue(), curDay.m, curDay.d, curDay.w);
                 p = gaussMixtureModel.getMeanAndInterval();
@@ -247,7 +251,7 @@ public final class PredictModel implements Model {
                 budgetMean[(int)j] = mean;
                 budgetConfidenceLower[(int)j] = lower;
                 budgetConfidenceUpper[(int)j] = upper;
-                System.out.println("Time: " + i + " " + time.get((int)j) + " " + mean + " " + lower + " " + upper);
+//                System.out.println("Time: " + i + " " + time.get((int)j) + " " + mean + " " + lower + " " + upper);
                 j++;
             }
         }
@@ -264,7 +268,8 @@ public final class PredictModel implements Model {
     }
 
     @Override
-    public CompletableFuture<ImmutablePair<ImmutableDoubleArray, Pair<ImmutableDoubleArray, ImmutableDoubleArray>>> predictSavedAmount(long reference, ImmutableLongArray time) {
+    public CompletableFuture<ImmutablePair<ImmutableDoubleArray, Pair<ImmutableDoubleArray, ImmutableDoubleArray>>>
+                    predictSavedAmount(long reference, ImmutableLongArray time) {
         double[] budgetMean = new double[time.length()];
         double[] budgetConfidenceLower = new double[time.length()];
         double[] budgetConfidenceUpper = new double[time.length()];
@@ -347,7 +352,7 @@ public final class PredictModel implements Model {
                 Bitmask.View2DMutable mask = Bitmask.view2DMutable(new long[Bitmask.size2d(tags.size(), transactions.size())], transactions.size());
                 for (int i = 0; i < transactions.size(); i++) {
                     Day tmpDay = new Day(transactions.get(i).time());
-                    System.out.println("new transaction date: " + tmpDay.m + " " + tmpDay.d + " " + tmpDay.w);
+//                    System.out.println("new transaction date: " + tmpDay.m + " " + tmpDay.d + " " + tmpDay.w);
                     for (int j = 0; j < tags.size(); j++) {
                         mask.set(j, i, tagPrediction.checkTag(tags.get(j), tmpDay.m, tmpDay.d));
                     }

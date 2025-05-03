@@ -36,7 +36,7 @@ public class TagPrediction {
         URL url = TagPrediction.class.getResource(fileName);
         Pattern pattern = Pattern.compile("^(\\d{2})/(\\d{2})$");
 
-        System.out.println(url.getPath());
+//        System.out.println(url.getPath());
 
         try (BufferedReader br = new BufferedReader(new FileReader(url.getPath()))) {
 
@@ -48,12 +48,12 @@ public class TagPrediction {
 
                 int firstSpace = line.indexOf(' ');
                 if (firstSpace == -1) {
-                    System.out.println("Error: No space found");
+//                    System.out.println("Error: No space found");
                 }
 
                 String trimmed = line.substring(firstSpace + 1);
                 if (trimmed.length() < 8) {
-                    System.out.println("Error: Length less than 8");
+//                    System.out.println("Error: Length less than 8");
                 }
 
                 String name = trimmed.substring(0, trimmed.length() - 8);
@@ -71,7 +71,7 @@ public class TagPrediction {
                     tagList.put(name, Pair.of(intNum1, intNum2));
 //                    System.out.println("Festival name : " + name + ", Date : " + date + ", Num1 :" + intNum1 + ", Num2 :" + intNum2);
                 } else {
-                    System.out.println("Error: Invalid format");
+//                    System.out.println("Error: Invalid format");
                 }
             }
 
@@ -82,8 +82,8 @@ public class TagPrediction {
 
     public boolean checkTag(String tag, int month, int day) {
         if (tagList.containsKey(tag)) {
-            if (abs(month * 30 + day - (tagList.get(tag).getLeft() * 30 + tagList.get(tag).getRight())) <= 15)
-                System.out.println(month + " " + day + " " + tagList.get(tag).getLeft() + " " + tagList.get(tag).getRight());
+//            if (abs(month * 30 + day - (tagList.get(tag).getLeft() * 30 + tagList.get(tag).getRight())) <= 15)
+//                System.out.println(month + " " + day + " " + tagList.get(tag).getLeft() + " " + tagList.get(tag).getRight());
             return abs(month * 30 + day - (tagList.get(tag).getLeft() * 30 + tagList.get(tag).getRight())) <= 15;
         } else {
             return false;

@@ -114,7 +114,7 @@ public class GMModelCalculationTest {
         System.out.println("Fitted component count: " + modelOutput.size());
         System.out.println("Fitted Model LicklyHood: " + (bicScore - Math.log(samples) * (modelOutput.size() * 3 - 1)));
 
-        Double AnsBICScore = g.BICCalculator(answerGMModel);
+        double AnsBICScore = g.BICCalculator(answerGMModel);
         System.out.println("Ans Model LicklyHood: " + (AnsBICScore - Math.log(samples) * (answerGMModel.size() * 3 - 1)));
     }
 

@@ -80,7 +80,7 @@ public class GMModelCalculation {
         List<List<Double>> tmpAnswer = new ArrayList<>();
         double tmpScore;
 
-        System.out.println("params.size() = " + params.size());
+//        System.out.println("params.size() = " + params.size());
 
         for (int k = 2; k <= min(20, params.size()); k++) {
             kMeans = kMeansPlus(k);
@@ -92,7 +92,7 @@ public class GMModelCalculation {
                 for (int j : kMeans[i]) {
                     tmpList.add(p.get(j));
                 }
-                System.out.println("kMeans[i]size = " + kMeans[i].size());
+//                System.out.println("kMeans[i]size = " + kMeans[i].size());
 
                 tmpAnswer.add(gaussParamsCalculator(tmpList));
             }
@@ -104,11 +104,11 @@ public class GMModelCalculation {
                 Score = tmpScore;
             }
 
-            System.out.println("k = " + k + ", tmpScore = " + tmpScore + ", Score = " + Score);
+//            System.out.println("k = " + k + ", tmpScore = " + tmpScore + ", Score = " + Score);
 
         }
 
-        System.out.println("answer = " + answer);
+//        System.out.println("answer = " + answer);
 
         return answer;
     }
@@ -123,7 +123,7 @@ public class GMModelCalculation {
 
         double[] G = new double[t.size() + 10];
         for (int i = 1; i < k; i++) {
-            System.out.println("k = " + k + ", centers[" + i + "] = " + centers[i - 1]);
+//            System.out.println("k = " + k + ", centers[" + i + "] = " + centers[i - 1]);
 
             for (int j = 0; j < t.size() + 5; j++) {
                 G[j] = 0;
@@ -149,7 +149,7 @@ public class GMModelCalculation {
                 G[j] = G[j - 1] + G[j] / Gsum;
             }
 
-            System.out.println(G[0] + ", " + G[1] + ", " + G[2]);
+//            System.out.println(G[0] + ", " + G[1] + ", " + G[2]);
 
             double random = Math.random();
             for (int j = 0; j < t.size(); j++) {
