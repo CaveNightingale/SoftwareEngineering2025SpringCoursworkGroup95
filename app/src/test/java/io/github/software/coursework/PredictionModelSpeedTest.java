@@ -249,12 +249,12 @@ public class PredictionModelSpeedTest {
 
         long S = System.currentTimeMillis();
 
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 100; i++) {
             long start = System.currentTimeMillis();
             predictModel.predictBudgetUsage(timestamp, times);
             long end = System.currentTimeMillis();
 
-            System.out.println("round #" + (i + 1) + ": " + (end - start) / 1000.0 + " seconds");
+//            System.out.println("round #" + (i + 1) + ": " + (end - start) / 1000.0 + " seconds");
         }
         long E = System.currentTimeMillis();
         System.out.println("full round: " + (E - S) / 1000.0 + " seconds");

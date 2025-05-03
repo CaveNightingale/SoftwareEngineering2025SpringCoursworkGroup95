@@ -76,9 +76,9 @@
 
 .add-transaction-note {
     -fx-pref-width: 30em;
-    -fx-pref-height: 20em;
-    -fx-min-height: 20em;
-    -fx-max-height: 20em;
+    -fx-pref-height: 16em;
+    -fx-min-height: 16em;
+    -fx-max-height: 16em;
 }
 
 .add-transaction-message, .add-entity-message {

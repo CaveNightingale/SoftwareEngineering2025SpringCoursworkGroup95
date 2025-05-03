@@ -29,7 +29,7 @@ public final class PredictModel implements Model {
     public GaussMixtureModel gaussMixtureModel;
     public EntityPrediction entityPrediction1;
     public EntityPrediction entityPrediction2;
-    public Map<String, List<List<Double>>> GMModelParameters;
+    public Map<String, double[][]> GMModelParameters;
     private final AsyncStorage storage;
     public int changedFlag;
     public TagPrediction tagPrediction;
@@ -39,13 +39,13 @@ public final class PredictModel implements Model {
     public double[] montAns = new double[1000];
 
 
-    private record Parameters(Map<String, List<List<Double>>> parameters) implements Item {
+    private record Parameters(Map<String, double[][]> parameters) implements Item {
         public static Parameters deserialize(Document.Reader reader) throws IOException {
-            Map<String, List<List<Double>>> parameters = new HashMap<>();
+            Map<String, double[][]> parameters = new HashMap<>();
             for (int idx = 0; !reader.isEnd(); idx++) {
                 Document.Reader entryReader = reader.readCompound(idx);
                 String key = entryReader.readString("key");
-                ArrayList<List<Double>> value = new ArrayList<>();
+                ArrayList<double[]> value = new ArrayList<>();
                 Document.Reader valueReader = entryReader.readCompound("value");
                 for (int i = 0; !valueReader.isEnd(); i++) {
                     ArrayList<Double> row = new ArrayList<>();
@@ -54,9 +54,9 @@ public final class PredictModel implements Model {
                         row.add(rowReader.readFloat(j));
                     }
                     rowReader.readEnd();
-                    value.add(row);
+                    value.add(row.stream().mapToDouble(Double::doubleValue).toArray());
                 }
-                parameters.put(key, value);
+                parameters.put(key, value.toArray(double[][]::new));
                 valueReader.readEnd();
                 entryReader.readEnd();
             }
@@ -67,12 +67,12 @@ public final class PredictModel implements Model {
         @Override
         public void serialize(Document.Writer writer) throws IOException {
             int idx = 0;
-            for (Map.Entry<String, List<List<Double>>> entry : parameters.entrySet()) {
+            for (Map.Entry<String, double[][]> entry : parameters.entrySet()) {
                 Document.Writer entryWriter = writer.writeCompound(idx++);
                 entryWriter.writeString("key", entry.getKey());
                 Document.Writer valueWriter = writer.writeCompound("value");
                 int i = 0;
-                for (List<Double> l : entry.getValue()) {
+                for (double[] l : entry.getValue()) {
                     Document.Writer rowWriter = valueWriter.writeCompound(i++);
                     int j = 0;
                     for (Double d : l) {
@@ -100,7 +100,7 @@ public final class PredictModel implements Model {
         this.storage = storage;
     }
 
-    public PredictModel(Map<String, List<List<Double>>> GMModelParameters, AsyncStorage storage) {
+    public PredictModel(Map<String, double[][]> GMModelParameters, AsyncStorage storage) {
         changedFlag = 0;
         gaussMixtureModel = new GaussMixtureModel();
         entityPrediction1 = new EntityPrediction("Categories1");
@@ -176,7 +176,13 @@ public final class PredictModel implements Model {
                         transLists.add(t.getRight());
                     }
 
-                    GMModelParameters.put(category, calculation.GMModelCalculator(transLists));
+                    GMModelParameters.put(
+                            category,
+                            calculation.GMModelCalculator(transLists)
+                                    .stream()
+                                    .map(x -> x.stream().mapToDouble(Double::doubleValue).toArray())
+                                    .toArray(double[][]::new)
+                    );
                 }
             } catch (IOException e) {
                 throw new RuntimeException(e);
@@ -220,34 +226,34 @@ public final class PredictModel implements Model {
 
         double mean = 0.0, upper = 0.0, lower = 0.0;
         Day curDay;
-        Pair<Double, Pair<Double, Double>> p;
+
+        Random random = new Random();
 
         for (long i = reference, j = 0; j < time.length(); i += 24 * 60 * 60 * 1000L) {
             curDay = new Day(i);
 
             upper = lower = 0.0;
 
-            for (Map.Entry<String, List<List<Double>>> gm : GMModelParameters.entrySet()) {
+            for (Map.Entry<String, double[][]> gm : GMModelParameters.entrySet()) {
                 gaussMixtureModel.set(gm.getValue(), curDay.m, curDay.d, curDay.w);
-                p = gaussMixtureModel.getMeanAndInterval();
-                mean += p.getLeft();
+//                p = gaussMixtureModel.getMeanAndInterval();
+                mean += gaussMixtureModel.getMean();
 //                lower += p.getRight().getLeft();
 //                upper += p.getRight().getRight();
 
                 for (int k = 0; k < 1000; k++)
-                    montNext[k] = gaussMixtureModel.getRandom();
+                    montNext[k] = gaussMixtureModel.sample(random);
                 for (int k = 0; k < 1000; k++)
-                    montAns[k] = montSum[(int)(Math.random() * 1000)] + montNext[(int)(Math.random() * 1000)];
+                    montAns[k] = montSum[random.nextInt(1000)] + montNext[random.nextInt(1000)];
                 for (int k = 0; k < 1000; k++)
                     montSum[k] = montAns[k];
                 Arrays.sort(montSum);
 
                 lower = montSum[49];
                 upper = montSum[949];
-
             }
 
-            if (i == time.get((int)j)) {
+            if (i >= time.get((int)j)) {
                 budgetMean[(int)j] = mean;
                 budgetConfidenceLower[(int)j] = lower;
                 budgetConfidenceUpper[(int)j] = upper;
@@ -279,20 +285,22 @@ public final class PredictModel implements Model {
 
         double mean = 0.0, upper = 0.0, lower = 0.0;
         Day curDay;
-        Pair<Double, Pair<Double, Double>> p;
+
+        Random random = new Random();
+
         for (long i = reference + 24 * 60 * 60 * 1000L, j = 0; j < time.length(); i += 24 * 60 * 60 * 1000L) {
             curDay = new Day(i);
-            for (Map.Entry<String, List<List<Double>>> gm : GMModelParameters.entrySet()) {
+            for (Map.Entry<String, double[][]> gm : GMModelParameters.entrySet()) {
                 gaussMixtureModel.set(gm.getValue(), curDay.m, curDay.d, curDay.w);
-                p = gaussMixtureModel.getMeanAndInterval();
-                mean += p.getLeft();
+//                p = gaussMixtureModel.getMeanAndInterval();
+                mean += gaussMixtureModel.getMean();
 //                lower += p.getRight().getLeft();
 //                upper += p.getRight().getRight();
 
                 for (int k = 0; k < 1000; k++)
-                    montNext[k] = gaussMixtureModel.getRandom();
+                    montNext[k] = gaussMixtureModel.sample(random);
                 for (int k = 0; k < 1000; k++)
-                    montAns[k] = montSum[(int)(Math.random() * 1000)] + montNext[(int)(Math.random() * 1000)];
+                    montAns[k] = montSum[random.nextInt(1000)] + montNext[random.nextInt(1000)];
                 for (int k = 0; k < 1000; k++)
                     montSum[k] = montAns[k];
                 Arrays.sort(montSum);
@@ -302,7 +310,7 @@ public final class PredictModel implements Model {
 
             }
 
-            if (i == time.get((int)j)) {
+            if (i >= time.get((int)j)) {
                 budgetMean[(int)j] = (double) (time.get((int)j) - reference) / 120000 - mean;
                 budgetConfidenceLower[(int)j] = (double) (time.get((int)j) - reference) / 130000 - upper;
                 budgetConfidenceUpper[(int)j] = (double) (time.get((int)j) - reference) / 70000 - lower;
