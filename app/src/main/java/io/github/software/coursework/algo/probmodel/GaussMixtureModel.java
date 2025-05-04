@@ -1,8 +1,7 @@
 package io.github.software.coursework.algo.probmodel;
 
+import io.github.software.coursework.util.XorShift128;
 import org.apache.commons.math3.distribution.NormalDistribution;
-
-import java.util.Random;
 
 public final class GaussMixtureModel {
 
@@ -28,7 +27,7 @@ public final class GaussMixtureModel {
             }
         }
 
-        // Parameters: mean, stddev, weight
+        // Parameters: mean, stdDev, weight
         parameters = new double[GMModelParam.length * 3];
         cumulativeProbabilities = new double[GMModelParam.length];
         mean = 0;
@@ -116,7 +115,7 @@ public final class GaussMixtureModel {
         return Math.max(0, mid);
     }
 
-    public double sample(Random randomGenerator) {
+    public double sample(XorShift128 randomGenerator) {
         double random = randomGenerator.nextDouble();
         int l = 0, r = cumulativeProbabilities.length - 1;
         while (r > l) {
@@ -128,22 +127,7 @@ public final class GaussMixtureModel {
             }
         }
         double mean = parameters[l * 3];
-        double stddev = parameters[l * 3 + 1];
-        return randomGenerator.nextGaussian(mean, stddev);
-
-//
-//        double l = -9999999.0, r = 9999999.0, mid;
-//
-//        while (r - l > 0.0000001) {
-//            mid = (l + r) / 2;
-//
-//            if (computeIntegral(mid) > random) {
-//                r = mid;
-//            } else {
-//                l = mid;
-//            }
-//        }
-//
-//        return l;
+        double stdDev = parameters[l * 3 + 1];
+        return randomGenerator.nextGaussian() * stdDev + mean;
     }
 }

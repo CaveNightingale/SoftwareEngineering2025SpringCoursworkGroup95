@@ -12,12 +12,13 @@ import io.github.software.coursework.data.*;
 import io.github.software.coursework.data.schema.Entity;
 import io.github.software.coursework.data.schema.Transaction;
 import io.github.software.coursework.util.Bitmask;
+import io.github.software.coursework.util.XorShift128;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 
-import java.util.Calendar;
-import java.util.Date;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 
 import java.io.IOException;
 import java.util.*;
@@ -26,6 +27,10 @@ import java.util.stream.Collectors;
 
 public final class PredictModel implements Model {
 
+    public static final int MONT_COUNT = 1024;
+    private static final int montLower = (int) (0.05 * MONT_COUNT);
+    private static final int montUpper = (int) (0.95 * MONT_COUNT);
+
     public GaussMixtureModel gaussMixtureModel;
     public EntityPrediction entityPrediction1;
     public EntityPrediction entityPrediction2;
@@ -33,11 +38,6 @@ public final class PredictModel implements Model {
     private final AsyncStorage storage;
     public int changedFlag;
     public TagPrediction tagPrediction;
-
-    public double[] montSum = new double[1000];
-    public double[] montNext = new double[1000];
-    public double[] montAns = new double[1000];
-
 
     private record Parameters(Map<String, double[][]> parameters) implements Item {
         public static Parameters deserialize(Document.Reader reader) throws IOException {
@@ -115,17 +115,10 @@ public final class PredictModel implements Model {
 
     }
 
-    public class Day {
-        public int m, d, w;
-
-        public Day(long time) {
-            Date date = new Date(time);
-            m = date.getMonth() + 1;
-            d = date.getDate();
-
-            Calendar calendar = Calendar.getInstance();
-            calendar.setTime(date);
-            w = calendar.get(Calendar.DAY_OF_WEEK);
+    public record Day(int m, int d, int w) {
+        public static Day of(long time) {
+            LocalDateTime utcTime = LocalDateTime.ofEpochSecond(time, 0, ZoneOffset.UTC);
+            return new Day(utcTime.getMonthValue(), utcTime.getDayOfMonth(), utcTime.getDayOfWeek().getValue());
         }
     }
 
@@ -155,7 +148,7 @@ public final class PredictModel implements Model {
                     long time = transaction.item().time();
                     double amount = transaction.item().amount() / 100.0;
                     String category = transaction.item().category();
-                    Day d = new Day(time);
+                    Day d = Day.of(time);
 
                     if (!mapper.contains(category)) {
                         mapper.add(category);
@@ -220,46 +213,33 @@ public final class PredictModel implements Model {
         double[] budgetMean = new double[time.length()];
         double[] budgetConfidenceLower = new double[time.length()];
         double[] budgetConfidenceUpper = new double[time.length()];
+        double[] montSum = new double[MONT_COUNT];
 
-        for (int i = 0; i < 1000; i++)
-            montSum[i] = montAns[i] = montNext[i] = 0.0;
+        double mean = 0.0;
 
-        double mean = 0.0, upper = 0.0, lower = 0.0;
-        Day curDay;
+        XorShift128 random = new XorShift128();
 
-        Random random = new Random();
+        long i = reference;
+        for (int j = 0; j < time.length(); ) {
+            Day curDay = Day.of(i);
 
-        for (long i = reference, j = 0; j < time.length(); i += 24 * 60 * 60 * 1000L) {
-            curDay = new Day(i);
-
-            upper = lower = 0.0;
-
-            for (Map.Entry<String, double[][]> gm : GMModelParameters.entrySet()) {
-                gaussMixtureModel.set(gm.getValue(), curDay.m, curDay.d, curDay.w);
-//                p = gaussMixtureModel.getMeanAndInterval();
+            for (double[][] gm : GMModelParameters.values()) {
+                gaussMixtureModel.set(gm, curDay.m, curDay.d, curDay.w);
                 mean += gaussMixtureModel.getMean();
-//                lower += p.getRight().getLeft();
-//                upper += p.getRight().getRight();
 
-                for (int k = 0; k < 1000; k++)
-                    montNext[k] = gaussMixtureModel.sample(random);
-                for (int k = 0; k < 1000; k++)
-                    montAns[k] = montSum[random.nextInt(1000)] + montNext[random.nextInt(1000)];
-                for (int k = 0; k < 1000; k++)
-                    montSum[k] = montAns[k];
-                Arrays.sort(montSum);
-
-                lower = montSum[49];
-                upper = montSum[949];
+                for (int k = 0; k < MONT_COUNT; k++) {
+                    montSum[k] += gaussMixtureModel.sample(random);
+                }
             }
 
-            if (i >= time.get((int)j)) {
-                budgetMean[(int)j] = mean;
-                budgetConfidenceLower[(int)j] = lower;
-                budgetConfidenceUpper[(int)j] = upper;
-//                System.out.println("Time: " + i + " " + time.get((int)j) + " " + mean + " " + lower + " " + upper);
+
+            if (i >= time.get(j)) {
+                budgetMean[j] = mean;
+                budgetConfidenceLower[j] = nth(montSum, montLower);
+                budgetConfidenceUpper[j] = nth(montSum, montUpper);
                 j++;
             }
+            i += 24 * 60 * 60 * 1000L;
         }
 
         return CompletableFuture.completedFuture(
@@ -279,41 +259,27 @@ public final class PredictModel implements Model {
         double[] budgetMean = new double[time.length()];
         double[] budgetConfidenceLower = new double[time.length()];
         double[] budgetConfidenceUpper = new double[time.length()];
+        double[] montSum = new double[MONT_COUNT];
 
-        for (int i = 0; i < 1000; i++)
-            montSum[i] = montAns[i] = montNext[i] = 0.0;
+        double mean = 0.0;
 
-        double mean = 0.0, upper = 0.0, lower = 0.0;
-        Day curDay;
-
-        Random random = new Random();
+        XorShift128 random = new XorShift128();
 
         for (long i = reference + 24 * 60 * 60 * 1000L, j = 0; j < time.length(); i += 24 * 60 * 60 * 1000L) {
-            curDay = new Day(i);
+            Day curDay = Day.of(i);
             for (Map.Entry<String, double[][]> gm : GMModelParameters.entrySet()) {
                 gaussMixtureModel.set(gm.getValue(), curDay.m, curDay.d, curDay.w);
-//                p = gaussMixtureModel.getMeanAndInterval();
                 mean += gaussMixtureModel.getMean();
-//                lower += p.getRight().getLeft();
-//                upper += p.getRight().getRight();
 
-                for (int k = 0; k < 1000; k++)
-                    montNext[k] = gaussMixtureModel.sample(random);
-                for (int k = 0; k < 1000; k++)
-                    montAns[k] = montSum[random.nextInt(1000)] + montNext[random.nextInt(1000)];
-                for (int k = 0; k < 1000; k++)
-                    montSum[k] = montAns[k];
-                Arrays.sort(montSum);
-
-                lower = montSum[49];
-                upper = montSum[949];
-
+                for (int k = 0; k < MONT_COUNT; k++) {
+                    montSum[k] += gaussMixtureModel.sample(random);
+                }
             }
 
             if (i >= time.get((int)j)) {
                 budgetMean[(int)j] = (double) (time.get((int)j) - reference) / 120000 - mean;
-                budgetConfidenceLower[(int)j] = (double) (time.get((int)j) - reference) / 130000 - upper;
-                budgetConfidenceUpper[(int)j] = (double) (time.get((int)j) - reference) / 70000 - lower;
+                budgetConfidenceLower[(int)j] = (double) (time.get((int)j) - reference) / 130000 - nth(montSum, montUpper);
+                budgetConfidenceUpper[(int)j] = (double) (time.get((int)j) - reference) / 70000 - nth(montSum, montLower);
                 j++;
             }
         }
@@ -359,7 +325,7 @@ public final class PredictModel implements Model {
                 }
                 Bitmask.View2DMutable mask = Bitmask.view2DMutable(new long[Bitmask.size2d(tags.size(), transactions.size())], transactions.size());
                 for (int i = 0; i < transactions.size(); i++) {
-                    Day tmpDay = new Day(transactions.get(i).time());
+                    Day tmpDay = Day.of(transactions.get(i).time());
 //                    System.out.println("new transaction date: " + tmpDay.m + " " + tmpDay.d + " " + tmpDay.w);
                     for (int j = 0; j < tags.size(); j++) {
                         mask.set(j, i, tagPrediction.checkTag(tags.get(j), tmpDay.m, tmpDay.d));
@@ -413,9 +379,8 @@ public final class PredictModel implements Model {
             if (GMModelParameters.containsKey(categories.get(i))) {
                 budget[i] = 0;
                 double curBudget = 0.0;
-                Day curDay;
                 for (long curTime = startTime; curTime <= endTime; curTime += 24 * 60 * 60 * 1000L) {
-                    curDay = new Day(curTime);
+                    Day curDay = Day.of(curTime);
                     gaussMixtureModel.set(GMModelParameters.get(categories.get(i)), curDay.m, curDay.d, curDay.w);
                     curBudget += gaussMixtureModel.getMean();
                 }
@@ -432,5 +397,42 @@ public final class PredictModel implements Model {
                         ImmutablePair.of(overallSaving, ImmutableLongArray.copyOf(saving))
                 )
         );
+    }
+
+    public static double nth(double[] arr, int n) {
+        return nth(arr, n, 0, arr.length - 1);
+    }
+
+    private static double nth(double[] arr, int n, int l, int r) {
+        while (true) {
+            int pivot = (l + r) >> 1;
+            double pivotValue = arr[pivot];
+            arr[pivot] = arr[r];
+            int i = l, j = r - 1;
+            while (i < j) {
+                while (i < r && arr[i] < pivotValue) {
+                    i++;
+                }
+                while (j > l && arr[j] > pivotValue) {
+                    j--;
+                }
+                if (i < j) {
+                    double tmp = arr[i];
+                    arr[i] = arr[j];
+                    arr[j] = tmp;
+                    i++;
+                    j--;
+                }
+            }
+            arr[r] = arr[i];
+            arr[i] = pivotValue;
+            if (i == n) {
+                return arr[i];
+            } else if (i < n) {
+                l = i + 1;
+            } else {
+                r = i - 1;
+            }
+        }
     }
 }

@@ -5,6 +5,7 @@ import java.security.SecureRandom;
 public final class XorShift128 {
     private static final SecureRandom RANDOM = new SecureRandom();
     private static final long floatMask = (1L << 52) - 1;
+    private static final double doubleEps = 1.0 / (1L << 52);
     private long state0, state1;
     private double nextGaussian;
     private boolean hasNextGaussian = false;
@@ -31,7 +32,7 @@ public final class XorShift128 {
     }
 
     public double nextDouble() {
-        return ((nextLong() & floatMask) / (double) floatMask);
+        return (nextLong() & floatMask) * doubleEps;
     }
 
     public int nextInt() {

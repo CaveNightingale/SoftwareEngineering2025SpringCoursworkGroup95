@@ -111,6 +111,7 @@ class TestStorage implements AsyncStorage {
 
         private final ReferenceItemPair<Transaction>[] transactions;
 
+        @SuppressWarnings("unchecked")
         public TestTransactionTable() {
             Calendar calendar = Calendar.getInstance();
 
@@ -249,14 +250,23 @@ public class PredictionModelSpeedTest {
 
         long S = System.currentTimeMillis();
 
-        for (int i = 0; i < 100; i++) {
-            long start = System.currentTimeMillis();
+        for (int i = 0; i < 1000; i++) {
+//            long start = System.currentTimeMillis();
             predictModel.predictBudgetUsage(timestamp, times);
-            long end = System.currentTimeMillis();
+//            long end = System.currentTimeMillis();
 
 //            System.out.println("round #" + (i + 1) + ": " + (end - start) / 1000.0 + " seconds");
         }
         long E = System.currentTimeMillis();
         System.out.println("full round: " + (E - S) / 1000.0 + " seconds");
     }
+
+//    @Test
+//    public void nthTest() {
+//        System.out.println(PredictModel.nth(new double[]{1, 2, 3}, 1));
+//        System.out.println(PredictModel.nth(new double[]{3, 1, 2, 4}, 1));
+//        System.out.println(PredictModel.nth(new double[]{1, 2, 3, 3, 3}, 1));
+//        System.out.println(PredictModel.nth(new double[]{1, 2, 3, 3, 3}, 4));
+//        System.out.println(PredictModel.nth(new double[]{1, 2, 3, 3, 5}, 4));
+//    }
 }

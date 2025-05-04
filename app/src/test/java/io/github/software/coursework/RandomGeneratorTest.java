@@ -36,7 +36,7 @@ public class RandomGeneratorTest {
         }
         KolmogorovSmirnovTest ksTest = new KolmogorovSmirnovTest();
         double p = ksTest.kolmogorovSmirnovTest(new NormalDistribution(0.0, 1.0), cdf);
-        assertTrue(p >= significanceLevel, "Reject Null Hypothesis: The distribution is not uniform, p = " + p);
+        assertTrue(p >= significanceLevel, "Reject Null Hypothesis: The distribution is not gaussian, p = " + p);
     }
 
     @Test
