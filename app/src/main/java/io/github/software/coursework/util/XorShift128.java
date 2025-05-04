@@ -24,9 +24,9 @@ public final class XorShift128 {
         long s0 = state1;
         state0 = s0;
         s1 ^= s1 << 23;
-        s1 ^= s1 >>> 17;
+        s1 ^= s1 >>> 18;
         s1 ^= s0;
-        s1 ^= s0 >>> 26;
+        s1 ^= s0 >>> 5;
         state1 = s1;
         return s1 + s0;
     }
