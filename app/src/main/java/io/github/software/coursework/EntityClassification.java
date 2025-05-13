@@ -5,6 +5,7 @@ import java.nio.file.*;
 
 import java.util.*;
 
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -27,6 +28,8 @@ import java.nio.file.Files;
 import java.nio.charset.StandardCharsets;
 
 public class EntityClassification {
+
+    private static final Logger logger = Logger.getLogger("EntityClassification");
 
     private static final ClassPath classPath;
     private static final Set<ClassPath.ResourceInfo> resources;
@@ -96,6 +99,7 @@ public class EntityClassification {
 
         URL url = Objects.requireNonNull(EntityClassification.class.getResource(fileFolderName));
         System.out.println("URL: " + url);
+        logger.info("URL: " + url);
 
         for (ClassPath.ResourceInfo resource : resources) {
             if (resource.getResourceName().startsWith("io/github/software/coursework/" + fileFolderName)) {
@@ -135,7 +139,7 @@ public class EntityClassification {
 
                 String lst = "";
                 for (String part : parts) {
-                    if (lst != "") {
+                    if (!lst.isEmpty()) {
                         nGrams.compute(lst + part, (key, count) -> count == null ? 1 : count + 1);
                     }
                     nGrams.compute(part, (key, count) -> count == null ? 1 : count + 1);

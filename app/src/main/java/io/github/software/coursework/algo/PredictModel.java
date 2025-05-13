@@ -27,7 +27,7 @@ import java.util.stream.Collectors;
 
 public final class PredictModel implements Model {
 
-    public static final int MONT_COUNT = 1024;
+    public static final int MONT_COUNT = 16384;
     private static final int montLower = (int) (0.05 * MONT_COUNT);
     private static final int montUpper = (int) (0.95 * MONT_COUNT);
 
@@ -283,6 +283,11 @@ public final class PredictModel implements Model {
                 j++;
             }
         }
+
+//        return CompletableFuture.runAsync(() -> {
+//            ...
+//            return ...
+//        });
 
         return CompletableFuture.completedFuture(
                 ImmutablePair.of(

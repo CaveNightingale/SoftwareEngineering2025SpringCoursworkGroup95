@@ -1,20 +1,18 @@
 package io.github.software.coursework;
 
-import com.google.common.reflect.ClassPath;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.*;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import static java.lang.Math.abs;
 
@@ -22,38 +20,45 @@ public class TagPrediction {
 
     public Map<String, Pair<Integer, Integer>> tagList;
     public String fileName;
+    private static final Logger logger = Logger.getLogger(TagPrediction.class.getName());
 
     public TagPrediction(String fileName) {
         tagList = new HashMap<>();
         this.fileName = fileName;
 
-        ReadTags();
+        readTags();
     }
 
-    public void ReadTags() {
+    public void readTags() {
         tagList.clear();
 
         URL url = TagPrediction.class.getResource(fileName);
         Pattern pattern = Pattern.compile("^(\\d{2})/(\\d{2})$");
 
+        if (url == null) {
+            logger.warning("Could not find file " + fileName);
+            return;
+        }
+
 //        System.out.println(url.getPath());
 
-        try (BufferedReader br = new BufferedReader(new FileReader(url.getPath()))) {
+        try {
+            List<String> lines = Files.readAllLines(Paths.get(url.getPath()), StandardCharsets.UTF_8);
 
-            String line;
-            while ((line = br.readLine()) != null) {
+            for (String line : lines) {
 
 //                System.out.println("Printing Lines");
 //                System.out.println(line);
 
                 int firstSpace = line.indexOf(' ');
                 if (firstSpace == -1) {
-//                    System.out.println("Error: No space found");
+                    logger.warning("Error: No space found");
                 }
 
                 String trimmed = line.substring(firstSpace + 1);
+
                 if (trimmed.length() < 8) {
-//                    System.out.println("Error: Length less than 8");
+                    logger.warning("Error: Length less than 8");
                 }
 
                 String name = trimmed.substring(0, trimmed.length() - 8);
@@ -71,12 +76,12 @@ public class TagPrediction {
                     tagList.put(name, Pair.of(intNum1, intNum2));
 //                    System.out.println("Festival name : " + name + ", Date : " + date + ", Num1 :" + intNum1 + ", Num2 :" + intNum2);
                 } else {
-//                    System.out.println("Error: Invalid format");
+                    logger.warning("Error: Invalid format");
                 }
             }
 
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.warning("Error: " + e.getMessage());
         }
     }
 

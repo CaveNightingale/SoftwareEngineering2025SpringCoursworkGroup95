@@ -9,8 +9,6 @@ public final class GaussMixtureModel {
     public double[] cumulativeProbabilities = new double[0];
     public static NormalDistribution dist;
     private double mean = Double.NaN;
-    private double confidenceIntervalLower = Double.NaN;
-    private double confidenceIntervalUpper = Double.NaN;
 
     public GaussMixtureModel() {
         dist = new NormalDistribution(0, 1);
@@ -49,70 +47,6 @@ public final class GaussMixtureModel {
 
     public double getMean() {
         return mean;
-    }
-
-    public double getConfidenceIntervalLower() {
-        if (Double.isNaN(confidenceIntervalLower)) {
-            confidenceIntervalLower = computeIntervalLower(getMean());
-        }
-        return confidenceIntervalLower;
-    }
-
-    public double getConfidenceIntervalUpper() {
-        if (Double.isNaN(confidenceIntervalUpper)) {
-            confidenceIntervalUpper = computeIntervalUpper(getMean());
-        }
-        return confidenceIntervalUpper;
-    }
-
-    private double computeIntegral(double l, double r) {
-        double sum = 0.0;
-
-        for (int i = 0; i + 3 <= parameters.length; i += 3) {
-            sum += parameters[i + 2] * (dist.cumulativeProbability((r - parameters[i]) / parameters[i + 1])
-                                  - dist.cumulativeProbability((l - parameters[i]) / parameters[i + 1]));
-        }
-//        System.out.println("getIntegral: " + l + ", " + r + ", sum: " + sum);
-
-        return sum;
-    }
-
-    private double computeIntegral(double x) {
-        double sum = 0.0;
-
-        for (int i = 0; i + 3 <= parameters.length; i += 3) {
-            sum += parameters[i + 2] * (dist.cumulativeProbability((x - parameters[i]) / parameters[i + 1]));
-        }
-
-        return sum;
-    }
-
-    private double computeIntervalLower(double mean) {
-        double l = -9999999.0, r = mean;
-        double mid = 0;
-        while (r - l > 0.0000001) {
-            mid = (l + r) / 2;
-            if (computeIntegral(mid, mean) < 0.45) {
-                r = mid;
-            } else {
-                l = mid;
-            }
-        }
-        return Math.max(0, mid);
-    }
-
-    private double computeIntervalUpper(double mean) {
-        double l = mean, r = 9999999.0;
-        double mid = 0;
-        while (r - l > 0.0000001) {
-            mid = (l + r) / 2;
-            if (computeIntegral(mean, mid) < 0.45) {
-                l = mid;
-            } else {
-                r = mid;
-            }
-        }
-        return Math.max(0, mid);
     }
 
     public double sample(XorShift128 randomGenerator) {

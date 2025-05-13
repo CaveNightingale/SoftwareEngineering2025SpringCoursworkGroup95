@@ -113,6 +113,7 @@ public class GMModelCalculation {
         return answer;
     }
 
+    @SuppressWarnings("unchecked")
     public List<Integer>[] kMeansPlus(int k) {
         System.out.println("k = " + k);
 
@@ -134,8 +135,10 @@ public class GMModelCalculation {
             for (double tValue : t) {
                 double maxG = 0.0;
                 for (int j = 0; j < ctops; j++) {
-                    if (maxG < Math.pow(tValue - centers[j], 2)) {
-                        maxG = Math.pow(tValue - centers[j], 2);
+                    double g1 = tValue - centers[j];
+                    double g = g1 * g1;
+                    if (maxG < g) {
+                        maxG = g;
                     }
                 }
 
