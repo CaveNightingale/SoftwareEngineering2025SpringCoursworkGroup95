@@ -34,7 +34,8 @@ public final class PredictModel implements Model {
     public GaussMixtureModel gaussMixtureModel;
     public EntityPrediction entityPrediction1;
     public EntityPrediction entityPrediction2;
-    public Map<String, double[][]> GMModelParameters;
+    public Map<String, double[][]> gMModelBudgetParameters;
+    public Map<String, double[][]> gMModelSaveParameters;
     private final AsyncStorage storage;
     public int changedFlag;
     public TagPrediction tagPrediction;
@@ -96,11 +97,12 @@ public final class PredictModel implements Model {
         entityPrediction2.loadNGram();
         tagPrediction = new TagPrediction("Tags.txt");
 
-        GMModelParameters = new HashMap<>();
+        gMModelBudgetParameters = new HashMap<>();
+        gMModelSaveParameters = new HashMap<>();
         this.storage = storage;
     }
 
-    public PredictModel(Map<String, double[][]> GMModelParameters, AsyncStorage storage) {
+    public PredictModel(Map<String, double[][]> gMModelBudgetParameters, Map<String, double[][]> gMModelSaveParameters, AsyncStorage storage) {
         changedFlag = 0;
         gaussMixtureModel = new GaussMixtureModel();
         entityPrediction1 = new EntityPrediction("Categories1");
@@ -109,8 +111,10 @@ public final class PredictModel implements Model {
         entityPrediction2.loadNGram();
         tagPrediction = new TagPrediction("Tags.txt");
 
-        this.GMModelParameters = new HashMap<>();
-        this.GMModelParameters.putAll(GMModelParameters);
+        this.gMModelBudgetParameters = new HashMap<>();
+        this.gMModelSaveParameters = new HashMap<>();
+        this.gMModelBudgetParameters.putAll(gMModelBudgetParameters);
+        this.gMModelSaveParameters.putAll(gMModelSaveParameters);
         this.storage = storage;
 
     }
@@ -139,7 +143,8 @@ public final class PredictModel implements Model {
         List<Pair<Double, Triple<Integer, Integer, Integer>>> transLists = new ArrayList<>();
         List<Pair<String, Pair<Double, Triple<Integer, Integer, Integer>>>> arrLists = new ArrayList<>();
         List<String> mapper = new ArrayList<>();
-        GMModelParameters.clear();
+        gMModelBudgetParameters.clear();
+        gMModelSaveParameters.clear();
 
         storage.transaction(table -> {
             try {
@@ -163,13 +168,31 @@ public final class PredictModel implements Model {
                 for (String category : mapper) {
                     transLists.clear();
                     for (Pair<String, Pair<Double, Triple<Integer, Integer, Integer>>> t : arrLists) {
-                        if (!t.getLeft().equalsIgnoreCase(category)) {
+                        if (!t.getLeft().equalsIgnoreCase(category) || t.getRight().getLeft() <= 0.0) {
                             continue;
                         }
                         transLists.add(t.getRight());
                     }
 
-                    GMModelParameters.put(
+                    this.gMModelSaveParameters.put(
+                            category,
+                            calculation.GMModelCalculator(transLists)
+                                    .stream()
+                                    .map(x -> x.stream().mapToDouble(Double::doubleValue).toArray())
+                                    .toArray(double[][]::new)
+                    );
+                }
+
+                for (String category : mapper) {
+                    transLists.clear();
+                    for (Pair<String, Pair<Double, Triple<Integer, Integer, Integer>>> t : arrLists) {
+                        if (!t.getLeft().equalsIgnoreCase(category) || t.getRight().getLeft() >= 0.0) {
+                            continue;
+                        }
+                        transLists.add(Pair.of(-t.getRight().getLeft(), t.getRight().getRight()));
+                    }
+
+                    this.gMModelBudgetParameters.put(
                             category,
                             calculation.GMModelCalculator(transLists)
                                     .stream()
@@ -185,7 +208,7 @@ public final class PredictModel implements Model {
 
     @Override
     public PredictModel fork() {
-        return new PredictModel(GMModelParameters, storage);
+        return new PredictModel(gMModelBudgetParameters, gMModelSaveParameters, storage);
     }
 
     @Override
@@ -223,7 +246,7 @@ public final class PredictModel implements Model {
         for (int j = 0; j < time.length(); ) {
             Day curDay = Day.of(i);
 
-            for (double[][] gm : GMModelParameters.values()) {
+            for (double[][] gm : gMModelBudgetParameters.values()) {
                 gaussMixtureModel.set(gm, curDay.m, curDay.d, curDay.w);
                 mean += gaussMixtureModel.getMean();
 
@@ -265,23 +288,33 @@ public final class PredictModel implements Model {
 
         XorShift128 random = new XorShift128();
 
-        for (long i = reference + 24 * 60 * 60 * 1000L, j = 0; j < time.length(); i += 24 * 60 * 60 * 1000L) {
+        for (long i = reference, j = 0; j < time.length(); i += 24 * 60 * 60 * 1000L) {
             Day curDay = Day.of(i);
-            for (Map.Entry<String, double[][]> gm : GMModelParameters.entrySet()) {
-                gaussMixtureModel.set(gm.getValue(), curDay.m, curDay.d, curDay.w);
+
+            for (double[][] gm : gMModelSaveParameters.values()) {
+                gaussMixtureModel.set(gm, curDay.m, curDay.d, curDay.w);
                 mean += gaussMixtureModel.getMean();
 
                 for (int k = 0; k < MONT_COUNT; k++) {
                     montSum[k] += gaussMixtureModel.sample(random);
                 }
             }
+            for (double[][] gm : gMModelBudgetParameters.values()) {
+                gaussMixtureModel.set(gm, curDay.m, curDay.d, curDay.w);
+                mean += gaussMixtureModel.getMean();
+
+                for (int k = 0; k < MONT_COUNT; k++) {
+                    montSum[k] -= gaussMixtureModel.sample(random);
+                }
+            }
 
             if (i >= time.get((int)j)) {
-                budgetMean[(int)j] = (double) (time.get((int)j) - reference) / 120000 - mean;
-                budgetConfidenceLower[(int)j] = (double) (time.get((int)j) - reference) / 130000 - nth(montSum, montUpper);
-                budgetConfidenceUpper[(int)j] = (double) (time.get((int)j) - reference) / 70000 - nth(montSum, montLower);
+                budgetMean[(int)j] = mean;
+                budgetConfidenceLower[(int)j] = nth(montSum, montLower);
+                budgetConfidenceUpper[(int)j] = nth(montSum, montUpper);
                 j++;
             }
+
         }
 
 //        return CompletableFuture.runAsync(() -> {
@@ -381,18 +414,25 @@ public final class PredictModel implements Model {
         long overallBudget = 0, overallSaving = 0;
         Random random = new Random();
         for (int i = 0; i < categories.size(); i++) {
-            if (GMModelParameters.containsKey(categories.get(i))) {
+            if (gMModelBudgetParameters.containsKey(categories.get(i))) {
                 budget[i] = 0;
                 double curBudget = 0.0;
                 for (long curTime = startTime; curTime <= endTime; curTime += 24 * 60 * 60 * 1000L) {
                     Day curDay = Day.of(curTime);
-                    gaussMixtureModel.set(GMModelParameters.get(categories.get(i)), curDay.m, curDay.d, curDay.w);
+                    gaussMixtureModel.set(gMModelBudgetParameters.get(categories.get(i)), curDay.m, curDay.d, curDay.w);
                     curBudget += gaussMixtureModel.getMean();
                 }
                 budget[i] += (long)(curBudget * 100);
                 overallBudget += budget[i];
             } else {
-                saving[i] = ((endTime - startTime) / (24 * 60 * 60 * 1000L) + 1) * 20000L;
+                saving[i] = 0;
+                double curSaving = 0.0;
+                for (long curTime = startTime; curTime <= endTime; curTime += 24 * 60 * 60 * 1000L) {
+                    Day curDay = Day.of(curTime);
+                    gaussMixtureModel.set(gMModelSaveParameters.get(categories.get(i)), curDay.m, curDay.d, curDay.w);
+                    curSaving += gaussMixtureModel.getMean();
+                }
+                saving[i] += (long)(curSaving * 100);
                 overallSaving += saving[i];
             }
         }
