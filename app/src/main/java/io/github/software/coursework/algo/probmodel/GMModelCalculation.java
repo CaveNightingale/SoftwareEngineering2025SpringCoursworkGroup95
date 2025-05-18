@@ -37,6 +37,24 @@ public class GMModelCalculation {
 
 
     public List<List<Double>> GMModelCalculator(List<Pair<Double, Triple<Integer, Integer, Integer>>> params) {
+
+        System.out.println("GMModelCalculator new parameters: " + params.size());
+
+        if (params.isEmpty()) {
+            List<List<Double>> answer = new ArrayList<>();
+            List<Double> temp = new ArrayList<>();
+            temp.add(0.0);
+            temp.add(0.1);
+            for (int i = 1; i < 13; i++)
+                temp.add(1.0);
+            for (int i = 1; i < 32; i++)
+                temp.add(0.0);
+            for (int i = 1; i < 8; i++)
+                temp.add(1.0);
+            answer.add(temp);
+            return answer;
+        }
+
         p = params;
         t = new ArrayList<>();
 

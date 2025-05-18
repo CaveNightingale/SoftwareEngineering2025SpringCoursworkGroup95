@@ -6,6 +6,7 @@ import java.io.*;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
@@ -40,15 +41,12 @@ public class TagPrediction {
             return;
         }
 
-//        System.out.println(url.getPath());
+        String filePath = url.getPath().toString().replaceFirst("^/[A-Z]:", "");
 
         try {
-            List<String> lines = Files.readAllLines(Paths.get(url.getPath()), StandardCharsets.UTF_8);
+            List<String> lines = Files.readAllLines(Path.of(filePath), StandardCharsets.UTF_8);
 
             for (String line : lines) {
-
-//                System.out.println("Printing Lines");
-//                System.out.println(line);
 
                 int firstSpace = line.indexOf(' ');
                 if (firstSpace == -1) {
