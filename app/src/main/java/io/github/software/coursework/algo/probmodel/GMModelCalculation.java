@@ -300,7 +300,9 @@ public class GMModelCalculation {
         }
         variance /= params.size();
 
-        variance = max(variance, 0.1);
+        if (variance < 1e-8) {
+            variance = 1.0 / params.size();
+        }
 
         List<Double> re = new ArrayList<>();
         re.add(mean);

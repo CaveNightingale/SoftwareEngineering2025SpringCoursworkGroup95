@@ -1,6 +1,7 @@
 package io.github.software.coursework;
 
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.math3.analysis.function.Constant;
 
 import java.io.*;
 import java.net.URL;
@@ -18,6 +19,9 @@ import java.util.regex.Pattern;
 import static java.lang.Math.abs;
 
 public class TagPrediction {
+
+    private static final int SUFFIX_LENGTH_DELETE = 8;
+    private static final int SUFFIX_LENGTH_DATE = 5;
 
     public Map<String, Pair<Integer, Integer>> tagList;
     public String fileName;
@@ -55,12 +59,12 @@ public class TagPrediction {
 
                 String trimmed = line.substring(firstSpace + 1);
 
-                if (trimmed.length() < 8) {
+                if (trimmed.length() < SUFFIX_LENGTH_DELETE) {
                     logger.warning("Error: Length less than 8");
                 }
 
-                String name = trimmed.substring(0, trimmed.length() - 8);
-                String date = trimmed.substring(trimmed.length() - 5);
+                String name = trimmed.substring(0, trimmed.length() - SUFFIX_LENGTH_DELETE);
+                String date = trimmed.substring(trimmed.length() - SUFFIX_LENGTH_DATE);
 
                 Matcher matcher = pattern.matcher(date);
 

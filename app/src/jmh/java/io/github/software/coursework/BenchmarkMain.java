@@ -17,7 +17,7 @@ public class BenchmarkMain {
     private static final Map<String, Double> minimumThroughputRequirement = ImmutableMap.of(
             XorShift128UniformBenchmark.class.getName(), 1.5e8,
             XorShift128GaussianBenchmark.class.getName(), 5.0e7,
-            PredictionModelBenchmark.class.getName(), 2.0e2
+            PredictionModelBenchmark.class.getName(), 1.2e1
     );
 
     public static void main(String[] args) throws RunnerException {

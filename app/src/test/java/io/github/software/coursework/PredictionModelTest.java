@@ -24,7 +24,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 
 import java.time.*;
-import java.time.temporal.ChronoUnit;
+import static org.junit.jupiter.api.Assertions.*;
 
 final class TestStorage implements AsyncStorage {
 
@@ -272,17 +272,21 @@ public class PredictionModelTest {
 //            System.out.println("Part 3: " + part3);
 
             for (int i = 0; i < part1.length(); i++) {
-                assert(!Double.isNaN(part1.get(i)));
-                assert(!Double.isInfinite(part1.get(i)));
+                double v1 = part1.get(i);
+                double v2 = part2.get(i);
+                double v3 = part3.get(i);
 
-                assert(!Double.isNaN(part2.get(i)));
-                assert(!Double.isInfinite(part2.get(i)));
+                assertFalse(Double.isNaN(v1), "part1[" + i + "] is NaN");
+                assertFalse(Double.isInfinite(v1), "part1[" + i + "] is Infinite");
 
-                assert(!Double.isNaN(part3.get(i)));
-                assert(!Double.isInfinite(part3.get(i)));
+                assertFalse(Double.isNaN(v2), "part2[" + i + "] is NaN");
+                assertFalse(Double.isInfinite(v2), "part2[" + i + "] is Infinite");
 
-                assert(part1.get(i) >= part2.get(i));
-                assert(part1.get(i) <= part3.get(i));
+                assertFalse(Double.isNaN(v3), "part3[" + i + "] is NaN");
+                assertFalse(Double.isInfinite(v3), "part3[" + i + "] is Infinite");
+
+                assertTrue(v1 >= v2, "part1[" + i + "] < part2[" + i + "]");
+                assertTrue(v1 <= v3, "part1[" + i + "] > part3[" + i + "]");
             }
         } catch (InterruptedException | ExecutionException e) {
             e.printStackTrace();
@@ -302,17 +306,21 @@ public class PredictionModelTest {
 //            System.out.println("Part 3: " + part3);
 
             for (int i = 0; i < part1.length(); i++) {
-                assert(!Double.isNaN(part1.get(i)));
-                assert(!Double.isInfinite(part1.get(i)));
+                double v1 = part1.get(i);
+                double v2 = part2.get(i);
+                double v3 = part3.get(i);
 
-                assert(!Double.isNaN(part2.get(i)));
-                assert(!Double.isInfinite(part2.get(i)));
+                assertFalse(Double.isNaN(v1), "part1[" + i + "] is NaN");
+                assertFalse(Double.isInfinite(v1), "part1[" + i + "] is Infinite");
 
-                assert(!Double.isNaN(part3.get(i)));
-                assert(!Double.isInfinite(part3.get(i)));
+                assertFalse(Double.isNaN(v2), "part2[" + i + "] is NaN");
+                assertFalse(Double.isInfinite(v2), "part2[" + i + "] is Infinite");
 
-                assert(part1.get(i) >= part2.get(i));
-                assert(part1.get(i) <= part3.get(i));
+                assertFalse(Double.isNaN(v3), "part3[" + i + "] is NaN");
+                assertFalse(Double.isInfinite(v3), "part3[" + i + "] is Infinite");
+
+                assertTrue(v1 >= v2, "part1[" + i + "] < part2[" + i + "]");
+                assertTrue(v1 <= v3, "part1[" + i + "] > part3[" + i + "]");
             }
         } catch (InterruptedException | ExecutionException e) {
             e.printStackTrace();
