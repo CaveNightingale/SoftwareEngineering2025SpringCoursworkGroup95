@@ -25,6 +25,9 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
+import static java.lang.Math.min;
+import static org.apache.commons.lang3.math.NumberUtils.max;
+
 public final class PredictModel implements Model {
 
     public static final int MONT_COUNT = 16384;
@@ -148,6 +151,9 @@ public final class PredictModel implements Model {
 
         storage.transaction(table -> {
             try {
+                double max_amount0 = 0.0, min_amount0 = 1000000000.0;
+                double max_amount1 = 0.0, min_amount1 = 1000000000.0;
+
                 SequencedCollection<ReferenceItemPair<Transaction>> transactions = table.list(Long.MIN_VALUE, Long.MAX_VALUE, 0, Integer.MAX_VALUE);
                 for (var transaction : transactions) {
                     long time = transaction.item().time();
@@ -172,6 +178,9 @@ public final class PredictModel implements Model {
                             continue;
                         }
                         transLists.add(t.getRight());
+
+                        max_amount0 = max(max_amount0, t.getRight().getLeft());
+                        min_amount0 = min(min_amount0, t.getRight().getLeft());
                     }
 
                     this.gMModelSaveParameters.put(
@@ -190,6 +199,9 @@ public final class PredictModel implements Model {
                             continue;
                         }
                         transLists.add(Pair.of(-t.getRight().getLeft(), t.getRight().getRight()));
+
+                        max_amount1 = max(max_amount1, -t.getRight().getLeft());
+                        min_amount1 = min(min_amount1, -t.getRight().getLeft());
                     }
 
                     this.gMModelBudgetParameters.put(
@@ -200,6 +212,7 @@ public final class PredictModel implements Model {
                                     .toArray(double[][]::new)
                     );
                 }
+
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -260,6 +273,14 @@ public final class PredictModel implements Model {
                 budgetMean[j] = mean;
                 budgetConfidenceLower[j] = nth(montSum, montLower);
                 budgetConfidenceUpper[j] = nth(montSum, montUpper);
+
+                if (budgetMean[j] < 0)
+                    budgetMean[j] = 0;
+                if (budgetConfidenceLower[j] < 0)
+                    budgetConfidenceLower[j] = 0;
+                if (budgetConfidenceUpper[j] < 0)
+                    budgetConfidenceUpper[j] = 0;
+
                 j++;
             }
             i += 24 * 60 * 60 * 1000L;
@@ -301,7 +322,7 @@ public final class PredictModel implements Model {
             }
             for (double[][] gm : gMModelBudgetParameters.values()) {
                 gaussMixtureModel.set(gm, curDay.m, curDay.d, curDay.w);
-                mean += gaussMixtureModel.getMean();
+                mean -= gaussMixtureModel.getMean();
 
                 for (int k = 0; k < MONT_COUNT; k++) {
                     montSum[k] -= gaussMixtureModel.sample(random);

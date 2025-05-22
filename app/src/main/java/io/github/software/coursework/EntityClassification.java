@@ -45,7 +45,7 @@ public class EntityClassification {
     public static List<Triple<String, Double, String>> entityClassification(String fileFolderName) {
         List<String> categories = getCategories(fileFolderName);
 
-        System.out.println(categories);
+//        System.out.println(categories);
 
         Map<String, String> nGramToCategory = new HashMap<>();
         Map<String, Integer> nGramFrequency = new HashMap<>();
@@ -95,10 +95,10 @@ public class EntityClassification {
     public static List<String> getCategories(String fileFolderName) {
         List<String> categories = new ArrayList<>();
 
-        System.out.println(fileFolderName);
+//        System.out.println(fileFolderName);
 
         URL url = Objects.requireNonNull(EntityClassification.class.getResource(fileFolderName));
-        System.out.println("URL: " + url);
+//        System.out.println("URL: " + url);
         logger.info("URL: " + url);
 
         for (ClassPath.ResourceInfo resource : resources) {
@@ -107,13 +107,13 @@ public class EntityClassification {
             }
         }
 
-        System.out.println(categories);
+//        System.out.println(categories);
 
         return categories;
     }
 
     public static Map<String, Integer> readText(String fileFolderName, String category) {
-        System.out.println("read Text " + category);
+//        System.out.println("read Text " + category);
         try  {
             Path path = Paths.get(EntityClassification.class.getResource(fileFolderName).toURI());
             List<String> textByLines = Files.readAllLines(path.resolve(category + ".txt"), StandardCharsets.UTF_8);

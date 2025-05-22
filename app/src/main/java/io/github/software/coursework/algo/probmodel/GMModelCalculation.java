@@ -133,8 +133,6 @@ public class GMModelCalculation {
 
     @SuppressWarnings("unchecked")
     public List<Integer>[] kMeansPlus(int k) {
-        System.out.println("k = " + k);
-
         double[] centers = new double[50];
         int ctops = 0;
         centers[ctops++] = t.get(0);
