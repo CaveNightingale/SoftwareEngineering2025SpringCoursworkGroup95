@@ -23,6 +23,8 @@ import java.time.ZoneOffset;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import static java.lang.Math.min;
@@ -243,9 +245,8 @@ public final class PredictModel implements Model {
         return CompletableFuture.completedFuture(null);
     }
 
-    @Override
-    public CompletableFuture<ImmutablePair<ImmutableDoubleArray, Pair<ImmutableDoubleArray, ImmutableDoubleArray>>>
-                    predictBudgetUsage(long reference, ImmutableLongArray time) {
+    public ImmutablePair<ImmutableDoubleArray, Pair<ImmutableDoubleArray, ImmutableDoubleArray>>
+                    predictBudgetUsageAsync(long reference, ImmutableLongArray time) {
         double[] budgetMean = new double[time.length()];
         double[] budgetConfidenceLower = new double[time.length()];
         double[] budgetConfidenceUpper = new double[time.length()];
@@ -286,20 +287,25 @@ public final class PredictModel implements Model {
             i += 24 * 60 * 60 * 1000L;
         }
 
-        return CompletableFuture.completedFuture(
-                ImmutablePair.of(
+        return ImmutablePair.of(
                         ImmutableDoubleArray.copyOf(budgetMean),
                         ImmutablePair.of(
                                 ImmutableDoubleArray.copyOf(budgetConfidenceLower),
                                 ImmutableDoubleArray.copyOf(budgetConfidenceUpper)
                         )
-                )
-        );
+                );
     }
 
     @Override
     public CompletableFuture<ImmutablePair<ImmutableDoubleArray, Pair<ImmutableDoubleArray, ImmutableDoubleArray>>>
-                    predictSavedAmount(long reference, ImmutableLongArray time) {
+                    predictBudgetUsage(long reference, ImmutableLongArray time) {
+        return CompletableFuture.supplyAsync(() -> {
+            return predictBudgetUsageAsync(reference, time);
+        });
+    }
+
+    public ImmutablePair<ImmutableDoubleArray, Pair<ImmutableDoubleArray, ImmutableDoubleArray>>
+                    predictSavedAmountAsync(long reference, ImmutableLongArray time) {
         double[] budgetMean = new double[time.length()];
         double[] budgetConfidenceLower = new double[time.length()];
         double[] budgetConfidenceUpper = new double[time.length()];
@@ -338,25 +344,25 @@ public final class PredictModel implements Model {
 
         }
 
-//        return CompletableFuture.runAsync(() -> {
-//            ...
-//            return ...
-//        });
-
-        return CompletableFuture.completedFuture(
-                ImmutablePair.of(
+        return ImmutablePair.of(
                         ImmutableDoubleArray.copyOf(budgetMean),
                         ImmutablePair.of(
                                 ImmutableDoubleArray.copyOf(budgetConfidenceLower),
                                 ImmutableDoubleArray.copyOf(budgetConfidenceUpper)
                         )
-                )
-        );
+                );
     }
 
     @Override
-    public CompletableFuture<ImmutablePair<ImmutableIntArray, Bitmask.View2D>>
-                    predictCategoriesAndTags(ImmutableList<Transaction> transactions, ImmutableList<String> categories, ImmutableList<String> tags) {
+    public CompletableFuture<ImmutablePair<ImmutableDoubleArray, Pair<ImmutableDoubleArray, ImmutableDoubleArray>>>
+                    predictSavedAmount(long reference, ImmutableLongArray time) {
+        return CompletableFuture.supplyAsync(() -> {
+            return predictSavedAmountAsync(reference, time);
+        });
+    }
+
+    public ImmutablePair<ImmutableIntArray, Bitmask.View2D>
+                    predictCategoriesAndTagsAsync(ImmutableList<Transaction> transactions, ImmutableList<String> categories, ImmutableList<String> tags) throws ExecutionException, InterruptedException {
         CompletableFuture<ImmutablePair<ImmutableIntArray, Bitmask.View2D>> future = new CompletableFuture<>();
 
         storage.entity(entity -> {
@@ -399,11 +405,24 @@ public final class PredictModel implements Model {
             }
         });
 
-        return future;
+        return future.get();
     }
 
     @Override
-    public CompletableFuture<ImmutableIntArray> predictEntityTypes(ImmutableList<Entity> entities) {
+    public CompletableFuture<ImmutablePair<ImmutableIntArray, Bitmask.View2D>>
+                    predictCategoriesAndTags(ImmutableList<Transaction> transactions, ImmutableList<String> categories, ImmutableList<String> tags) {
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                return predictCategoriesAndTagsAsync(transactions, categories, tags);
+            } catch (ExecutionException e) {
+                throw new RuntimeException(e);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        });
+    }
+
+    public ImmutableIntArray predictEntityTypesAsync(ImmutableList<Entity> entities) {
         Map<String, Integer> map = Arrays.stream(Entity.Type.values()).collect(Collectors.toMap(Enum::name, Enum::ordinal));
 
 
@@ -422,14 +441,18 @@ public final class PredictModel implements Model {
             }
         }
 
-        return CompletableFuture.completedFuture(
-                ImmutableIntArray.copyOf(types)
-        );
+        return ImmutableIntArray.copyOf(types);
     }
 
     @Override
-    public CompletableFuture<ImmutablePair<ImmutablePair<Long, ImmutableLongArray>, ImmutablePair<Long, ImmutableLongArray>>>
-                    predictGoals(ImmutableList<String> categories, long startTime, long endTime) {
+    public CompletableFuture<ImmutableIntArray> predictEntityTypes(ImmutableList<Entity> entities) {
+        return CompletableFuture.supplyAsync(() -> {
+            return predictEntityTypesAsync(entities);
+        });
+    }
+
+    public ImmutablePair<ImmutablePair<Long, ImmutableLongArray>, ImmutablePair<Long, ImmutableLongArray>>
+                    predictGoalsAsync(ImmutableList<String> categories, long startTime, long endTime) {
         long[] budget = new long[categories.size()];
         long[] saving = new long[categories.size()];
         long overallBudget = 0, overallSaving = 0;
@@ -457,12 +480,18 @@ public final class PredictModel implements Model {
                 overallSaving += saving[i];
             }
         }
-        return CompletableFuture.completedFuture(
-                ImmutablePair.of(
+        return ImmutablePair.of(
                         ImmutablePair.of(overallBudget, ImmutableLongArray.copyOf(budget)),
                         ImmutablePair.of(overallSaving, ImmutableLongArray.copyOf(saving))
-                )
-        );
+                );
+    }
+
+    @Override
+    public CompletableFuture<ImmutablePair<ImmutablePair<Long, ImmutableLongArray>, ImmutablePair<Long, ImmutableLongArray>>>
+                    predictGoals(ImmutableList<String> categories, long startTime, long endTime) {
+        return CompletableFuture.supplyAsync(() -> {
+            return predictGoalsAsync(categories, startTime, endTime);
+        });
     }
 
     public static double nth(double[] arr, int n) {
