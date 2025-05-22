@@ -87,7 +87,7 @@ public final class ChartSequentialPredictionView implements ChartController.View
             rendering.save();
             rendering.setStroke(Color.BLACK.deriveColor(1, 1, 1, 0.5));
             String date = LocalDate.ofEpochDay(model.getStart() / MainPageModel.DAY + (int) mouseX).format(formatter);
-            rendering.drawText(date, ChartRendering.ALIGN_CENTER, ChartRendering.ALIGN_START, rendering.fromDataX(mouseX), rendering.fromDataY(0) + 7.5);
+            rendering.drawText(date, ChartRendering.ALIGN_CENTER, ChartRendering.ALIGN_START, rendering.fromDataX(mouseX), rendering.fromFracY(0) + 7.5);
             rendering.restore();
             String text = getMouseHoverText(model);
             rendering.save();
@@ -112,7 +112,7 @@ public final class ChartSequentialPredictionView implements ChartController.View
         if (index < model.getTrainingSamples().length()) {
             return String.format("%.2f", model.getTrainingSamples().get(index));
         } else {
-            double referenceValue = model.getTrainingSamples().get(model.getTrainingSamples().length() - 1);
+            double referenceValue = model.getTrainingSamples().isEmpty() ? 0 : model.getTrainingSamples().get(model.getTrainingSamples().length() - 1);
             double value = model.getPredictedMean().get(index - model.getTrainingSamples().length()) + referenceValue;
             double upper = model.getPredictedUpperBound().get(index - model.getTrainingSamples().length()) + referenceValue;
             double lower = model.getPredictedLowerBound().get(index - model.getTrainingSamples().length()) + referenceValue;

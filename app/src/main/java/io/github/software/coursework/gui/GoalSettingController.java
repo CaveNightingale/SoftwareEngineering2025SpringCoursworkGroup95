@@ -79,6 +79,16 @@ public final class GoalSettingController {
         ArrayList<String> categories = new ArrayList<>(model.getCategories());
         categories.sort(String::compareTo);
         categoryList.getChildren().clear();
+        goalBudget.valueProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue != null) {
+                model.setOverallBudget(newValue);
+            }
+        });
+        goalBudget.valueProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue != null) {
+                model.setOverallBudget(newValue);
+            }
+        });
         for (String category : categories) {
             if (!model.getCategorical().containsKey(category)) {
                 model.getCategorical().put(category, Pair.of(0.00, false));
