@@ -5,21 +5,25 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import io.github.software.coursework.algo.Model;
-import io.github.software.coursework.algo.NoSkill;
 import io.github.software.coursework.algo.PredictModel;
 import io.github.software.coursework.data.AsyncStorage;
 import io.github.software.coursework.data.json.EncryptedLogger;
 import io.github.software.coursework.data.json.Encryption;
 import io.github.software.coursework.data.json.JsonStorage;
-import io.github.software.coursework.gui.DecryptionView;
+import io.github.software.coursework.gui.DecryptionPageController;
+import io.github.software.coursework.gui.DecryptionPageModel;
 import io.github.software.coursework.gui.EncryptionSetting;
-import io.github.software.coursework.gui.MainView;
+import io.github.software.coursework.gui.MainPage;
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Node;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Tab;
+import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Paint;
 import javafx.scene.text.Text;
@@ -48,8 +52,16 @@ public class App extends Application {
 
     @Override
     public void start(Stage stage) {
-        DecryptionView decryptionView = new DecryptionView();
-        Scene scene = new Scene(decryptionView, 400, 250);
+        AnchorPane node;
+        FXMLLoader loader = new FXMLLoader(DecryptionPageController.class.getResource("DecryptionPage.fxml"));
+        try {
+            node = loader.load();
+        } catch (IOException e) {
+            throw new IllegalStateException(e);
+        }
+        DecryptionPageController decryptionController = loader.getController();
+        DecryptionPageModel decryptionModel = decryptionController.getModel();
+        Scene scene = new Scene(node, 400, 250);
         stage.setScene(scene);
         stage.setResizable(false);
         stage.setTitle("Financial Management System");
@@ -57,10 +69,10 @@ public class App extends Application {
         stage.setHeight(275);
         stage.setMaximized(false);
         stage.show();
-        decryptionView.focus();
-        decryptionView.setOnDecryptionSubmit(event -> {
+        decryptionController.focus();
+        decryptionModel.setOnDecryptionSubmit(event -> {
             if (event.getAccount() == null) {
-                decryptionView.reportPasswordIncorrect();
+                decryptionController.reportPasswordIncorrect();
                 return;
             }
             try {
@@ -75,7 +87,7 @@ public class App extends Application {
                 });
             } catch (IOException ex) {
                 logger.log(Level.INFO, "Cannot decrypt", ex);
-                decryptionView.reportPasswordIncorrect();
+                decryptionController.reportPasswordIncorrect();
                 return;
             }
             stage.setWidth(800);
@@ -87,8 +99,8 @@ public class App extends Application {
         });
     }
 
-    private Scene getScene(Stage stage, DecryptionView.DecryptionSubmitEvent event) {
-        MainView mainView = new MainView(storage, model);
+    private Scene getScene(Stage stage, DecryptionPageModel.DecryptionSubmitEvent event) {
+        MainPage mainView = new MainPage(storage, model);
         EncryptionSetting encryptionSetting = new EncryptionSetting(event.getAccount(), event.getPassword());
         encryptionSetting.setOnRequestRestart(event1 -> {
             mainView.setDisable(true);

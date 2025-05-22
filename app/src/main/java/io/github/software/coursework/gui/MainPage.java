@@ -1,7 +1,6 @@
 package io.github.software.coursework.gui;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.primitives.Doubles;
 import com.google.common.primitives.ImmutableDoubleArray;
 import com.google.common.primitives.ImmutableLongArray;
 import io.github.software.coursework.algo.Model;
@@ -23,6 +22,7 @@ import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import org.apache.commons.lang3.tuple.ImmutablePair;
@@ -35,32 +35,34 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import javafx.scene.layout.*;
-import javafx.scene.paint.Color;
-import javafx.scene.paint.Paint;
+
 import javafx.scene.text.Text;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 import java.text.NumberFormat;
 import java.util.Locale;
 import java.io.IOException;
-import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.stream.IntStream;
 
 import static io.github.software.coursework.data.schema.Entity.Type.UNKNOWN;
 
-public class MainView extends AnchorPane {
+public class MainPage extends AnchorPane {
     private static final Logger logger = Logger.getLogger("MainView");
     private static final int pageSize = 20;
-    private static final long day = 1000L * 60 * 60 * 24;
+    public static final long DAY = 1000L * 60 * 60 * 24;
 
     @FXML
-    private TransactionList transactionList;
+    private Node transactionList;
 
     @FXML
-    private EntityList entityList;
+    private TransactionListController transactionListController;
+
+    @FXML
+    private Node entityList;
+
+    @FXML
+    private EntityListController entityListController;
 
     @FXML
     private TabPane tabPane;
@@ -84,22 +86,34 @@ public class MainView extends AnchorPane {
     private VBox settings;
 
     @FXML
-    private EditList categoriesEdit;
+    private Node categoriesEdit;
 
     @FXML
-    private EditList tagsEdit;
+    private Node tagsEdit;
 
     @FXML
-    private Chart budgetProgress;
+    private Region budgetProgress;
 
     @FXML
-    private Chart budgetHeatmap;
+    private ChartController<ChartSequentialPredictionModel> budgetProgressController;
 
     @FXML
-    private Chart savingProgress;
+    private Region budgetHeatmap;
 
     @FXML
-    private Chart savingHeatmap;
+    private ChartController<ChartHeatmapModel> budgetHeatmapController;
+
+    @FXML
+    private Region savingProgress;
+
+    @FXML
+    private ChartController<ChartSequentialPredictionModel> savingProgressController;
+
+    @FXML
+    private Region savingHeatmap;
+
+    @FXML
+    private ChartController<ChartHeatmapModel> savingHeatmapController;
 
     @FXML
     private GoalSetting goalSetting;
@@ -110,15 +124,21 @@ public class MainView extends AnchorPane {
     @FXML
     private Text savedAmount;
 
+    @FXML
+    private EditListController categoriesEditController;
+
+    @FXML
+    private EditListController tagsEditController;
+
     private Tab addTransactionTab;
 
-    private AddTransaction addTransaction;
+    private AddTransactionController addTransaction;
 
     private final HashMap<Reference<Transaction>, Tab> editTransactionTabs = new HashMap<>();
 
     private Tab addEntityTab;
 
-    private AddEntity addEntity;
+    private AddEntityController addEntity;
 
     private final HashMap<Reference<Entity>, Tab> editEntityTabs = new HashMap<>();
 
@@ -140,8 +160,8 @@ public class MainView extends AnchorPane {
         storageSettingProperty().set(value);
     }
 
-    public MainView(AsyncStorage asyncStorage, Model model) {
-        FXMLLoader fxmlLoader = new FXMLLoader(MainView.class.getResource("MainView.fxml"));
+    public MainPage(AsyncStorage asyncStorage, Model model) {
+        FXMLLoader fxmlLoader = new FXMLLoader(MainPage.class.getResource("MainPage.fxml"));
         fxmlLoader.setRoot(this);
         fxmlLoader.setController(this);
         try {
@@ -150,25 +170,40 @@ public class MainView extends AnchorPane {
             throw new RuntimeException(e);
         }
 
+        budgetProgressController.setView(new ChartSequentialPredictionView());
+        savingProgressController.setView(new ChartSequentialPredictionView());
+        budgetHeatmapController.setView(new ChartHeatmapView());
+        savingHeatmapController.setView(new ChartHeatmapView());
+
         this.asyncStorage = asyncStorage;
         this.model = model;
 
-        transactionList.setOnTransactionEditClicked(event -> {
+        transactionListController.getModel().setOnAction(event -> {
             Reference<Transaction> transaction = event.getReference();
             tabPane.getSelectionModel().select(editTransactionTabs.computeIfAbsent(transaction, t -> {
-                AddTransaction addTransaction = new AddTransaction(event.getTransaction(), event.getEntity(), model);
-                addTransaction.setEntityItems(entityList.getItems());
-                addTransaction.setCategoryItems(categoriesEdit.getNames());
-                addTransaction.setTagItems(tagsEdit.getNames());
+                FXMLLoader loader = new FXMLLoader(MainPage.class.getResource("AddTransaction.fxml"));
+                Node node;
+                try {
+                    node = loader.load();
+                } catch (IOException e) {
+                    throw new IllegalStateException(e);
+                }
+                AddTransactionController addTransactionController = loader.getController();
+                AddTransactionModel addTransactionModel = addTransactionController.getModel();
+                addTransactionModel.setModel(model);
+                addTransactionModel.setAvailableEntities(entityListController.getModel().getItems());
+                addTransactionModel.setAvailableCategories(categoriesEditController.getModel().getNames());
+                addTransactionModel.setAvailableTags(tagsEditController.getModel().getNames());
+                addTransactionModel.setTransaction(event.getTransaction());
                 Tab tab = new Tab("Edit Transaction: " + event.getTransaction().title());
-                tab.setContent(addTransaction);
+                tab.setContent(node);
                 tab.setOnClosed(event1 -> {
                     editTransactionTabs.remove(transaction);
                     tabPane.getSelectionModel().select(transactionTab);
                 });
-                addTransaction.setOnSubmit(event1 -> asyncStorage.transaction(table -> {
+                addTransactionModel.setOnSubmit(event1 -> asyncStorage.transaction(table -> {
                     try {
-                        Transaction item = event1.isDelete() ? null : addTransaction.getTransaction();
+                        Transaction item = event1.isDelete() ? null : addTransactionModel.getTransaction();
                         Transaction old = table.put(transaction, AsyncStorage.Sensitivity.NORMAL, item);
                         model.trainOnUpdate(Update.empty(), Update.single(transaction, old, item));
                     } catch (IOException e) {
@@ -187,19 +222,29 @@ public class MainView extends AnchorPane {
                 return tab;
             }));
         });
-        entityList.setOnEntityEditClicked(event -> {
+        entityListController.getModel().setOnAction(event -> {
             Reference<Entity> entity = event.getReference();
             tabPane.getSelectionModel().select(editEntityTabs.computeIfAbsent(entity, t -> {
-                AddEntity addEntity = new AddEntity(event.getEntity(), model);
+                FXMLLoader loader = new FXMLLoader(MainPage.class.getResource("AddEntity.fxml"));
+                Node node;
+                try {
+                    node = loader.load();
+                } catch (IOException e) {
+                    throw new IllegalStateException(e);
+                }
+                AddEntityController addEntityController = loader.getController();
+                AddEntityModel addEntityModel = addEntityController.getModel();
+                addEntityModel.setModel(model);
+                addEntityModel.setEntity(event.getEntity());
                 Tab tab = new Tab("Edit Transaction Party: " + event.getEntity().name());
-                tab.setContent(addEntity);
+                tab.setContent(node);
                 tab.setOnClosed(event1 -> {
                     editEntityTabs.remove(entity);
                     tabPane.getSelectionModel().select(entityTab);
                 });
-                addEntity.setOnSubmit(event1 -> asyncStorage.entity(table -> {
+                addEntityModel.setOnSubmit(event1 -> asyncStorage.entity(table -> {
                     try {
-                        Entity item = addEntity.getEntity();
+                        Entity item = addEntityModel.getEntity();
                         Entity old = table.put(entity, AsyncStorage.Sensitivity.NORMAL, item);
                         model.trainOnUpdate(Update.single(entity, old, item), Update.empty());
                     } catch (IOException e) {
@@ -252,12 +297,13 @@ public class MainView extends AnchorPane {
             }
         });
 
-        categoriesEdit.setOnSubmit(event -> {
+        categoriesEditController.getModel().setOnSubmit(event -> {
+            event.getEditItemModel().setEditable(false);
             if (event.isInsertMode()) {
                 asyncStorage.transaction(table -> {
                     try {
                         table.addCategory(event.getName(), AsyncStorage.Sensitivity.NORMAL);
-                        Platform.runLater(event::reset);
+                        Platform.runLater(() -> event.getEditItemModel().reset());
                     } catch (SyntaxException e) {
                         Platform.runLater(() -> {
                             Alert alert = new Alert(Alert.AlertType.ERROR);
@@ -273,7 +319,7 @@ public class MainView extends AnchorPane {
                 asyncStorage.transaction(table -> {
                     try {
                         table.removeCategory(event.getName(), AsyncStorage.Sensitivity.NORMAL);
-                        Platform.runLater(event::reset);
+                        Platform.runLater(() -> event.getEditItemModel().reset());
                     } catch (SyntaxException e) {
                         Platform.runLater(() -> {
                             Alert alert = new Alert(Alert.AlertType.ERROR);
@@ -289,12 +335,13 @@ public class MainView extends AnchorPane {
             loadCategories();
         });
 
-        tagsEdit.setOnSubmit(event -> {
+        tagsEditController.getModel().setOnSubmit(event -> {
+            event.getEditItemModel().setEditable(false);
             if (event.isInsertMode()) {
                 asyncStorage.transaction(table -> {
                     try {
                         table.addTag(event.getName(), AsyncStorage.Sensitivity.NORMAL);
-                        Platform.runLater(event::reset);
+                        Platform.runLater(() -> event.getEditItemModel().reset());
                     } catch (SyntaxException e) {
                         Platform.runLater(() -> {
                             Alert alert = new Alert(Alert.AlertType.ERROR);
@@ -310,7 +357,7 @@ public class MainView extends AnchorPane {
                 asyncStorage.transaction(table -> {
                     try {
                         table.removeTag(event.getName(), AsyncStorage.Sensitivity.NORMAL);
-                        Platform.runLater(event::reset);
+                        Platform.runLater(() -> event.getEditItemModel().reset());
                     } catch (SyntaxException e) {
                         Platform.runLater(() -> {
                             Alert alert = new Alert(Alert.AlertType.ERROR);
@@ -326,7 +373,7 @@ public class MainView extends AnchorPane {
             loadTags();
         });
 
-        goalSetting.setCategories(categoriesEdit.getNames());
+        goalSetting.setCategories(categoriesEditController.getModel().getNames());
         goalSetting.setOnSubmit(event -> asyncStorage.transaction(table -> {
             try {
                 table.setGoal(event.getGoal(), AsyncStorage.Sensitivity.NORMAL);
@@ -379,9 +426,8 @@ public class MainView extends AnchorPane {
                     }
 
                     Platform.runLater(() -> {
-                        transactionList.setOriginalItems(result);
-                        // 注意：不再重置分页，保持当前页
-                        transactionList.updateCurrentPage(0, pageSize);
+                        transactionListController.setOriginalItems(result);
+                        transactionListController.updateCurrentPage(0, pageSize);
                     });
 
                 } catch (IOException e) {
@@ -394,7 +440,7 @@ public class MainView extends AnchorPane {
     @FXML
     private void handleSearch() {
         String searchQuery = searchField.getText().trim();
-        currentSearchQuery = searchQuery; // 保存当前搜索词
+        currentSearchQuery = searchQuery;
 
         // 重置到第一页
         pagination.setCurrentPageIndex(0);
@@ -403,7 +449,6 @@ public class MainView extends AnchorPane {
         asyncStorage.transaction(transactionTable -> {
             asyncStorage.entity(entityTable -> {
                 try {
-                    // 读取所有交易
                     SequencedCollection<ReferenceItemPair<Transaction>> transactions =
                             transactionTable.list(Long.MIN_VALUE, Long.MAX_VALUE, 0, Integer.MAX_VALUE);
 
@@ -424,9 +469,9 @@ public class MainView extends AnchorPane {
                     }
 
                     Platform.runLater(() -> {
-                        transactionList.setOriginalItems(result);
+                        transactionListController.setOriginalItems(result);
                         updatePagination(result.size());
-                        transactionList.updateCurrentPage(0, pageSize); // 确保第一页内容显示
+                        transactionListController.updateCurrentPage(0, pageSize); // 确保第一页内容显示
                     });
 
                 } catch (IOException e) {
@@ -453,10 +498,10 @@ public class MainView extends AnchorPane {
             try {
                 ImmutablePair<Set<String>, Set<String>> categories = table.getCategories();
                 Platform.runLater(() -> {
-                    categoriesEdit.getNames().clear();
-                    categoriesEdit.getNames().addAll(categories.getLeft());
-                    categoriesEdit.getProtectedNames().clear();
-                    categoriesEdit.getProtectedNames().addAll(categories.getRight());
+                    categoriesEditController.getModel().getNames().clear();
+                    categoriesEditController.getModel().getNames().addAll(categories.getLeft());
+                    categoriesEditController.getModel().getProtectedNames().clear();
+                    categoriesEditController.getModel().getProtectedNames().addAll(categories.getRight());
                 });
             } catch (IOException e) {
                 logger.log(Level.SEVERE, "Failed to list categories", e);
@@ -469,10 +514,10 @@ public class MainView extends AnchorPane {
             try {
                 ImmutablePair<Set<String>, Set<String>> tags = table.getTags();
                 Platform.runLater(() -> {
-                    tagsEdit.getNames().clear();
-                    tagsEdit.getNames().addAll(tags.getLeft());
-                    tagsEdit.getProtectedNames().clear();
-                    tagsEdit.getProtectedNames().addAll(tags.getRight());
+                    tagsEditController.getModel().getNames().clear();
+                    tagsEditController.getModel().getNames().addAll(tags.getLeft());
+                    tagsEditController.getModel().getProtectedNames().clear();
+                    tagsEditController.getModel().getProtectedNames().addAll(tags.getRight());
                 });
             } catch (IOException e) {
                 logger.log(Level.SEVERE, "Failed to list tags", e);
@@ -485,8 +530,8 @@ public class MainView extends AnchorPane {
             try {
                 SequencedCollection<ReferenceItemPair<Entity>> entities = table.list(0, Integer.MAX_VALUE);
                 Platform.runLater(() -> {
-                    entityList.getItems().clear();
-                    entityList.getItems().addAll(entities);
+                    entityListController.getModel().getItems().clear();
+                    entityListController.getModel().getItems().addAll(entities);
                 });
             } catch (IOException e) {
                 logger.log(Level.SEVERE, "Failed to list entities", e);
@@ -513,7 +558,7 @@ public class MainView extends AnchorPane {
                             items.add(ImmutablePair.of(transaction, entityNames.get(transaction.item().entity())));
                         }
                         Platform.runLater(() -> {
-                            transactionList.setOriginalItems(items);
+                            transactionListController.setOriginalItems(items);
                         });
                     } catch (IOException e) {
                         logger.log(Level.SEVERE, "Cannot get the names for transactions", e);
@@ -533,11 +578,11 @@ public class MainView extends AnchorPane {
                 Platform.runLater(() -> goalSetting.setGoal(goal));
                 long today = System.currentTimeMillis();
                 // TODO: time zone?
-                today = today - Math.floorMod(today, day);
-                long start = goal == null ? today - day * 15 : goal.start();
-                start = start - Math.floorMod(start, day);
-                long end = goal == null ? today + day * 15 : goal.end();
-                end = end - Math.floorMod(end, day);
+                today = today - Math.floorMod(today, DAY);
+                long start = goal == null ? today - DAY * 15 : goal.start();
+                start = start - Math.floorMod(start, DAY);
+                long end = goal == null ? today + DAY * 15 : goal.end();
+                end = end - Math.floorMod(end, DAY);
                 today = Math.min(today, end);
                 double[] budgetTrain;
                 double[] savedTrain;
@@ -548,11 +593,11 @@ public class MainView extends AnchorPane {
                 TreeMap<String, Long> categoricalSave = new TreeMap<>();
                 if (today >= start) {
                     SequencedCollection<ReferenceItemPair<Transaction>> transactions = table.list(start, today, 0, Integer.MAX_VALUE);
-                    budgetTrain = new double[(int) ((today - start) / day + 1)];
-                    savedTrain = new double[(int) ((today - start) / day + 1)];
+                    budgetTrain = new double[(int) ((today - start) / DAY + 1)];
+                    savedTrain = new double[(int) ((today - start) / DAY + 1)];
                     for (ReferenceItemPair<Transaction> transaction : transactions) {
                         long time = transaction.item().time();
-                        int binIndex = (int) Math.floorDiv(time - start, day);
+                        int binIndex = (int) Math.floorDiv(time - start, DAY);
                         savedTrain[binIndex] += transaction.item().amount();
                         totalSaved += transaction.item().amount();
                         categoricalSave.put(transaction.item().category(),
@@ -571,16 +616,16 @@ public class MainView extends AnchorPane {
                     for (int i = 1; i < savedTrain.length; i++) {
                         savedTrain[i] = savedTrain[i] + savedTrain[i - 1];
                     }
-                    timeToPredict = new long[(int) ((end - today) / day)];
+                    timeToPredict = new long[(int) ((end - today) / DAY)];
                     for (int i = 0; i < timeToPredict.length; i++) {
-                        timeToPredict[i] = today + (i + 1) * day;
+                        timeToPredict[i] = today + (i + 1) * DAY;
                     }
                 } else {
                     budgetTrain = new double[0];
                     savedTrain = new double[0];
-                    timeToPredict = new long[(int) ((end - start) / day)];
+                    timeToPredict = new long[(int) ((end - start) / DAY)];
                     for (int i = 0; i < timeToPredict.length; i++) {
-                        timeToPredict[i] = start + (i + 1) * day;
+                        timeToPredict[i] = start + (i + 1) * DAY;
                     }
                 }
                 HashMap<String, Pair<Long, Long>> goalByCategory = new HashMap<>();
@@ -602,7 +647,7 @@ public class MainView extends AnchorPane {
                         categoricalUsedProgress[i] = categoricalUsed[i] / (categoricalUsed[i] + categoricalUsedGoalRemaining[i]);
                     }
                 }
-                HeatmapRenderer usedHeatmap = new HeatmapRenderer(
+                ChartHeatmapModel usedHeatmap = new ChartHeatmapModel(
                         goal == null ? ImmutableList.of("Used") : ImmutableList.of("Used", "Remaining", "Progress"),
                         budgetCategories,
                         goal == null ? ImmutableList.of(ImmutableDoubleArray.copyOf(categoricalUsed)) :
@@ -627,7 +672,7 @@ public class MainView extends AnchorPane {
                         categoricalSavedProgress[i] = categoricalSaved[i] / (categoricalSaved[i] + categoricalSavedGoalRemaining[i]);
                     }
                 }
-                HeatmapRenderer savedHeatmap = new HeatmapRenderer(
+                ChartHeatmapModel savedHeatmap = new ChartHeatmapModel(
                         goal == null ? ImmutableList.of("Saved") : ImmutableList.of("Saved", "Remaining", "Progress"),
                         savingCategories,
                         goal == null ? ImmutableList.of(ImmutableDoubleArray.copyOf(categoricalSaved)) :
@@ -640,10 +685,10 @@ public class MainView extends AnchorPane {
                 Platform.runLater(() -> {
                     budgetHeatmap.setPrefHeight(20 * budgetCategories.size() + 50);
                     budgetHeatmap.setMinHeight(20 * budgetCategories.size() + 50);
-                    budgetHeatmap.setRenderer(usedHeatmap);
+                    budgetHeatmapController.setModel(usedHeatmap);
                     savingHeatmap.setPrefHeight(20 * savingCategories.size() + 50);
                     savingHeatmap.setMinHeight(20 * savingCategories.size() + 50);
-                    savingHeatmap.setRenderer(savedHeatmap);
+                    savingHeatmapController.setModel(savedHeatmap);
                 });
                 long finalStart = start;
                 long finalEnd = end;
@@ -654,7 +699,7 @@ public class MainView extends AnchorPane {
                     ImmutableDoubleArray mean = prediction.getLeft();
                     ImmutableDoubleArray lower = prediction.getRight().getLeft();
                     ImmutableDoubleArray upper = prediction.getRight().getRight();
-                    SequentialPredictionRenderer renderer = new SequentialPredictionRenderer(
+                    ChartSequentialPredictionModel sequentialPredictionModel = new ChartSequentialPredictionModel(
                             ImmutableDoubleArray.copyOf(budgetTrain),
                             mean,
                             lower,
@@ -676,14 +721,14 @@ public class MainView extends AnchorPane {
                             String formattedGoal = currencyFormat.format(goalValue);
                             budgetAmount.setText(formattedUsed + " / " + formattedGoal + " used");
                         }
-                        budgetProgress.setRenderer(renderer);
+                        budgetProgressController.setModel(sequentialPredictionModel);
                     });
                 });
                 model.predictSavedAmount(today, ImmutableLongArray.copyOf(timeToPredict)).thenAccept(prediction -> {
                     ImmutableDoubleArray mean = prediction.getLeft();
                     ImmutableDoubleArray lower = prediction.getRight().getLeft();
                     ImmutableDoubleArray upper = prediction.getRight().getRight();
-                    SequentialPredictionRenderer renderer = new SequentialPredictionRenderer(
+                    ChartSequentialPredictionModel savingPrediction = new ChartSequentialPredictionModel(
                             ImmutableDoubleArray.copyOf(savedTrain),
                             mean,
                             lower,
@@ -705,7 +750,7 @@ public class MainView extends AnchorPane {
                             String formattedGoal = formatSignedCurrency(goalValue, currencyFormat);
                             savedAmount.setText(formattedSaved + " / " + formattedGoal + " saved");
                         }
-                        savingProgress.setRenderer(renderer);
+                        savingProgressController.setModel(savingPrediction);
                     });
                 });
             } catch (IOException e) {
@@ -726,12 +771,21 @@ public class MainView extends AnchorPane {
             tabPane.getSelectionModel().select(addTransactionTab);
             return;
         }
-        addTransaction = new AddTransaction(null, null, model);
-        addTransactionTab = new Tab("Add Transaction");
-        addTransaction.setEntityItems(entityList.getItems());
-        addTransaction.setCategoryItems(categoriesEdit.getNames());
-        addTransaction.setTagItems(tagsEdit.getNames());
-        addTransactionTab.setContent(addTransaction);
+        FXMLLoader loader = new FXMLLoader(MainPage.class.getResource("AddTransaction.fxml"));
+        Node node;
+        try {
+            node = loader.load();
+        } catch (IOException e) {
+            throw new IllegalStateException(e);
+        }
+        AddTransactionController addTransactionController = loader.getController();
+        AddTransactionModel addTransactionModel = addTransactionController.getModel();
+        addTransactionModel.setModel(model);
+        addTransactionModel.setAvailableEntities(entityListController.getModel().getItems());
+        addTransactionModel.setAvailableCategories(categoriesEditController.getModel().getNames());
+        addTransactionModel.setAvailableTags(tagsEditController.getModel().getNames());
+        addTransactionTab = new Tab("Add New Transaction");
+        addTransactionTab.setContent(node);
         addTransactionTab.setOnClosed(event -> {
             addTransactionTab = null;
             addTransaction = null;
@@ -740,7 +794,7 @@ public class MainView extends AnchorPane {
         Runnable insert = () -> asyncStorage.transaction(table -> {
             try {
                 Reference<Transaction> ref = new Reference<>();
-                Transaction item = addTransaction.getTransaction();
+                Transaction item = addTransactionModel.getTransaction();
                 Transaction old = table.put(ref, AsyncStorage.Sensitivity.NORMAL, item);
                 model.trainOnUpdate(Update.empty(), Update.single(ref, old, item));
             } catch (IOException e) {
@@ -756,8 +810,8 @@ public class MainView extends AnchorPane {
                 loadTransactions();
             });
         });
-        addTransaction.setOnSubmit(event -> asyncStorage.transaction(table -> {
-            Transaction inserted = addTransaction.getTransaction();
+        addTransactionModel.setOnSubmit(event -> asyncStorage.transaction(table -> {
+            Transaction inserted = addTransactionModel.getTransaction();
             try {
                 SequencedCollection<ReferenceItemPair<Transaction>> transactionThatDay = table.list(inserted.time() - 1, inserted.time(), 0, Integer.MAX_VALUE);
                 Transaction similar = transactionThatDay.stream()
@@ -775,7 +829,7 @@ public class MainView extends AnchorPane {
                             if (response == ButtonType.OK) {
                                 insert.run();
                             } else {
-                                addTransaction.setDisable(false);
+                                addTransaction.handleSubmitCancel();
                             }
                         });
                     });
@@ -796,18 +850,27 @@ public class MainView extends AnchorPane {
             tabPane.getSelectionModel().select(addEntityTab);
             return;
         }
-        addEntity = new AddEntity(null, model);
+        FXMLLoader loader = new FXMLLoader(AddEntityController.class.getResource("AddEntity.fxml"));
+        Node node;
+        try {
+            node = loader.load();
+        } catch (IOException e) {
+            throw new IllegalStateException(e);
+        }
+        AddEntityController addEntityController = loader.getController();
+        AddEntityModel addEntityModel = addEntityController.getModel();
+        addEntityModel.setModel(model);
         addEntityTab = new Tab("Add New Transaction Party");
-        addEntityTab.setContent(addEntity);
+        addEntityTab.setContent(node);
         addEntityTab.setOnClosed(event -> {
             addEntityTab = null;
             addEntity = null;
             tabPane.getSelectionModel().select(entityTab);
         });
-        addEntity.setOnSubmit(event -> asyncStorage.entity(table -> {
+        addEntityModel.setOnSubmit(event -> asyncStorage.entity(table -> {
             try {
                 Reference<Entity> ref = new Reference<>();
-                Entity item = addEntity.getEntity();
+                Entity item = addEntityModel.getEntity();
                 Entity old = table.put(ref, AsyncStorage.Sensitivity.NORMAL, item);
                 model.trainOnUpdate(Update.single(ref, old, item), Update.empty());
             } catch (IOException e) {
@@ -992,256 +1055,5 @@ public class MainView extends AnchorPane {
                 "m.haleem@qmul.ac.uk",
                 "Feedback",
                 "Please write your valued comments.");
-    }
-
-    public static final class SequentialPredictionRenderer extends Chart.Renderer {
-        private final double cent = 0.01;
-
-        private final ImmutableDoubleArray trainingSamples;
-        private final ImmutableDoubleArray predictedMean;
-        private final ImmutableDoubleArray predictedLowerBound;
-        private final ImmutableDoubleArray predictedUpperBound;
-        private final long start;
-        private final long end;
-        private final long today;
-        private final double reference;
-        private final String referenceName;
-
-        private final int sequenceLength;
-        private final double top;
-        private final double bottom;
-
-        private double mouseX = Double.NaN;
-
-        public SequentialPredictionRenderer(
-                ImmutableDoubleArray trainingSamples,
-                ImmutableDoubleArray predictedMean,
-                ImmutableDoubleArray predictedLowerBound,
-                ImmutableDoubleArray predictedUpperBound,
-                long start,
-                long end,
-                long today,
-                double reference,
-                String referenceName
-        ) {
-            this.trainingSamples = trainingSamples;
-            this.predictedMean = predictedMean;
-            this.predictedLowerBound = predictedLowerBound;
-            this.predictedUpperBound = predictedUpperBound;
-            this.start = start;
-            this.end = end;
-            this.today = today;
-            this.reference = reference;
-            this.referenceName = referenceName;
-
-            this.sequenceLength = trainingSamples.length() + predictedMean.length();
-            double top = 1;
-            double bottom = 0;
-            if (Double.isFinite(reference)) {
-                top = Math.max(top, reference);
-                bottom = Math.min(bottom, reference);
-            }
-            double predictBase = trainingSamples.isEmpty() ? 0 : trainingSamples.get(trainingSamples.length() - 1);
-            for (int i = 0; i < predictedUpperBound.length(); i++) {
-                top = Math.max(top, predictedUpperBound.get(i) + predictBase);
-                bottom = Math.min(bottom, predictedUpperBound.get(i) + predictBase);
-            }
-            for (int i = 0; i < predictedLowerBound.length(); i++) {
-                top = Math.max(top, predictedLowerBound.get(i) + predictBase);
-                bottom = Math.min(bottom, predictedLowerBound.get(i) + predictBase);
-            }
-            for (int i = 0; i < predictedMean.length(); i++) {
-                top = Math.max(top, predictedMean.get(i) + predictBase);
-                bottom = Math.min(bottom, predictedMean.get(i) + predictBase);
-            }
-            for (int i = 0; i < trainingSamples.length(); i++) {
-                top = Math.max(top, trainingSamples.get(i));
-                bottom = Math.min(bottom, trainingSamples.get(i));
-            }
-            this.top = top;
-            this.bottom = bottom;
-        }
-
-        private void drawReference(double x0, double y0, double x1, double y1, Paint paint) {
-            save();
-            getGraphicsContext().setLineDashes(10, 5);
-            plot(new double[]{x0, x1}, new double[]{y0, y1}, paint, 2);
-            restore();
-        }
-
-        private double[] addReference(double[] array, double reference) {
-            double[] newArray = new double[array.length + 1];
-            newArray[0] = reference;
-            for (int i = 0; i < array.length; i++) {
-                newArray[i + 1] = array[i] + reference;
-            }
-            return newArray;
-        }
-
-        @Override
-        public void render() {
-            setYLimits(bottom * cent, top * cent);
-            setXLimits(0, sequenceLength - 1);
-
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yy/M/d");
-            ArrayList<Pair<Double, String>> xTicks = new ArrayList<>();
-            if (sequenceLength >= 10) {
-                for (int i = 0; i <= 5; i++) {
-                    int idx = (i * (sequenceLength - 1)) / 5;
-                    long time = start + idx * day;
-                    String date = LocalDate.ofEpochDay(Math.ceilDiv(time, day)).format(formatter);
-                    xTicks.add(Pair.of((double) idx, date));
-                }
-            } else {
-                for (int i = 0; i < sequenceLength; i++) {
-                    long time = start + i * day;
-                    String date = LocalDate.ofEpochDay(Math.ceilDiv(time, day)).format(formatter);
-                    xTicks.add(Pair.of((double) i, date));
-                }
-            }
-            drawXAxis(xTicks);
-
-            double scale = Math.abs((top - bottom) * cent);
-            if (Double.isFinite(reference)) {
-                drawYAxis(0, Math.max(Math.max(Math.abs(reference * cent) / 4, 0.2), scale / 8));
-            } else {
-                drawYAxis(0, scale / 4);
-            }
-
-            double[] trainX = IntStream.range(-1, trainingSamples.length()).asDoubleStream().toArray();
-            double[] trainY = addReference(trainingSamples.stream().map(x -> x * cent).toArray(), 0);
-            plot(trainX, trainY, Color.GREEN, 2);
-
-            double[] predX= IntStream.range(trainingSamples.length() - 1, sequenceLength).asDoubleStream().toArray();
-            double[] predY = addReference(predictedMean.stream().map(x -> x * cent).toArray(), trainY[trainY.length - 1]);
-            plot(predX, predY, Color.BLUE, 2);
-
-            double[] predLowerX = IntStream.range(trainingSamples.length() - 1, sequenceLength).asDoubleStream().toArray();
-            double[] predLowerY = addReference(predictedLowerBound.stream().map(x -> x * cent).toArray(), trainY[trainY.length - 1]);
-            double[] predUpperX = predLowerX.clone();
-            double[] predUpperY = addReference(predictedUpperBound.stream().map(x -> x * cent).toArray(), trainY[trainY.length - 1]);
-            Doubles.reverse(predLowerX);
-            Doubles.reverse(predLowerY);
-            double[] confidenceX = Doubles.concat(predUpperX, predLowerX);
-            double[] confidenceY = Doubles.concat(predUpperY, predLowerY);
-            fill(confidenceX, confidenceY, Color.BLUE.deriveColor(1, 1, 1, 0.25));
-
-            if (Double.isFinite(reference)) {
-                double y = reference * cent;
-                drawReference(fracXToDataX(0), y, fracXToDataX(1), y, Color.RED.deriveColor(1, 1, 1, 0.5));
-                save();
-                getGraphicsContext().setStroke(Color.RED.deriveColor(1, 1, 1, 0.5));
-                drawText(this.referenceName, ALIGN_START, ALIGN_END, fromFracX(0) + 5, fromDataY(y) - 5);
-                restore();
-            }
-
-            if (today >= start && today <= end) {
-                long x = (today - start) / day;
-                drawReference(x, bottom * cent, x, top * cent, Color.DARKCYAN.deriveColor(1, 1, 1, 0.5));
-                save();
-                getGraphicsContext().setStroke(Color.DARKCYAN.deriveColor(1, 1, 1, 0.5));
-                drawText("Today", ALIGN_CENTER, ALIGN_END, fromDataX(x), fromDataY(top * cent) - 5);
-                restore();
-            }
-
-            if (Double.isFinite(mouseX)) {
-                drawReference(mouseX, fracYToDataY(0), mouseX, fracYToDataY(1), Color.BLACK.deriveColor(1, 1, 1, 0.5));
-                save();
-                getGraphicsContext().setStroke(Color.BLACK.deriveColor(1, 1, 1, 0.5));
-                String date = LocalDate.ofEpochDay(start / day + (int) mouseX).format(formatter);
-                drawText(date, ALIGN_CENTER, ALIGN_START, fromDataX(mouseX), fromDataY(0) + 7.5);
-                restore();
-                String text = getMouseHoverText();
-                save();
-                getGraphicsContext().setStroke(Color.BLACK.deriveColor(1, 1, 1, 0.5));
-                drawText(text, ALIGN_CENTER, ALIGN_END, fromDataX(mouseX), fromFracY(1) - 5);
-                restore();
-            }
-        }
-
-        private String getMouseHoverText() {
-            int index = (int) mouseX;
-            if (index < trainingSamples.length()) {
-                double value = trainingSamples.get(index);
-                return String.format("%.2f", value);
-            } else {
-                double referenceValue = trainingSamples.get(trainingSamples.length() - 1);
-                double value = predictedMean.get(index - trainingSamples.length()) + referenceValue;
-                double upper = predictedUpperBound.get(index - trainingSamples.length()) + referenceValue;
-                double lower = predictedLowerBound.get(index - trainingSamples.length()) + referenceValue;
-                return String.format("%.2f / %.2f / %.2f", lower, value, upper);
-            }
-        }
-
-        @Override
-        public void onHover(double screenX, double screenY) {
-            mouseX = Double.isFinite(screenX) ? Math.round(toDataX(screenX)) : Double.NaN;
-            if (mouseX < 0 || mouseX >= sequenceLength) {
-                mouseX = Double.NaN;
-            }
-            getGraphicsContext().clearRect(0, 0, getScreenWidth(), getScreenHeight());
-            render();
-        }
-    }
-
-    public static final class HeatmapRenderer extends Chart.Renderer {
-        private final ImmutableList<String> xTicks;
-        private final ImmutableList<String> yTicks;
-        private final ImmutableList<ImmutableDoubleArray> data; // column major
-
-        public HeatmapRenderer(ImmutableList<String> xTicks, ImmutableList<String> yTicks, ImmutableList<ImmutableDoubleArray> data) {
-            this.xTicks = xTicks;
-            this.yTicks = yTicks;
-            this.data = data;
-        }
-
-        private Color color(double percent) {
-            if (!Double.isFinite(percent)) {
-                return Color.LIGHTGRAY;
-            }
-            return percent > 0 ? Color.WHITE.interpolate(Color.RED, percent) : Color.WHITE.interpolate(Color.GREEN, -percent);
-        }
-
-        private double[] normalize(ImmutableDoubleArray data) {
-            double[] normalized = new double[data.length()];
-            double max = 0;
-            double min = 0;
-            for (int i = 0; i < data.length(); i++) {
-                if (!Double.isFinite(data.get(i))) {
-                    normalized[i] = 0;
-                    continue;
-                }
-                max = Math.max(max, data.get(i));
-                min = Math.min(min, data.get(i));
-            }
-            double scale = Math.max(Math.max(max, -min), 1e-3);
-            for (int i = 0; i < data.length(); i++) {
-                normalized[i] = data.get(i) / scale;
-            }
-            return normalized;
-        }
-
-        @Override
-        public void render() {
-            setDataPaddingLeft(120);
-            setYInverted(false);
-            setXCategoricalLimit(this.xTicks.size());
-            setYCategoricalLimit(this.yTicks.size());
-            for (int i = 0; i < data.size(); i++) {
-                ImmutableDoubleArray column = data.get(i);
-                double[] normalized = normalize(column);
-                for (int j = 0; j < column.length(); j++) {
-                    fill(
-                            new double[]{i - 0.5, i - 0.5, i + 0.5, i + 0.5},
-                            new double[]{j - 0.5, j + 0.5, j + 0.5, j - 0.5},
-                            color(normalized[j]).deriveColor(1, 0.75, 1, 0.5)
-                    );
-                    String text = Double.isFinite(column.get(j)) ? String.format("%.2f", column.get(j)) : "N/A";
-                    drawText(text, ALIGN_CENTER, ALIGN_CENTER, fromDataX(i), fromDataY(j));
-                }
-            }
-            drawXAxis(xTicks);
-            drawYAxis(yTicks);
-        }
     }
 }

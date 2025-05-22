@@ -81,7 +81,7 @@ public class GoalSetting extends VBox {
     private boolean hasGoal = false;
 
     public GoalSetting() {
-        FXMLLoader fxmlLoader = new FXMLLoader(DecryptionView.class.getResource("GoalSetting.fxml"));
+        FXMLLoader fxmlLoader = new FXMLLoader(DecryptionPageController.class.getResource("GoalSetting.fxml"));
         fxmlLoader.setRoot(this);
         fxmlLoader.setController(this);
         try {
