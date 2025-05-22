@@ -1,6 +1,5 @@
-package io.github.software.coursework;
+package io.github.software.coursework.algo;
 
-import com.google.common.collect.ImmutableSet;
 import com.google.common.reflect.ClassPath;
 import org.apache.commons.lang3.tuple.Triple;
 
@@ -44,7 +43,7 @@ public class EntityPrediction {
         listedNames = new HashMap<>();
         nGramsClassification = new HashMap<>();
         nGramsScore = new HashMap<>();
-        urlDataset = EntityClassification.class.getResource(target);
+        urlDataset = EntityClassification.class.getResource("/io/github/software/coursework/" + target);
     }
 
     public boolean hasCategory(String category) {

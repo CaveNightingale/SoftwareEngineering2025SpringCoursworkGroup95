@@ -35,13 +35,21 @@ public final class GaussMixtureModel {
             parameters[i * 3] = GMModelParam[i][0];
             parameters[i * 3 + 1] = GMModelParam[i][1];
             parameters[i * 3 + 2] = GMModelParam[i][month] + GMModelParam[i][day] + GMModelParam[i][week];
-            mean += parameters[i * 3] * parameters[i * 3 + 2];
             cumulativeProbabilities[i] = cumulative;
             cumulative += parameters[i * 3 + 2];
+
+            if (parameters[i * 3 + 2] <= 1e-6) {
+                parameters[i * 3] = 0.0;
+                parameters[i * 3 + 1] = 0.01;
+            }
+            mean += parameters[i * 3] * parameters[i * 3 + 2];
+
         }
 
-        if (mean < 0.0) {
-            mean = 0.0;
+        mean /= cumulative;
+        for (int i = 0; i < GMModelParam.length; i++) {
+            parameters[i * 3 + 2] /= cumulative;
+            cumulativeProbabilities[i] /= cumulative;
         }
     }
 

@@ -1,4 +1,4 @@
-package io.github.software.coursework;
+package io.github.software.coursework.algo;
 
 import java.io.*;
 import java.nio.file.*;
@@ -9,11 +9,6 @@ import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import java.io.FileOutputStream;
-import java.io.FileWriter;
-import java.io.PrintStream;
-
-import com.google.common.collect.ImmutableSet;
 import com.google.common.reflect.ClassPath;
 import org.apache.commons.lang3.tuple.Triple;
 import org.apache.commons.math3.distribution.BetaDistribution;
@@ -22,7 +17,6 @@ import java.util.stream.Collectors;
 
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.nio.file.*;
 
 import java.nio.file.Files;
 import java.nio.charset.StandardCharsets;
@@ -95,9 +89,9 @@ public class EntityClassification {
     public static List<String> getCategories(String fileFolderName) {
         List<String> categories = new ArrayList<>();
 
-//        System.out.println(fileFolderName);
+//        System.out.println("/io/github/software/coursework" + fileFolderName + "---" + EntityClassification.class.getResource("/io/github/software/coursework/" + fileFolderName));
 
-        URL url = Objects.requireNonNull(EntityClassification.class.getResource(fileFolderName));
+        URL url = Objects.requireNonNull(EntityClassification.class.getResource("/io/github/software/coursework/" + fileFolderName));
 //        System.out.println("URL: " + url);
         logger.info("URL: " + url);
 
@@ -115,7 +109,7 @@ public class EntityClassification {
     public static Map<String, Integer> readText(String fileFolderName, String category) {
 //        System.out.println("read Text " + category);
         try  {
-            Path path = Paths.get(EntityClassification.class.getResource(fileFolderName).toURI());
+            Path path = Paths.get(EntityClassification.class.getResource("/io/github/software/coursework/" + fileFolderName).toURI());
             List<String> textByLines = Files.readAllLines(path.resolve(category + ".txt"), StandardCharsets.UTF_8);
 
             Map<String, Integer> nGrams = new HashMap<>();

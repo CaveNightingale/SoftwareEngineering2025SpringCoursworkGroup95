@@ -1,14 +1,12 @@
-package io.github.software.coursework;
+package io.github.software.coursework.algo;
 
 import org.apache.commons.lang3.tuple.Pair;
-import org.apache.commons.math3.analysis.function.Constant;
 
 import java.io.*;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,7 +35,7 @@ public class TagPrediction {
     public void readTags() {
         tagList.clear();
 
-        URL url = TagPrediction.class.getResource(fileName);
+        URL url = TagPrediction.class.getResource("/io/github/software/coursework/" + fileName);
         Pattern pattern = Pattern.compile("^(\\d{2})/(\\d{2})$");
 
         if (url == null) {

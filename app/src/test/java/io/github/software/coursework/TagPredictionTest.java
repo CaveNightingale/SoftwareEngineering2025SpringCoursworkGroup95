@@ -1,5 +1,7 @@
 package io.github.software.coursework;
 import static org.junit.jupiter.api.Assertions.*;
+
+import io.github.software.coursework.algo.TagPrediction;
 import org.junit.jupiter.api.Test;
 
 public class TagPredictionTest {

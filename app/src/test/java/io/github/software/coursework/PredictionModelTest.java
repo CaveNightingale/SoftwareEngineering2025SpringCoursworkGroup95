@@ -11,6 +11,7 @@ import io.github.software.coursework.data.ReferenceItemPair;
 import io.github.software.coursework.data.schema.Entity;
 import io.github.software.coursework.data.schema.Goal;
 import io.github.software.coursework.data.schema.Transaction;
+import io.github.software.coursework.util.XorShift128;
 import org.apache.commons.lang3.time.TimeZones;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
@@ -134,7 +135,7 @@ final class TestStorage implements AsyncStorage {
 
             int i = 0;
             for (long time = timestamp - 24 * 60 * 60 * 1000L * 1000; time < timestamp; time += 24 * 60 * 60 * 1000L) {
-                Transaction x = new Transaction("", "", time, (int)(Math.random() * 8000) - 4000, "Diet", new Reference<>((int) (Math.random() * 20)), ImmutableList.of());
+                Transaction x = new Transaction("", "", time, (int)(Math.random() * 400000) - 200000, "Diet" + i, new Reference<>((int) (Math.random() * 20)), ImmutableList.of());
                 transactions[i] = new ReferenceItemPair<>(new Reference<>(i), x );
                 i++;
             }
@@ -230,6 +231,14 @@ final class TestStorage implements AsyncStorage {
 }
 
 public class PredictionModelTest {
+
+    @Test
+    public void testRandom() {
+        XorShift128 rand = new XorShift128();
+        for (int i=0; i<10; i++) {
+            System.out.println(rand.nextGaussian());
+        }
+    }
 
     @Test
     public void testPredictionModel() {
