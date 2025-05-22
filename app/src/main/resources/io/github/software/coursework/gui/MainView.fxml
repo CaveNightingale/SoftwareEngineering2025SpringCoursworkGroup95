@@ -31,6 +31,10 @@
             <ScrollPane fitToWidth="true" fitToHeight="true">
                 <VBox>
                     <ToolBar>
+                        <HBox fx:id="festivalReminderContainer" styleClass="festival-reminder-box">
+                            <CheckBox fx:id="festivalReminderToggle" selected="true"/>
+                            <Label fx:id="festivalReminderLabel" styleClass="festival-reminder-label"/>
+                        </HBox>
                         <Region HBox.hgrow="ALWAYS"/>
                         <Button text="Feedback" onAction="#handleFeedback"/>
                         <Button text="Settings" onAction="#handleSettings"/>

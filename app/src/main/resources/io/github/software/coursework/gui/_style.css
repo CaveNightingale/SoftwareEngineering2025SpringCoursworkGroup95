@@ -135,6 +135,31 @@
     -fx-text-fill: #ff0000;
 }
 
+/* 节日提醒容器样式 */
+.festival-reminder-box {
+    -fx-padding: 0 10 0 5;
+    -fx-spacing: 5;
+    -fx-alignment: center-left;
+}
+
+/* 节日提醒标签样式 */
+.festival-reminder-label {
+    -fx-text-fill: #E67E22;
+    -fx-font-weight: bold;
+    -fx-font-size: 13px;
+}
+
+/* 节日提醒复选框样式 */
+.festival-reminder-toggle .box {
+    -fx-background-color: white;
+    -fx-border-color: #E67E22;
+    -fx-border-radius: 3px;
+}
+
+.festival-reminder-toggle:selected .mark {
+    -fx-background-color: #E67E22;
+}
+
 .pagination {
     -fx-page-information-visible: false;
     -fx-max-height: 1em;
