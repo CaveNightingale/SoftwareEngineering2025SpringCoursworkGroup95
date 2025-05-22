@@ -1,19 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import io.github.software.coursework.gui.MainView?>
-<?import io.github.software.coursework.gui.TransactionList?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<?import java.net.URL?>
-<?import io.github.software.coursework.gui.EntityList?>
 <?import javafx.scene.text.Text?>
-<?import io.github.software.coursework.gui.EditList?>
-<?import io.github.software.coursework.gui.Chart?>
-<?import io.github.software.coursework.gui.GoalSetting?>
-<fx:root
-        type="io.github.software.coursework.gui.MainView"
+<?import java.net.URL?>
+<AnchorPane
         xmlns="http://javafx.com/javafx"
         xmlns:fx="http://javafx.com/fxml"
+        fx:id="root"
+        fx:controller="io.github.software.coursework.gui.MainPageController"
         prefHeight="600"
         prefWidth="800"
 >
@@ -41,10 +36,10 @@
                         <Text fx:id="budgetAmount"/>
                     </HBox>
                     <HBox>
-                        <Chart fx:id="budgetProgress" HBox.hgrow="ALWAYS" prefHeight="150" minHeight="150"/>
+                        <fx:include source="Chart.fxml" fx:id="budgetProgress" prefHeight="150" minHeight="150" HBox.hgrow="ALWAYS"/>
                     </HBox>
                     <HBox>
-                        <Chart fx:id="budgetHeatmap" HBox.hgrow="ALWAYS" prefHeight="150" minHeight="150"/>
+                        <fx:include source="Chart.fxml" fx:id="budgetHeatmap" prefHeight="150" minHeight="150" HBox.hgrow="ALWAYS"/>
                     </HBox>
                     <HBox styleClass="model-title">
                         <Label text="Saving"/>
@@ -52,10 +47,10 @@
                         <Text fx:id="savedAmount"/>
                     </HBox>
                     <HBox>
-                        <Chart fx:id="savingProgress"  HBox.hgrow="ALWAYS" prefHeight="150" minHeight="150"/>
+                        <fx:include source="Chart.fxml" fx:id="savingProgress" prefHeight="150" minHeight="150" HBox.hgrow="ALWAYS"/>
                     </HBox>
                     <HBox>
-                        <Chart fx:id="savingHeatmap" HBox.hgrow="ALWAYS" prefHeight="150" minHeight="150"/>
+                        <fx:include source="Chart.fxml" fx:id="savingHeatmap" prefHeight="150" minHeight="150" HBox.hgrow="ALWAYS"/>
                     </HBox>
                 </VBox>
             </ScrollPane>
@@ -71,7 +66,7 @@
                     <Pagination fx:id="pagination"/>
                 </ToolBar>
                 <ScrollPane fitToWidth="true" fitToHeight="true" VBox.vgrow="ALWAYS" vbarPolicy="ALWAYS">
-                    <TransactionList fx:id="transactionList" styleClass="transaction-list"/>
+                    <fx:include source="TransactionList.fxml" fx:id="transactionList" styleClass="transaction-list"/>
                 </ScrollPane>
             </VBox>
         </Tab>
@@ -83,7 +78,7 @@
                     <!-- is "save" button needed? -->
                 </ToolBar>
                 <ScrollPane fitToWidth="true" fitToHeight="true" VBox.vgrow="ALWAYS" vbarPolicy="ALWAYS">
-                    <EntityList fx:id="entityList" styleClass="entity-list"/>
+                    <fx:include source="EntityList.fxml" fx:id="entityList" styleClass="entity-list"/>
                 </ScrollPane>
             </VBox>
         </Tab>
@@ -95,18 +90,18 @@
                             <Label text="Categories"/>
                         </HBox>
                         <VBox styleClass="setting-line">
-                            <EditList fx:id="categoriesEdit"/>
+                            <fx:include source="EditList.fxml" fx:id="categoriesEdit"/>
                         </VBox>
                         <HBox styleClass="setting-title">
                             <Label text="Tags"/>
                         </HBox>
                         <VBox styleClass="setting-line">
-                            <EditList fx:id="tagsEdit"/>
+                            <fx:include source="EditList.fxml" fx:id="tagsEdit"/>
                         </VBox>
                     </VBox>
-                    <GoalSetting fx:id="goalSetting"/>
+                    <fx:include source="GoalSetting.fxml" fx:id="goalSetting"/>
                 </VBox>
             </ScrollPane>
         </Tab>
     </TabPane>
-</fx:root>
+</AnchorPane>

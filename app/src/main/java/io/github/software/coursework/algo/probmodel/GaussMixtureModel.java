@@ -56,7 +56,7 @@ public class GaussMixtureModel {
                                      - dist.cumulativeProbability((l - param.getLeft()) / param.getMiddle()));
         }
 
-        System.out.println("getIntegral: " + l + ", " + r + ", sum: " + sum);
+//        System.out.println("getIntegral: " + l + ", " + r + ", sum: " + sum);
 
         return sum;
     }
