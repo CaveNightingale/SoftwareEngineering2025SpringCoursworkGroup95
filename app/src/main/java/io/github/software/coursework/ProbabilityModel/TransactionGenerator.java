@@ -14,7 +14,7 @@ public class TransactionGenerator {
     }
 
     public Transaction generateTransaction(Category category, LocalDate date) {
-        double amount = mapper.getModel(category).generateAmount();
+        double amount = mapper.getModel(category).generateAmount(random);
         String description = category.toString().toLowerCase() + " spending";
         return new Transaction(date, amount, category, description);
     }

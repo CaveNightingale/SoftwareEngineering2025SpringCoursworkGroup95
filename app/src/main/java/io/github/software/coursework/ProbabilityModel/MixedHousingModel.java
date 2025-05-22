@@ -5,7 +5,6 @@ import java.util.Random;
 public class MixedHousingModel implements DistributionModel {
     private final NormalModel normalPart;
     private final ZeroInflatedParetoModel paretoPart;
-    private final Random random = new Random();
     private final double normalWeight;
 
     public MixedHousingModel(NormalModel normalPart, ZeroInflatedParetoModel paretoPart, double normalWeight) {
@@ -15,11 +14,11 @@ public class MixedHousingModel implements DistributionModel {
     }
 
     @Override
-    public double generateAmount() {
+    public double generateAmount(Random random) {
         if (random.nextDouble() < normalWeight) {
-            return normalPart.generateAmount();
+            return normalPart.generateAmount(random);
         } else {
-            return paretoPart.generateAmount();
+            return paretoPart.generateAmount(random);
         }
     }
 }

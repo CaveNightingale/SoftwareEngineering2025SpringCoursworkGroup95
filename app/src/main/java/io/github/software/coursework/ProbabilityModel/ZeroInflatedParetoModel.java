@@ -6,7 +6,6 @@ public class ZeroInflatedParetoModel implements DistributionModel {
     private final double shape;
     private final double scale;
     private final double zeroProbability;
-    private final Random random = new Random();
 
     public ZeroInflatedParetoModel(double shape, double scale, double zeroProbability) {
         this.shape = shape;
@@ -15,7 +14,7 @@ public class ZeroInflatedParetoModel implements DistributionModel {
     }
 
     @Override
-    public double generateAmount() {
+    public double generateAmount(Random random) {
         if (random.nextDouble() < zeroProbability) return 0;
         return scale / Math.pow(random.nextDouble(), 1.0 / shape);
     }
