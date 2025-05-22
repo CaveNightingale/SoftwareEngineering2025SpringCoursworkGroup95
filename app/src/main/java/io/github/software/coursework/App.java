@@ -10,10 +10,7 @@ import io.github.software.coursework.data.AsyncStorage;
 import io.github.software.coursework.data.json.EncryptedLogger;
 import io.github.software.coursework.data.json.Encryption;
 import io.github.software.coursework.data.json.JsonStorage;
-import io.github.software.coursework.gui.DecryptionPageController;
-import io.github.software.coursework.gui.DecryptionPageModel;
-import io.github.software.coursework.gui.EncryptionSetting;
-import io.github.software.coursework.gui.MainPage;
+import io.github.software.coursework.gui.*;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
@@ -33,6 +30,7 @@ import javafx.stage.Stage;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -100,8 +98,29 @@ public class App extends Application {
     }
 
     private Scene getScene(Stage stage, DecryptionPageModel.DecryptionSubmitEvent event) {
-        MainPage mainView = new MainPage(storage, model);
-        EncryptionSetting encryptionSetting = new EncryptionSetting(event.getAccount(), event.getPassword());
+        Parent mainView;
+        MainPageController mainPageController = new MainPageController(storage, model);
+        FXMLLoader loader = new FXMLLoader(MainPageController.class.getResource("MainPage.fxml"));
+        loader.setControllerFactory(cls -> {
+            if (cls == MainPageController.class) {
+                return mainPageController;
+            } else {
+                try {
+                    return cls.getConstructor().newInstance();
+                } catch (InstantiationException | InvocationTargetException | IllegalAccessException |
+                         NoSuchMethodException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        });
+        try {
+            mainView = loader.load();
+        } catch (IOException e) {
+            throw new IllegalStateException(e);
+        }
+
+        EncryptionSettingController encryptionSettingController = new EncryptionSettingController(event.getAccount(), event.getPassword());
+        EncryptionSettingModel encryptionSetting = encryptionSettingController.getModel();
         encryptionSetting.setOnRequestRestart(event1 -> {
             mainView.setDisable(true);
             Thread.ofPlatform().start(() -> {
@@ -176,11 +195,30 @@ public class App extends Application {
                     text.setFill(Paint.valueOf("#ff0000"));
                     textFlow.getChildren().add(text);
                 }
-                mainView.openExternalTab(tab);
+                mainPageController.openExternalTab(tab);
                 Platform.runLater(() -> scrollPane.setVvalue(1.0));
             });
         }));
-        mainView.setStorageSetting(encryptionSetting);
+        loader = new FXMLLoader(MainPageController.class.getResource("EncryptionSetting.fxml"));
+        loader.setControllerFactory(cls -> {
+            if (cls == EncryptionSettingController.class) {
+                return encryptionSettingController;
+            } else {
+                try {
+                    return cls.getConstructor().newInstance();
+                } catch (InstantiationException | InvocationTargetException | IllegalAccessException |
+                         NoSuchMethodException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        });
+        Node node;
+        try {
+            node = loader.load();
+        } catch (IOException e) {
+            throw new IllegalStateException(e);
+        }
+        mainPageController.setStorageSetting(node);
         return new Scene(mainView, 800, 600);
     }
 

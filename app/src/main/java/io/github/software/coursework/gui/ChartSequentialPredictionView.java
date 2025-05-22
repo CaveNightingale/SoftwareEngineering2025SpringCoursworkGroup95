@@ -26,14 +26,14 @@ public final class ChartSequentialPredictionView implements ChartController.View
         if (model.getSequenceLength() >= 10) {
             for (int i = 0; i <= 5; i++) {
                 int idx = (i * (model.getSequenceLength() - 1)) / 5;
-                long time = model.getStart() + idx * MainPage.DAY;
-                String date = LocalDate.ofEpochDay(Math.ceilDiv(time, MainPage.DAY)).format(formatter);
+                long time = model.getStart() + idx * MainPageModel.DAY;
+                String date = LocalDate.ofEpochDay(Math.ceilDiv(time, MainPageModel.DAY)).format(formatter);
                 xTicks.add(Pair.of((double) idx, date));
             }
         } else {
             for (int i = 0; i < model.getSequenceLength(); i++) {
-                long time = model.getStart() + i * MainPage.DAY;
-                String date = LocalDate.ofEpochDay(Math.ceilDiv(time, MainPage.DAY)).format(formatter);
+                long time = model.getStart() + i * MainPageModel.DAY;
+                String date = LocalDate.ofEpochDay(Math.ceilDiv(time, MainPageModel.DAY)).format(formatter);
                 xTicks.add(Pair.of((double) i, date));
             }
         }
@@ -74,7 +74,7 @@ public final class ChartSequentialPredictionView implements ChartController.View
         }
 
         if (model.getToday() >= model.getStart() && model.getToday() <= model.getEnd()) {
-            long x = (model.getToday() - model.getStart()) / MainPage.DAY;
+            long x = (model.getToday() - model.getStart()) / MainPageModel.DAY;
             drawReference(rendering, x, model.getBottom() * cent, x, model.getTop() * cent, Color.DARKCYAN.deriveColor(1, 1, 1, 0.5));
             rendering.save();
             rendering.setStroke(Color.DARKCYAN.deriveColor(1, 1, 1, 0.5));
@@ -86,7 +86,7 @@ public final class ChartSequentialPredictionView implements ChartController.View
             drawReference(rendering, mouseX, rendering.fracYToDataY(0), mouseX, rendering.fracYToDataY(1), Color.BLACK.deriveColor(1, 1, 1, 0.5));
             rendering.save();
             rendering.setStroke(Color.BLACK.deriveColor(1, 1, 1, 0.5));
-            String date = LocalDate.ofEpochDay(model.getStart() / MainPage.DAY + (int) mouseX).format(formatter);
+            String date = LocalDate.ofEpochDay(model.getStart() / MainPageModel.DAY + (int) mouseX).format(formatter);
             rendering.drawText(date, ChartRendering.ALIGN_CENTER, ChartRendering.ALIGN_START, rendering.fromDataX(mouseX), rendering.fromDataY(0) + 7.5);
             rendering.restore();
             String text = getMouseHoverText(model);
@@ -107,29 +107,6 @@ public final class ChartSequentialPredictionView implements ChartController.View
         onRender(rendering, model);
     }
 
-    private void drawConfidenceInterval(ChartRendering rendering, ChartSequentialPredictionModel model, double base, double cent) {
-        double[] predLowerX = generateXValues(model.getTrainingSamples().length() - 1, model.getSequenceLength());
-        double[] predLowerY = addReference(model.getPredictedLowerBound().stream().map(x -> x * cent).toArray(), base);
-        double[] predUpperX = predLowerX.clone();
-        double[] predUpperY = addReference(model.getPredictedUpperBound().stream().map(x -> x * cent).toArray(), base);
-        rendering.fill(
-                combineArrays(predUpperX, reverseArray(predLowerX)),
-                combineArrays(predUpperY, reverseArray(predLowerY)),
-                Color.BLUE.deriveColor(1, 1, 1, 0.25));
-    }
-
-    private void drawMouseHover(ChartRendering rendering, ChartSequentialPredictionModel model, double cent) {
-        rendering.setStroke(Color.BLACK.deriveColor(1, 1, 1, 0.5));
-        String hoverText = getMouseHoverText(model);
-        rendering.drawText(
-                hoverText,
-                ChartRendering.ALIGN_CENTER,
-                ChartRendering.ALIGN_END,
-                rendering.fromDataX(mouseX),
-                rendering.fromFracY(1) - 5
-        );
-    }
-
     private String getMouseHoverText(ChartSequentialPredictionModel model) {
         int index = (int) mouseX;
         if (index < model.getTrainingSamples().length()) {
@@ -141,27 +118,6 @@ public final class ChartSequentialPredictionView implements ChartController.View
             double lower = model.getPredictedLowerBound().get(index - model.getTrainingSamples().length()) + referenceValue;
             return String.format("%.2f / %.2f / %.2f", lower, value, upper);
         }
-    }
-
-    private double[] generateXValues(int start, int end) {
-        return IntStream.range(start, end).asDoubleStream().toArray();
-    }
-
-    private double[] reverseArray(double[] array) {
-        double[] reversed = array.clone();
-        for (int i = 0, j = array.length - 1; i < j; i++, j--) {
-            double temp = reversed[i];
-            reversed[i] = reversed[j];
-            reversed[j] = temp;
-        }
-        return reversed;
-    }
-
-    private double[] combineArrays(double[] array1, double[] array2) {
-        double[] combined = new double[array1.length + array2.length];
-        System.arraycopy(array1, 0, combined, 0, array1.length);
-        System.arraycopy(array2, 0, combined, array1.length, array2.length);
-        return combined;
     }
 
     private double[] addReference(double[] array, double reference) {

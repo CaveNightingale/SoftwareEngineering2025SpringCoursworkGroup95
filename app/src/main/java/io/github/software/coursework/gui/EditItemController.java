@@ -44,8 +44,6 @@ public final class EditItemController {
 
     @FXML
     private void handleSubmit() {
-        if (model.getOnSubmit() != null) {
-            model.getOnSubmit().handle(new EditItemModel.SubmitEvent(true, model.getText(), model));
-        }
+        model.submit();
     }
 }

@@ -47,6 +47,26 @@ public final class EditItemModel {
         this.onSubmit.set(handler);
     }
 
+    public BooleanProperty insertMode = new SimpleBooleanProperty(false);
+
+    public BooleanProperty insertModeProperty() {
+        return insertMode;
+    }
+
+    public boolean isInsertMode() {
+        return insertMode.get();
+    }
+
+    public void setInsertMode(boolean insertMode) {
+        this.insertMode.set(insertMode);
+    }
+
+    public void submit() {
+        if (getOnSubmit() != null) {
+            getOnSubmit().handle(new SubmitEvent(isInsertMode(), getText(), this));
+        }
+    }
+
     public void reset() {
         setText("");
         setEditable(true);

@@ -73,6 +73,7 @@ public final class EditListController {
         }
         EditItemController controller = loader.getController();
         insertModeItemModel = controller.getModel();
+        insertModeItemModel.setInsertMode(true);
         insertModeItemModel.onSubmitProperty().bind(model.onSubmitProperty());
         return node;
     }
