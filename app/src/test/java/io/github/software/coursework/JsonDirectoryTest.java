@@ -175,9 +175,13 @@ public class JsonDirectoryTest {
 
             // Skip query
             queryResult = chunkedIndex.querySamples(sorted.get(queryLeft), sorted.get(queryRight), 1, Integer.MAX_VALUE);
-            assertEquals(queryResult.size(), subList.size() - 1);
-            for (int i = 1; i < subList.size(); i++) {
-                assertEquals(subList.get(i), queryResult.get(i - 1));
+            if (queryLeft == queryRight) {
+                assertEquals(0, queryResult.size());
+            } else {
+                assertEquals(subList.size() - 1, queryResult.size());
+                for (int i = 1; i < subList.size(); i++) {
+                    assertEquals(subList.get(i), queryResult.get(i - 1));
+                }
             }
         }
         try (ChunkedIndex<IntegerItem> chunkedIndex = new ChunkedIndex<>(
