@@ -15,4 +15,5 @@ public record Reference<T extends Item>(long id) {
     public Reference(String string) {
         this(Hashing.murmur3_128().hashString(string, StandardCharsets.UTF_8).asLong());
     }
+
 }

@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Text?>
+<?import java.net.URL?>
+<AnchorPane
+        xmlns="http://javafx.com/javafx"
+        xmlns:fx="http://javafx.com/fxml"
+        fx:id="root"
+        fx:controller="io.github.software.coursework.gui.MainPageController"
+        prefHeight="600"
+        prefWidth="800"
+>
+    <stylesheets>
+        <URL value="@_style.css"/>
+    </stylesheets>
+    <TabPane
+            fx:id="tabPane"
+            AnchorPane.bottomAnchor="0.0"
+            AnchorPane.leftAnchor="0.0"
+            AnchorPane.rightAnchor="0.0"
+            AnchorPane.topAnchor="0.0"
+    >
+        <Tab closable="false" text="Dashboard">
+            <ScrollPane fitToWidth="true" fitToHeight="true">
+                <VBox>
+                    <ToolBar>
+                        <HBox fx:id="festivalReminderContainer" styleClass="festival-reminder-box">
+                            <CheckBox fx:id="festivalReminderToggle" selected="true" styleClass="festival-reminder-toggle"/>
+                            <Label fx:id="festivalReminderLabel" styleClass="festival-reminder-label"/>
+                        </HBox>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Button text="Feedback" onAction="#handleFeedback"/>
+                        <Button text="Settings" onAction="#handleSettings"/>
+                    </ToolBar>
+                    <HBox styleClass="model-title">
+                        <Label text="Budget"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Text fx:id="budgetAmount"/>
+                    </HBox>
+                    <HBox>
+                        <fx:include source="Chart.fxml" fx:id="budgetProgress" prefHeight="150" minHeight="150" HBox.hgrow="ALWAYS"/>
+                    </HBox>
+                    <HBox>
+                        <fx:include source="Chart.fxml" fx:id="budgetHeatmap" prefHeight="150" minHeight="150" HBox.hgrow="ALWAYS"/>
+                    </HBox>
+                    <HBox styleClass="model-title">
+                        <Label text="Saving"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Text fx:id="savedAmount"/>
+                    </HBox>
+                    <HBox>
+                        <fx:include source="Chart.fxml" fx:id="savingProgress" prefHeight="150" minHeight="150" HBox.hgrow="ALWAYS"/>
+                    </HBox>
+                    <HBox>
+                        <fx:include source="Chart.fxml" fx:id="savingHeatmap" prefHeight="150" minHeight="150" HBox.hgrow="ALWAYS"/>
+                    </HBox>
+                </VBox>
+            </ScrollPane>
+        </Tab>
+        <Tab closable="false" text="Transactions" fx:id="transactionTab">
+            <VBox>
+                <ToolBar>
+                    <Button text="Add" onAction="#handleAddTransaction"/>
+                    <Button text="Export CSV" onAction="#handleExportCSV"/>
+                    <Button text="Import CSV" onAction="#handleImportCSV"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <TextField fx:id="searchField" promptText="Search transactions..." onAction="#handleSearch"/>
+                    <Pagination fx:id="pagination"/>
+                </ToolBar>
+                <ScrollPane fitToWidth="true" fitToHeight="true" VBox.vgrow="ALWAYS" vbarPolicy="ALWAYS">
+                    <fx:include source="TransactionList.fxml" fx:id="transactionList" styleClass="transaction-list"/>
+                </ScrollPane>
+            </VBox>
+        </Tab>
+        <Tab closable="false" text="Transaction Parties" fx:id="entityTab">
+            <VBox>
+                <ToolBar>
+                    <Button text="Add" onAction="#handleAddEntity"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <!-- is "save" button needed? -->
+                </ToolBar>
+                <ScrollPane fitToWidth="true" fitToHeight="true" VBox.vgrow="ALWAYS" vbarPolicy="ALWAYS">
+                    <fx:include source="EntityList.fxml" fx:id="entityList" styleClass="entity-list"/>
+                </ScrollPane>
+            </VBox>
+        </Tab>
+        <Tab fx:id="settingsTab" text="Settings">
+            <ScrollPane fitToWidth="true" fitToHeight="true" VBox.vgrow="ALWAYS">
+                <VBox fx:id="settings">
+                    <VBox>
+                        <HBox styleClass="setting-title">
+                            <Label text="Categories"/>
+                        </HBox>
+                        <VBox styleClass="setting-line">
+                            <fx:include source="EditList.fxml" fx:id="categoriesEdit"/>
+                        </VBox>
+                        <HBox styleClass="setting-title">
+                            <Label text="Tags"/>
+                        </HBox>
+                        <VBox styleClass="setting-line">
+                            <fx:include source="EditList.fxml" fx:id="tagsEdit"/>
+                        </VBox>
+                    </VBox>
+                    <fx:include source="GoalSetting.fxml" fx:id="goalSetting"/>
+                </VBox>
+            </ScrollPane>
+        </Tab>
+    </TabPane>
+</AnchorPane>

@@ -1,33 +1,40 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import io.github.software.coursework.gui.AddTransaction?>
+<?import io.github.software.coursework.gui.AddTransactionController?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
+<?import org.controlsfx.control.ToggleSwitch?>
+<?import javafx.scene.web.WebView?>
 <?import org.controlsfx.control.SearchableComboBox?>
-<fx:root
+<VBox
         xmlns="http://javafx.com/javafx"
         xmlns:fx="http://javafx.com/fxml"
-        type="io.github.software.coursework.gui.AddTransaction"
+        fx:controller="io.github.software.coursework.gui.AddTransactionController"
+        fx:id="root"
         styleClass="add-transaction"
 >
     <HBox styleClass="add-transaction-row">
         <Label text="Title"/>
         <Region HBox.hgrow="ALWAYS"/>
+        <Label fx:id="titleError" textFill="red" styleClass="add-transaction-error"/>
         <TextField styleClass="add-transaction-field" fx:id="title" onKeyTyped="#handlePredictorInput"/>
     </HBox>
     <HBox styleClass="add-transaction-row">
         <Label text="Amount"/>
         <Region HBox.hgrow="ALWAYS"/>
+        <Label fx:id="amountError" textFill="red" styleClass="add-transaction-error"/>
         <TextField styleClass="add-transaction-field" fx:id="amount" onKeyTyped="#handlePredictorInput"/>
     </HBox>
     <HBox styleClass="add-transaction-row">
         <Label text="Transaction Party"/>
         <Region HBox.hgrow="ALWAYS"/>
+        <Label fx:id="entityError" textFill="red" styleClass="add-transaction-error"/>
         <SearchableComboBox styleClass="add-transaction-field" fx:id="entity" onAction="#handlePredictorInput"/>
     </HBox>
     <HBox styleClass="add-transaction-row">
         <Label text="Time"/>
         <Region HBox.hgrow="ALWAYS"/>
+        <Label fx:id="timeError" textFill="red" styleClass="add-transaction-error"/>
         <DatePicker styleClass="add-transaction-field" fx:id="time" onAction="#handlePredictorInput"/>
     </HBox>
     <HBox styleClass="add-transaction-row">
@@ -45,9 +52,13 @@
         <Region HBox.hgrow="ALWAYS"/>
     </HBox>
     <HBox styleClass="add-transaction-row">
-        <Label text="Description"/>
+        <Label text="Note"/>
         <Region HBox.hgrow="ALWAYS"/>
-        <TextArea styleClass="add-transaction-field" fx:id="description" onKeyTyped="#handlePredictorInput"/>
+        <ToggleSwitch text="Preview" styleClass="add-transaction-note-preview" fx:id="previewSwitch"/>
+        <StackPane styleClass="add-transaction-note">
+            <WebView fx:id="notePreview" managed="false" visible="false"/>
+            <TextArea fx:id="note" onKeyTyped="#handlePredictorInput"/>
+        </StackPane>
     </HBox>
     <HBox styleClass="add-transaction-row">
         <Region HBox.hgrow="ALWAYS"/>
@@ -57,4 +68,4 @@
         <Region styleClass="space" managed="false" visible="false" fx:id="deleteSpace"/>
         <Button text="Delete" onAction="#handleDelete" managed="false" visible="false" fx:id="delete"/>
     </HBox>
-</fx:root>
+</VBox>
