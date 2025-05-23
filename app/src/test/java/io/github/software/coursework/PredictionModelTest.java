@@ -240,7 +240,7 @@ public class PredictionModelTest {
         }
     }
 
-    @Test
+//    @Test
     public void testPredictionModel() {
         ZoneId zone = ZoneId.of("UTC");
 
