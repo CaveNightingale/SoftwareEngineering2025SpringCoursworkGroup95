@@ -32,6 +32,7 @@
                         </HBox>
                         <Region HBox.hgrow="ALWAYS"/>
                         <Button text="Feedback" onAction="#handleFeedback"/>
+                        <Button text="Help" onAction="#handleHelp"/>
                         <Button text="Settings" onAction="#handleSettings"/>
                     </ToolBar>
                     <HBox styleClass="model-title">
@@ -105,6 +106,11 @@
                     </VBox>
                     <fx:include source="GoalSetting.fxml" fx:id="goalSetting"/>
                 </VBox>
+            </ScrollPane>
+        </Tab>
+        <Tab fx:id="helpTab" text="Help">
+            <ScrollPane fitToWidth="true" fitToHeight="true" VBox.vgrow="ALWAYS">
+                <fx:include source="Help.fxml" fx:id="help"/>
             </ScrollPane>
         </Tab>
     </TabPane>
