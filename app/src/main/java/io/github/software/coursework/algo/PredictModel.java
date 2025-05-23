@@ -192,8 +192,8 @@ public final class PredictModel implements Model {
                                     .map(x -> x.stream().mapToDouble(Double::doubleValue).toArray())
                                     .toArray(double[][]::new)
                     );
-                    loaded.complete(null);
                 }
+                loaded.complete(null);
 
             } catch (IOException e) {
                 throw new RuntimeException(e);
