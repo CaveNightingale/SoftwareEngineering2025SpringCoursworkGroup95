@@ -763,64 +763,64 @@ public final class MainPageModel {
         }
     }
 
+    private static final Map<String, MonthDay> festivals = Map.ofEntries(
+            Map.entry("Chinese New Year", MonthDay.of(2, 10)),
+            Map.entry("Lantern Festival", MonthDay.of(2, 24)),
+            Map.entry("Qingming Festival", MonthDay.of(4, 4)),
+            Map.entry("Dragon Boat Festival", MonthDay.of(6, 10)),
+            Map.entry("Qixi Festival", MonthDay.of(8, 10)),
+            Map.entry("Mid-Autumn Festival", MonthDay.of(9, 17)),
+            Map.entry("Double Ninth Festival", MonthDay.of(10, 11)),
+            Map.entry("Winter Solstice", MonthDay.of(12, 21)),
+            Map.entry("Laba Festival", MonthDay.of(1, 18)),
+            Map.entry("Chinese New Year's Eve", MonthDay.of(2, 9)),
+            Map.entry("Minor New Year (Little New Year)", MonthDay.of(2, 2)),
+            Map.entry("Start of Spring (Lichun)", MonthDay.of(2, 4)),
+            Map.entry("Shangsi Festival", MonthDay.of(4, 11)),
+            Map.entry("Cold Food Festival", MonthDay.of(4, 3)),
+            Map.entry("Mazu's Birthday", MonthDay.of(5, 1)),
+            Map.entry("Buddha's Birthday", MonthDay.of(5, 15)),
+            Map.entry("Ghost Festival", MonthDay.of(8, 19)),
+            Map.entry("Zhongyuan Festival", MonthDay.of(8, 19)),
+            Map.entry("Teachers' Day (Mainland China)", MonthDay.of(9, 10)),
+            Map.entry("Lichun Offering (Worshipping Spring Ox)", MonthDay.of(2, 4)),
+
+            // International Holidays (19 entries)
+            Map.entry("Valentine's Day", MonthDay.of(2, 14)),
+            Map.entry("St. Patrick's Day", MonthDay.of(3, 17)),
+            Map.entry("April Fools' Day", MonthDay.of(4, 1)),
+            Map.entry("Easter", MonthDay.of(3, 31)),
+            Map.entry("Earth Day", MonthDay.of(4, 22)),
+            Map.entry("Mother's Day", MonthDay.of(5, 12)),
+            Map.entry("Father's Day", MonthDay.of(6, 16)),
+            Map.entry("Pride Day", MonthDay.of(6, 28)),
+            Map.entry("Independence Day (US)", MonthDay.of(7, 4)),
+            Map.entry("Halloween", MonthDay.of(10, 31)),
+            Map.entry("Thanksgiving (US)", MonthDay.of(11, 28)),
+            Map.entry("Christmas Eve", MonthDay.of(12, 24)),
+            Map.entry("Christmas Day", MonthDay.of(12, 25)),
+            Map.entry("New Year's Eve", MonthDay.of(12, 31)),
+            Map.entry("New Year's Day", MonthDay.of(1, 1)),
+            Map.entry("Black History Month Start", MonthDay.of(2, 1)),
+            Map.entry("International Women's Day", MonthDay.of(3, 8)),
+            Map.entry("International Workers' Day", MonthDay.of(5, 1)),
+            Map.entry("International Friendship Day", MonthDay.of(7, 30)),
+
+            // Shopping Events (11 entries)
+            Map.entry("618 Shopping Festival", MonthDay.of(6, 18)),
+            Map.entry("Double 11 (Singles' Day)", MonthDay.of(11, 11)),
+            Map.entry("Double 12", MonthDay.of(12, 12)),
+            Map.entry("Black Friday", MonthDay.of(11, 29)),
+            Map.entry("Cyber Monday", MonthDay.of(12, 2)),
+            Map.entry("Chinese Valentine's Day Sales", MonthDay.of(8, 10)),
+            Map.entry("New Year's Sales", MonthDay.of(1, 1)),
+            Map.entry("Back-to-School Sales", MonthDay.of(8, 25)),
+            Map.entry("National Day Golden Week Sales", MonthDay.of(10, 1)),
+            Map.entry("Women's Day Sales", MonthDay.of(3, 8)),
+            Map.entry("Summer Mid-Year Sale", MonthDay.of(6, 15))
+    );
+
     public Optional<Map.Entry<String, Long>> getClosestFestival() {
-        Map<String, MonthDay> festivals = Map.ofEntries(
-                Map.entry("Chinese New Year", MonthDay.of(2, 10)),
-                Map.entry("Lantern Festival", MonthDay.of(2, 24)),
-                Map.entry("Qingming Festival", MonthDay.of(4, 4)),
-                Map.entry("Dragon Boat Festival", MonthDay.of(6, 10)),
-                Map.entry("Qixi Festival", MonthDay.of(8, 10)),
-                Map.entry("Mid-Autumn Festival", MonthDay.of(9, 17)),
-                Map.entry("Double Ninth Festival", MonthDay.of(10, 11)),
-                Map.entry("Winter Solstice", MonthDay.of(12, 21)),
-                Map.entry("Laba Festival", MonthDay.of(1, 18)),
-                Map.entry("Chinese New Year's Eve", MonthDay.of(2, 9)),
-                Map.entry("Minor New Year (Little New Year)", MonthDay.of(2, 2)),
-                Map.entry("Start of Spring (Lichun)", MonthDay.of(2, 4)),
-                Map.entry("Shangsi Festival", MonthDay.of(4, 11)),
-                Map.entry("Cold Food Festival", MonthDay.of(4, 3)),
-                Map.entry("Mazu's Birthday", MonthDay.of(5, 1)),
-                Map.entry("Buddha's Birthday", MonthDay.of(5, 15)),
-                Map.entry("Ghost Festival", MonthDay.of(8, 19)),
-                Map.entry("Zhongyuan Festival", MonthDay.of(8, 19)),
-                Map.entry("Teachers' Day (Mainland China)", MonthDay.of(9, 10)),
-                Map.entry("Lichun Offering (Worshipping Spring Ox)", MonthDay.of(2, 4)),
-
-                // International Holidays (19 entries)
-                Map.entry("Valentine's Day", MonthDay.of(2, 14)),
-                Map.entry("St. Patrick's Day", MonthDay.of(3, 17)),
-                Map.entry("April Fools' Day", MonthDay.of(4, 1)),
-                Map.entry("Easter", MonthDay.of(3, 31)),
-                Map.entry("Earth Day", MonthDay.of(4, 22)),
-                Map.entry("Mother's Day", MonthDay.of(5, 12)),
-                Map.entry("Father's Day", MonthDay.of(6, 16)),
-                Map.entry("Pride Day", MonthDay.of(6, 28)),
-                Map.entry("Independence Day (US)", MonthDay.of(7, 4)),
-                Map.entry("Halloween", MonthDay.of(10, 31)),
-                Map.entry("Thanksgiving (US)", MonthDay.of(11, 28)),
-                Map.entry("Christmas Eve", MonthDay.of(12, 24)),
-                Map.entry("Christmas Day", MonthDay.of(12, 25)),
-                Map.entry("New Year's Eve", MonthDay.of(12, 31)),
-                Map.entry("New Year's Day", MonthDay.of(1, 1)),
-                Map.entry("Black History Month Start", MonthDay.of(2, 1)),
-                Map.entry("International Women's Day", MonthDay.of(3, 8)),
-                Map.entry("International Workers' Day", MonthDay.of(5, 1)),
-                Map.entry("International Friendship Day", MonthDay.of(7, 30)),
-
-                // Shopping Events (11 entries)
-                Map.entry("618 Shopping Festival", MonthDay.of(6, 18)),
-                Map.entry("Double 11 (Singles' Day)", MonthDay.of(11, 11)),
-                Map.entry("Double 12", MonthDay.of(12, 12)),
-                Map.entry("Black Friday", MonthDay.of(11, 29)),
-                Map.entry("Cyber Monday", MonthDay.of(12, 2)),
-                Map.entry("Chinese Valentine's Day Sales", MonthDay.of(8, 10)),
-                Map.entry("New Year's Sales", MonthDay.of(1, 1)),
-                Map.entry("Back-to-School Sales", MonthDay.of(8, 25)),
-                Map.entry("National Day Golden Week Sales", MonthDay.of(10, 1)),
-                Map.entry("Women's Day Sales", MonthDay.of(3, 8)),
-                Map.entry("Summer Mid-Year Sale", MonthDay.of(6, 15))
-        );
-
         LocalDate today = LocalDate.now();
 
         return festivals.entrySet().stream()

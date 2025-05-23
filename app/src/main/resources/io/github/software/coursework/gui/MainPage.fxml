@@ -27,7 +27,7 @@
                 <VBox>
                     <ToolBar>
                         <HBox fx:id="festivalReminderContainer" styleClass="festival-reminder-box">
-                            <CheckBox fx:id="festivalReminderToggle" selected="true"/>
+                            <CheckBox fx:id="festivalReminderToggle" selected="true" styleClass="festival-reminder-toggle"/>
                             <Label fx:id="festivalReminderLabel" styleClass="festival-reminder-label"/>
                         </HBox>
                         <Region HBox.hgrow="ALWAYS"/>
