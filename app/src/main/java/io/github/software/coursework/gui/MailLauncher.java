@@ -5,7 +5,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 
-public final class MailLauncher {
+final class MailLauncher {
     public static void openMailClient(String to, String subject, String body) {
         if (!Desktop.isDesktopSupported()) {
             System.err.println("Desktop is not supported on this system.");

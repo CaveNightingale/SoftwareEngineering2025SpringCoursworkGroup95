@@ -2,6 +2,12 @@ package io.github.software.coursework.data;
 
 import java.io.IOException;
 
+/**
+ * A pair of a reference and an item.
+ * @param reference the reference to the item
+ * @param item the item
+ * @param <T> the type of the item
+ */
 public record ReferenceItemPair<T extends Item>(Reference<T> reference, T item) implements Item {
     public ReferenceItemPair<T> withReference(Reference<T> reference) {
         return new ReferenceItemPair<>(reference, item);

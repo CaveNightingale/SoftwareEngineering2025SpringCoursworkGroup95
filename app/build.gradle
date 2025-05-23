@@ -61,3 +61,7 @@ tasks.named('test') {
     // Use JUnit Platform for unit tests.
     useJUnitPlatform()
 }
+
+tasks.javadoc {
+    options.addStringOption('Xdoclint:all,-missing', '-quiet')
+}

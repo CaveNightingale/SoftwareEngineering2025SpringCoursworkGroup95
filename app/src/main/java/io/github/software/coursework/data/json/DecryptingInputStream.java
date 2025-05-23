@@ -1,5 +1,6 @@
 package io.github.software.coursework.data.json;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
 import javax.crypto.BadPaddingException;
@@ -16,6 +17,7 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 
+@VisibleForTesting
 public final class DecryptingInputStream extends InputStream {
     private final InputStream backing;
     private final Cipher cipher;

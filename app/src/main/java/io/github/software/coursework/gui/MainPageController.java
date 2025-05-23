@@ -33,6 +33,9 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.SequencedCollection;
 
+/**
+ * The controller for the main page of the application.
+ */
 public final class MainPageController {
     private static final Logger logger = Logger.getLogger("MainViewController");
 
@@ -146,6 +149,11 @@ public final class MainPageController {
 
     private final MainPageModel model;
 
+    /**
+     * Constructor for MainPageController.
+     * @param asyncStorage the async storage
+     * @param analyticsModel the analytics model
+     */
     public MainPageController(AsyncStorage asyncStorage, Model analyticsModel) {
         // 创建Model
         this.model = new MainPageModel(asyncStorage, analyticsModel);
@@ -442,6 +450,10 @@ public final class MainPageController {
         pagination.setCurrentPageIndex(0);
     }
 
+    /**
+     * Open a tab whose content is provided by some external source.
+     * @param externalTab the external tab to open
+     */
     public void openExternalTab(Tab externalTab) {
         if (tabPane.getTabs().contains(externalTab)) {
             tabPane.getSelectionModel().select(externalTab);
@@ -451,6 +463,11 @@ public final class MainPageController {
         tabPane.getSelectionModel().select(externalTab);
     }
 
+    /**
+     * Set the storage setting node.
+     * This is used to decouple the storage implementation from the GUI.
+     * @param value the storage setting node
+     */
     public void setStorageSetting(Node value) {
         model.setStorageSetting(value);
     }
@@ -685,9 +702,4 @@ public final class MainPageController {
             festivalReminderLabel.setText("No festival data available");
         }
     }
-
-    public MainPageModel getModel() {
-        return model;
-    }
-
 }

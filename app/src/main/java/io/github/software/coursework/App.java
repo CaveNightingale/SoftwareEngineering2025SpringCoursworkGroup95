@@ -38,13 +38,22 @@ import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+/**
+ * The main class of the application.
+ */
 public class App extends Application {
     private final Logger logger = Logger.getLogger("App");
+
+    /**
+     * Main function of the application.
+     * @param args the arguments of the application. We don't accept any arguments.
+     */
     public static void main(String[] args) {
         Logger logger = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
         logger.setLevel(Level.INFO);
         launch(args);
     }
+
     private AsyncStorage storage;
     private Model model;
 

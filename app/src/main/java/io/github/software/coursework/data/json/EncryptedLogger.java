@@ -28,7 +28,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 public final class EncryptedLogger implements Closeable {
     private record Entry(Date time, AsyncStorage.Sensitivity sensitivity, String event, Item[] items) {}
     // Size padded to prevent inference of the length of the data
-    private final int paddingChunkSize = 512;
+    private static final int paddingChunkSize = 512;
 
     private final byte[] key;
     private final BufferedWriter writer;

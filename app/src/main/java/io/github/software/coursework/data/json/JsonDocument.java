@@ -1,12 +1,14 @@
 package io.github.software.coursework.data.json;
 
 import com.fasterxml.jackson.core.JsonFactory;
+import com.google.common.annotations.VisibleForTesting;
 import io.github.software.coursework.data.Document;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
+@VisibleForTesting
 public final class JsonDocument implements Document {
     private final ByteArrayOutputStream bytes;
     private static final JsonFactory JSON_FACTORY = JsonFactory.builder().build();

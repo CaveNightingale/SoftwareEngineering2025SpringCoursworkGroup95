@@ -1,5 +1,6 @@
 package io.github.software.coursework.gui.rendering;
 
+import com.google.common.annotations.VisibleForTesting;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Paint;
 import javafx.scene.text.Font;
@@ -14,6 +15,7 @@ import static io.github.software.coursework.gui.ChartRendering.ALIGN_END;
 import static io.github.software.coursework.gui.ChartRendering.ALIGN_CENTER;
 import static io.github.software.coursework.gui.ChartRendering.ALIGN_START;
 
+@VisibleForTesting
 public final class RenderingRenderer {
     private final RenderingState state;
     private final RenderingTransformer transformer;

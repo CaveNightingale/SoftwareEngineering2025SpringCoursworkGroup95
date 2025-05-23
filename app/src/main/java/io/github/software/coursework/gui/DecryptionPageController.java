@@ -14,6 +14,9 @@ import javafx.stage.FileChooser;
 import java.io.File;
 import java.util.Objects;
 
+/**
+ * Controller for the decryption page.
+ */
 public final class DecryptionPageController {
     @FXML
     private AnchorPane root;
@@ -87,6 +90,9 @@ public final class DecryptionPageController {
         }
     }
 
+    /**
+     * Show a message that the password is incorrect.
+     */
     public void reportPasswordIncorrect() {
         passwordIncorrect.setVisible(true);
         passwordIncorrectImport.setVisible(true);
@@ -110,19 +116,25 @@ public final class DecryptionPageController {
         });
     }
 
+    /**
+     * Set the password field to be focused.
+     */
     public void focus() {
         password.requestFocus();
     }
 
-    public void handleDecrypt() {
+    @FXML
+    private void handleDecrypt() {
         model.handleDecrypt(account.getValue(), password.getText());
     }
 
-    public void handleCreate() {
+    @FXML
+    private void handleCreate() {
         model.handleCreate(accountCreate.getText(), passwordCreate.getText());
     }
 
-    public void handleImport() {
+    @FXML
+    private void handleImport() {
         model.handleImport(path.getText(), key.getText(), accountImport.getText(), passwordImport.getText());
     }
 
@@ -148,7 +160,8 @@ public final class DecryptionPageController {
         return digit && upper && lower && other;
     }
 
-    public void handleCreatePage() {
+    @FXML
+    private void handleCreatePage() {
         createPage.setVisible(true);
         importPage.setVisible(false);
         importNext.setVisible(false);
@@ -156,7 +169,8 @@ public final class DecryptionPageController {
         faqPage.setVisible(false);
     }
 
-    public void handleImportPage() {
+    @FXML
+    private void handleImportPage() {
         importPage.setVisible(true);
         createPage.setVisible(false);
         decryptPage.setVisible(false);
@@ -164,7 +178,8 @@ public final class DecryptionPageController {
         importNext.setVisible(false);
     }
 
-    public void handleDecryptPage() {
+    @FXML
+    private void handleDecryptPage() {
         decryptPage.setVisible(true);
         importPage.setVisible(false);
         importNext.setVisible(false);
@@ -172,7 +187,8 @@ public final class DecryptionPageController {
         faqPage.setVisible(false);
     }
 
-    public void handleImportNext() {
+    @FXML
+    private void handleImportNext() {
         importNext.setVisible(true);
         importPage.setVisible(false);
         createPage.setVisible(false);
@@ -180,7 +196,8 @@ public final class DecryptionPageController {
         faqPage.setVisible(false);
     }
 
-    public void handleFaqPage() {
+    @FXML
+    private void handleFaqPage() {
         faqPage.setVisible(true);
         importNext.setVisible(false);
         importPage.setVisible(false);
@@ -188,7 +205,8 @@ public final class DecryptionPageController {
         decryptPage.setVisible(false);
     }
 
-    public void handleImportPathSelect() {
+    @FXML
+    private void handleImportPathSelect() {
         DirectoryChooser directoryChooser = new DirectoryChooser();
         directoryChooser.setTitle("Select Directory");
         File directory = directoryChooser.showDialog(root.getScene().getWindow());
@@ -207,7 +225,8 @@ public final class DecryptionPageController {
         }
     }
 
-    public void handleImportKeySelect() {
+    @FXML
+    private void handleImportKeySelect() {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Select Key");
         File file = fileChooser.showOpenDialog(root.getScene().getWindow());

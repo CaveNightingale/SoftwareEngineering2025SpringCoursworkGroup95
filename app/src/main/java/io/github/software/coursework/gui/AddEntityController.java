@@ -1,6 +1,5 @@
 package io.github.software.coursework.gui;
 
-import io.github.software.coursework.data.schema.Entity;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
