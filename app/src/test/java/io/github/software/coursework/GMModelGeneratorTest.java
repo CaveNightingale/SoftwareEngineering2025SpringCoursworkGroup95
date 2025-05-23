@@ -1,5 +1,6 @@
 package io.github.software.coursework;
 
+import io.github.software.coursework.algo.GMModelGenerator;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 import org.junit.jupiter.api.Test;

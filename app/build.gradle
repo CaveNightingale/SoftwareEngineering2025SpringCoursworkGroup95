@@ -1,5 +1,6 @@
 plugins {
     id 'application'
+    id "me.champeau.jmh" version "0.7.3"
 }
 
 repositories {
@@ -39,6 +40,12 @@ dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter:5.11.3'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
+    jmhAnnotationProcessor 'org.openjdk.jmh:jmh-generator-annprocess:1.35'
+    jmh 'org.openjdk.jmh:jmh-core:0.9'
+    jmh 'org.openjdk.jmh:jmh-generator-annprocess:0.9'
+    jmh 'org.openjdk.jmh:jmh-generator-bytecode:0.9'
+    jmh sourceSets.test.output
+
     // Apache Commons Math
     implementation 'org.apache.commons:commons-math3:3.6.1'
 }
@@ -64,4 +71,13 @@ tasks.named('test') {
 
 tasks.javadoc {
     options.addStringOption('Xdoclint:all,-missing', '-quiet')
+}
+
+tasks.register('bench', JavaExec) {
+    group = 'verification'
+    description = 'Run the benchmarks and assert reaching the minimum throughput requirements'
+    dependsOn tasks.jmhClasses
+
+    classpath = sourceSets.jmh.runtimeClasspath
+    mainClass = 'io.github.software.coursework.BenchmarkMain'
 }

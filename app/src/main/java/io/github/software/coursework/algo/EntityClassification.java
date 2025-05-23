@@ -1,18 +1,14 @@
-package io.github.software.coursework;
+package io.github.software.coursework.algo;
 
 import java.io.*;
 import java.nio.file.*;
 
 import java.util.*;
 
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import java.io.FileOutputStream;
-import java.io.FileWriter;
-import java.io.PrintStream;
-
-import com.google.common.collect.ImmutableSet;
 import com.google.common.reflect.ClassPath;
 import org.apache.commons.lang3.tuple.Triple;
 import org.apache.commons.math3.distribution.BetaDistribution;
@@ -21,12 +17,13 @@ import java.util.stream.Collectors;
 
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.nio.file.*;
 
 import java.nio.file.Files;
 import java.nio.charset.StandardCharsets;
 
 public class EntityClassification {
+
+    private static final Logger logger = Logger.getLogger("EntityClassification");
 
     private static final ClassPath classPath;
     private static final Set<ClassPath.ResourceInfo> resources;
@@ -42,7 +39,7 @@ public class EntityClassification {
     public static List<Triple<String, Double, String>> entityClassification(String fileFolderName) {
         List<String> categories = getCategories(fileFolderName);
 
-        System.out.println(categories);
+//        System.out.println(categories);
 
         Map<String, String> nGramToCategory = new HashMap<>();
         Map<String, Integer> nGramFrequency = new HashMap<>();
@@ -92,10 +89,11 @@ public class EntityClassification {
     public static List<String> getCategories(String fileFolderName) {
         List<String> categories = new ArrayList<>();
 
-        System.out.println(fileFolderName);
+//        System.out.println("/io/github/software/coursework" + fileFolderName + "---" + EntityClassification.class.getResource("/io/github/software/coursework/" + fileFolderName));
 
-        URL url = Objects.requireNonNull(EntityClassification.class.getResource(fileFolderName));
-        System.out.println("URL: " + url);
+        URL url = Objects.requireNonNull(EntityClassification.class.getResource("/io/github/software/coursework/" + fileFolderName));
+//        System.out.println("URL: " + url);
+        logger.info("URL: " + url);
 
         for (ClassPath.ResourceInfo resource : resources) {
             if (resource.getResourceName().startsWith("io/github/software/coursework/" + fileFolderName)) {
@@ -103,15 +101,15 @@ public class EntityClassification {
             }
         }
 
-        System.out.println(categories);
+//        System.out.println(categories);
 
         return categories;
     }
 
     public static Map<String, Integer> readText(String fileFolderName, String category) {
-        System.out.println("read Text " + category);
+//        System.out.println("read Text " + category);
         try  {
-            Path path = Paths.get(EntityClassification.class.getResource(fileFolderName).toURI());
+            Path path = Paths.get(EntityClassification.class.getResource("/io/github/software/coursework/" + fileFolderName).toURI());
             List<String> textByLines = Files.readAllLines(path.resolve(category + ".txt"), StandardCharsets.UTF_8);
 
             Map<String, Integer> nGrams = new HashMap<>();
@@ -135,7 +133,7 @@ public class EntityClassification {
 
                 String lst = "";
                 for (String part : parts) {
-                    if (lst != "") {
+                    if (!lst.isEmpty()) {
                         nGrams.compute(lst + part, (key, count) -> count == null ? 1 : count + 1);
                     }
                     nGrams.compute(part, (key, count) -> count == null ? 1 : count + 1);

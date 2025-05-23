@@ -1,0 +1,50 @@
+1. Chinese New Year - 02/10
+2. Lantern Festival - 02/24
+3. Qingming Festival - 04/04
+4. Dragon Boat Festival - 06/10
+5. Qixi Festival - 08/10
+6. Mid-Autumn Festival - 09/17
+7. Double Ninth Festival - 10/11
+8. Winter Solstice - 12/21
+9. Laba Festival - 01/18
+10. Chinese New Year's Eve - 02/09
+11. Minor New Year (Little New Year) - 02/02
+12. Start of Spring (Lichun) - 02/04
+13. Shangsi Festival - 04/11
+14. Cold Food Festival - 04/03
+15. Mazu’s Birthday - 05/01
+16. Buddha’s Birthday - 05/15
+17. Ghost Festival - 08/19
+18. Zhongyuan Festival - 08/19
+19. Teachers’ Day (Mainland China) - 09/10
+20. Lichun Offering (Worshipping Spring Ox) - 02/04
+21. Valentine's Day - 02/14
+22. St. Patrick’s Day - 03/17
+23. April Fools’ Day - 04/01
+24. Easter - 03/31
+25. Earth Day - 04/22
+26. Mother's Day - 05/12
+27. Father's Day - 06/16
+28. Pride Day - 06/28
+29. Independence Day (US) - 07/04
+30. Halloween - 10/31
+31. Thanksgiving (US) - 11/28
+32. Christmas Eve - 12/24
+33. Christmas Day - 12/25
+34. New Year’s Eve - 12/31
+35. New Year’s Day - 01/01
+36. Black History Month Start - 02/01
+37. International Women’s Day - 03/08
+38. International Workers’ Day - 05/01
+39. International Friendship Day - 07/30
+40. 618 Shopping Festival - 06/18
+41. Double 11 (Singles’ Day) - 11/11
+42. Double 12 - 12/12
+43. Black Friday - 11/29
+44. Cyber Monday - 12/02
+45. Chinese Valentine's Day Sales - 08/10
+46. New Year’s Sales - 01/01
+47. Back-to-School Sales - 08/25
+48. National Day Golden Week Sales - 10/01
+49. Women’s Day Sales - 03/08
+50. Summer Mid-Year Sale - 06/15

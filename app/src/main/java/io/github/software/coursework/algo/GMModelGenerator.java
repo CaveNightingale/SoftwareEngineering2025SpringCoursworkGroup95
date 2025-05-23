@@ -1,4 +1,4 @@
-package io.github.software.coursework;
+package io.github.software.coursework.algo;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.ImmutablePair;
@@ -34,6 +34,7 @@ public class GMModelGenerator {
         generateComponents();
     }
 
+    @SuppressWarnings("unchecked")
     private void generateComponents() {
         componentCount = rand.nextInt(21) + 10;  // 10~30
         components = new ArrayList<>();
