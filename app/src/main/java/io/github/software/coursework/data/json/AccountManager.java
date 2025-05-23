@@ -2,6 +2,7 @@ package io.github.software.coursework.data.json;
 
 import com.fasterxml.jackson.core.JsonEncoding;
 import com.fasterxml.jackson.core.JsonFactory;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import io.github.software.coursework.data.Deserialize;
 import io.github.software.coursework.data.Document;
@@ -83,9 +84,10 @@ public final class AccountManager {
         }
     }
 
-    private AccountManager() {}
-
     private static final String accountList = ".config/BUPT-QMUL_2025_Spring_Software_Engineering_Coursework_Group_95_Submission/accounts.json";
+
+    @VisibleForTesting
+    public AccountManager() {}
 
     private Account defaultAccount = null;
     private static final File home = new File(System.getProperty("user.home"));
@@ -93,7 +95,12 @@ public final class AccountManager {
     private static final Logger logger = Logger.getLogger("AccountManager");
 
     private final ArrayList<Account> accounts = new ArrayList<>();
-    private final File accountsFile = new File(home, accountList);
+    private static File accountsFile = new File(home, accountList);
+
+    @VisibleForTesting
+    public static void setAccountList(File accountList) {
+        AccountManager.accountsFile = accountList;
+    }
 
     /**
      * Get the default account.
