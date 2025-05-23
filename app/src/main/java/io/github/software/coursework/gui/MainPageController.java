@@ -7,6 +7,9 @@ import io.github.software.coursework.data.Reference;
 import io.github.software.coursework.data.ReferenceItemPair;
 import io.github.software.coursework.data.schema.Entity;
 import io.github.software.coursework.data.schema.Transaction;
+import javafx.animation.Animation;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.event.Event;
 import javafx.fxml.FXML;
@@ -15,13 +18,17 @@ import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
+import javafx.util.Duration;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Map;
+import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.SequencedCollection;
@@ -113,6 +120,15 @@ public final class MainPageController {
     @FXML
     private EditListController tagsEditController;
 
+    @FXML
+    private HBox festivalReminderContainer;
+
+    @FXML
+    private CheckBox festivalReminderToggle;
+
+    @FXML
+    private Label festivalReminderLabel;
+
     private Tab addTransactionTab;
     private AddTransactionController addTransaction;
 
@@ -128,6 +144,7 @@ public final class MainPageController {
 
     @FXML
     private void initialize() {
+        initFestivalReminder();
 
         // 初始化图表
         budgetProgressController.setView(new ChartSequentialPredictionView());
@@ -611,6 +628,44 @@ public final class MainPageController {
         alert.setHeaderText(header);
         alert.setContentText(content);
         alert.show();
+    }
+
+    private void initFestivalReminder() {
+        festivalReminderContainer.getStyleClass().add("festival-reminder-box");
+        festivalReminderLabel.getStyleClass().add("festival-reminder-label");
+
+        festivalReminderToggle.selectedProperty().addListener((obs, oldVal, newVal) -> {
+            updateFestivalReminder();
+        });
+
+        Timeline festivalUpdateTimeline = new Timeline(
+                new KeyFrame(Duration.hours(12), e -> updateFestivalReminder())
+        );
+        festivalUpdateTimeline.setCycleCount(Animation.INDEFINITE);
+        festivalUpdateTimeline.play();
+
+        updateFestivalReminder();
+    }
+
+    private void updateFestivalReminder() {
+        if (!festivalReminderToggle.isSelected()) {
+            festivalReminderLabel.setText("");
+            return;
+        }
+
+        Optional<Map.Entry<String, Long>> closestFestival = model.getClosestFestival();
+
+        if (closestFestival.isPresent()) {
+            long daysLeft = closestFestival.get().getValue();
+            String message = daysLeft <= 7 ?
+                    String.format("Next festival: %s (in %d days)",
+                            closestFestival.get().getKey(),
+                            daysLeft) :
+                    "No important festivals coming soon";
+            festivalReminderLabel.setText(message);
+        } else {
+            festivalReminderLabel.setText("No festival data available");
+        }
     }
 
     public MainPageModel getModel() {
