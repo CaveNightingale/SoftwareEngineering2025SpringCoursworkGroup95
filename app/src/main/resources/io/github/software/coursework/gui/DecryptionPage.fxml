@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import io.github.software.coursework.gui.DecryptionView?>
+<?import io.github.software.coursework.gui.DecryptionPageController?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <?import java.net.URL?>
 <?import javafx.scene.text.Text?>
 <?import javafx.scene.text.TextFlow?>
-<fx:root
-        type="io.github.software.coursework.gui.DecryptionView"
+<AnchorPane
         xmlns="http://javafx.com/javafx"
         xmlns:fx="http://javafx.com/fxml"
+        fx:controller="io.github.software.coursework.gui.DecryptionPageController"
         prefHeight="300"
         prefWidth="400"
 >
@@ -142,4 +142,4 @@
             </HBox>
         </VBox>
     </StackPane>
-</fx:root>
+</AnchorPane>

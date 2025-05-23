@@ -52,7 +52,7 @@ public final class GaussMixtureModel {
             cumulativeProbabilities[i] /= cumulative;
         }
     }
-
+ 
     public double getMean() {
         return mean;
     }

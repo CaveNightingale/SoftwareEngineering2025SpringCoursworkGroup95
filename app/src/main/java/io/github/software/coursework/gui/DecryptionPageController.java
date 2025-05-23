@@ -2,13 +2,9 @@ package io.github.software.coursework.gui;
 
 import io.github.software.coursework.data.json.AccountManager;
 import io.github.software.coursework.data.json.Encryption;
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.SimpleObjectProperty;
 import javafx.event.Event;
-import javafx.event.EventHandler;
 import javafx.event.EventType;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
 import javafx.scene.control.*;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.VBox;
@@ -16,10 +12,12 @@ import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Objects;
 
-public class DecryptionView extends AnchorPane {
+public final class DecryptionPageController {
+    @FXML
+    private AnchorPane root;
+
     @FXML
     private ComboBox<AccountManager.Account> account;
 
@@ -71,21 +69,11 @@ public class DecryptionView extends AnchorPane {
     @FXML
     public Hyperlink faqLink;
 
-    private final ObjectProperty<EventHandler<DecryptionSubmitEvent>> onDecryptionSubmit = new SimpleObjectProperty<>();
+    private final DecryptionPageModel model = new DecryptionPageModel();
 
-    public ObjectProperty<EventHandler<DecryptionSubmitEvent>> onDecryptionSubmitProperty() {
-        return onDecryptionSubmit;
+    public DecryptionPageModel getModel() {
+        return model;
     }
-
-    public final EventHandler<DecryptionSubmitEvent> getOnDecryptionSubmit() {
-        return onDecryptionSubmit.get();
-    }
-
-    public final void setOnDecryptionSubmit(EventHandler<DecryptionSubmitEvent> value) {
-        onDecryptionSubmit.set(value);
-    }
-
-    private final AccountManager accountManager;
 
     private static final class AccountCell extends ListCell<AccountManager.Account> {
         @Override
@@ -104,37 +92,20 @@ public class DecryptionView extends AnchorPane {
         passwordIncorrectImport.setVisible(true);
     }
 
-    public DecryptionView() {
-        FXMLLoader fxmlLoader = new FXMLLoader(DecryptionView.class.getResource("DecryptionView.fxml"));
-        fxmlLoader.setRoot(this);
-        fxmlLoader.setController(this);
-        try {
-            fxmlLoader.load();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        accountManager = AccountManager.getManager();
-        accountManager.loadAccounts();
-        onDecryptionSubmit.addListener((observable, oldValue, newValue) -> {
-            if (oldValue != null) {
-                this.removeEventHandler(DecryptionSubmitEvent.DECRYPTION_SUBMIT, oldValue);
-            }
-            if (newValue != null) {
-                this.addEventHandler(DecryptionSubmitEvent.DECRYPTION_SUBMIT, newValue);
-            }
-        });
-        account.getItems().addAll(accountManager.getAccounts());
+    @FXML
+    private void initialize() {
+        account.getItems().addAll(model.getAccounts());
         account.setCellFactory(param -> new AccountCell());
         account.setButtonCell(new AccountCell());
-        if (accountManager.getDefaultAccount() != null) {
-            account.setValue(accountManager.getDefaultAccount());
+        if (model.getDefaultAccount() != null) {
+            account.setValue(model.getDefaultAccount());
         }
 
         password.setOnAction(event -> handleDecrypt());
 
         passwordCreate.textProperty().addListener((observable, oldValue, newValue) -> {
             if (!Objects.equals(oldValue, newValue)) {
-                passwordIncorrectCreate.setVisible(newValue == null || !isPasswordString(newValue));
+                passwordIncorrectCreate.setVisible(newValue == null || !isPasswordStrong(newValue));
             }
         });
     }
@@ -144,22 +115,18 @@ public class DecryptionView extends AnchorPane {
     }
 
     public void handleDecrypt() {
-        accountManager.setDefaultAccount(account.getValue());
-        accountManager.saveAccounts();
-        Event.fireEvent(this, new DecryptionSubmitEvent(DecryptionSubmitEvent.DECRYPTION_SUBMIT, account.getValue(), password.getText()));
+        model.handleDecrypt(account.getValue(), password.getText());
     }
 
     public void handleCreate() {
-        AccountManager.Account account1 = accountManager.makeAccount(accountCreate.getText(), passwordCreate.getText());
-        if (account1 != null) {
-            accountManager.addAccount(account1);
-            accountManager.setDefaultAccount(account1);
-            accountManager.saveAccounts();
-            Event.fireEvent(this, new DecryptionSubmitEvent(DecryptionSubmitEvent.DECRYPTION_SUBMIT, account1, passwordCreate.getText()));
-        }
+        model.handleCreate(accountCreate.getText(), passwordCreate.getText());
     }
 
-    private boolean isPasswordString(String password) {
+    public void handleImport() {
+        model.handleImport(path.getText(), key.getText(), accountImport.getText(), passwordImport.getText());
+    }
+
+    private boolean isPasswordStrong(String password) {
         if (password.length() < 8) {
             return false;
         }
@@ -179,14 +146,6 @@ public class DecryptionView extends AnchorPane {
             }
         }
         return digit && upper && lower && other;
-    }
-
-    public void handleImport() {
-        AccountManager.Account account1 = new AccountManager.Account(accountImport.getText(), path.getText(), key.getText());
-        accountManager.addAccount(account1);
-        accountManager.setDefaultAccount(account1);
-        accountManager.saveAccounts();
-        Event.fireEvent(this, new DecryptionSubmitEvent(DecryptionSubmitEvent.DECRYPTION_SUBMIT, account1, passwordImport.getText()));
     }
 
     public void handleCreatePage() {
@@ -232,7 +191,7 @@ public class DecryptionView extends AnchorPane {
     public void handleImportPathSelect() {
         DirectoryChooser directoryChooser = new DirectoryChooser();
         directoryChooser.setTitle("Select Directory");
-        File directory = directoryChooser.showDialog(this.getScene().getWindow());
+        File directory = directoryChooser.showDialog(root.getScene().getWindow());
         if (directory == null) {
             return;
         }
@@ -251,30 +210,10 @@ public class DecryptionView extends AnchorPane {
     public void handleImportKeySelect() {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Select Key");
-        File file = fileChooser.showOpenDialog(this.getScene().getWindow());
+        File file = fileChooser.showOpenDialog(root.getScene().getWindow());
         if (file == null) {
             return;
         }
         key.setText(file.getAbsolutePath());
-    }
-
-    public static class DecryptionSubmitEvent extends Event {
-        public static final EventType<DecryptionSubmitEvent> DECRYPTION_SUBMIT = new EventType<>(Event.ANY, "DECRYPTION_SUBMIT");
-        private final AccountManager.Account account;
-        private final String password;
-
-        public AccountManager.Account getAccount() {
-            return account;
-        }
-
-        public String getPassword() {
-            return password;
-        }
-
-        public DecryptionSubmitEvent(EventType<? extends Event> eventType, AccountManager.Account account, String password) {
-            super(eventType);
-            this.account = account;
-            this.password = password;
-        }
     }
 }
