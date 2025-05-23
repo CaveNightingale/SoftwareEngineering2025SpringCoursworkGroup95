@@ -1,5 +1,6 @@
 package io.github.software.coursework.gui.rendering;
 
+import com.google.common.annotations.VisibleForTesting;
 import io.github.software.coursework.gui.ChartRendering;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;

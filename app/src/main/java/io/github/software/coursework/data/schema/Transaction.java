@@ -7,6 +7,16 @@ import io.github.software.coursework.data.Reference;
 
 import java.io.IOException;
 
+/**
+ * Represents a transaction.
+ * @param title The title of the transaction.
+ * @param description The note of the transaction.
+ * @param time The time of the transaction, in milliseconds since epoch.
+ * @param amount The amount of the transaction, in cents.
+ * @param category The category of the transaction.
+ * @param entity The party involved in the transaction.
+ * @param tags The tags of the transaction.
+ */
 public record Transaction(
         String title,
         String description,

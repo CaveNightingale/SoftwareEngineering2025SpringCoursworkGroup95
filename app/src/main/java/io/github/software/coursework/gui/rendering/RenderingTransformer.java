@@ -1,5 +1,8 @@
 package io.github.software.coursework.gui.rendering;
 
+import com.google.common.annotations.VisibleForTesting;
+
+@VisibleForTesting
 public final class RenderingTransformer {
     private final RenderingState state;
     public RenderingTransformer(RenderingState state) {

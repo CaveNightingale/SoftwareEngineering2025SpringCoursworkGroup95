@@ -2,6 +2,7 @@ package io.github.software.coursework.data.json;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
+import com.google.common.annotations.VisibleForTesting;
 import io.github.software.coursework.data.Document;
 import io.github.software.coursework.data.Reference;
 import io.github.software.coursework.data.SyntaxException;
@@ -12,6 +13,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.logging.Logger;
 
+@VisibleForTesting
 @ParametersAreNonnullByDefault
 public final class JsonReader implements Document.Reader {
     private final Logger logger = Logger.getLogger("JsonReader");

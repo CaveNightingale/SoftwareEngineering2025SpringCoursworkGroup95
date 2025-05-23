@@ -7,6 +7,15 @@ import org.apache.commons.lang3.tuple.ImmutableTriple;
 
 import java.io.IOException;
 
+/**
+ * Represents a goal.
+ * A goal is a period of time during which the user wants to save a certain amount of money or spend a certain amount of money.
+ * @param start The start time of the goal, in milliseconds since epoch.
+ * @param end The end time of the goal, in milliseconds since epoch.
+ * @param budget The budget for the goal, in cents.
+ * @param saving The amount of money the user wants to save, in cents.
+ * @param byCategory The budget and saving for each category, in cents. The first element is the category name, the second element is the budget, and the third element is the saving.
+ */
 public record Goal(
         long start,
         long end,
@@ -102,6 +111,10 @@ public record Goal(
         return rval.withByCategory(byCategoryBuilder.build());
     }
 
+    /**
+     * A wrapper for a goal that may or may not be present.
+     * @param goal The goal, or null if not present.
+     */
     public record Optional(Goal goal) implements Item {
         public Optional() {
             this(null);

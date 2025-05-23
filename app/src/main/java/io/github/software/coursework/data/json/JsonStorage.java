@@ -20,6 +20,11 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
+/**
+ * A JSON-based storage implementation.
+ * You should only create instance of this class in the Main class. In other occasions,
+ * use {@link AsyncStorage} to access the storage.
+ */
 public final class JsonStorage implements AsyncStorage {
     private static final List<String> defaultCategories = List.of(
             "Accommodation",
@@ -104,6 +109,12 @@ public final class JsonStorage implements AsyncStorage {
         System.exit(1);
     }
 
+    /**
+     * Creates a new JsonStorage instance.
+     * @param account the account to use
+     * @param password the password to use
+     * @throws IOException if an I/O error occurs
+     */
     public JsonStorage(AccountManager.Account account, String password) throws IOException {
         byte[] key = Encryption.readKeyFile(password, Files.readString(Path.of(account.key())));
         if (key == null) {

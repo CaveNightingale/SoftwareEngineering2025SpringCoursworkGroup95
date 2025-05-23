@@ -63,7 +63,8 @@ public final class TransactionListController {
         model.getItems().forEach(pair -> root.getChildren().add(createItem(pair)));
     }
 
-    public void initialize() {
+    @FXML
+    private void initialize() {
         model.itemsProperty().addListener((observable, oldValue, newValue) -> {
             root.getChildren().clear();
             if (oldValue != null) {

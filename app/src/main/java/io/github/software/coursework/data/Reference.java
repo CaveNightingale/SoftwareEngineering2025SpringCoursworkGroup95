@@ -5,6 +5,11 @@ import com.google.common.hash.Hashing;
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 
+/**
+ * A reference to an item.
+ * @param id The id of the item.
+ * @param <T> The type of the item.
+ */
 public record Reference<T extends Item>(long id) {
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 

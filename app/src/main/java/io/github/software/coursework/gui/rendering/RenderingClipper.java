@@ -1,10 +1,12 @@
 package io.github.software.coursework.gui.rendering;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.commons.lang3.tuple.Pair;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.util.ArrayList;
 
+@VisibleForTesting
 public final class RenderingClipper {
     private final RenderingState state;
 
