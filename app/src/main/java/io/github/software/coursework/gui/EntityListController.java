@@ -50,17 +50,11 @@ public final class EntityListController {
         return node;
     }
 
-    private void onListContentChange(ListChangeListener.Change<? extends ReferenceItemPair<Entity>> change) {
-        while (change.next()) {
-            if (change.wasAdded()) {
-                int index = 0;
-                for (ReferenceItemPair<Entity> pair : change.getAddedSubList()) {
-                    root.getChildren().add(change.getFrom() + (index++), createItem(pair));
-                }
-            } else if (change.wasRemoved()) {
-                root.getChildren().remove(change.getFrom(), change.getFrom() + change.getRemovedSize());
-            }
-        }
+    private final ListChangeListener<ReferenceItemPair<Entity>> onListContentChange = change -> rebuildChildren();
+
+    private void rebuildChildren() {
+        root.getChildren().clear();
+        model.getItems().forEach(pair -> root.getChildren().add(createItem(pair)));
     }
 
     @FXML
@@ -68,11 +62,11 @@ public final class EntityListController {
         model.itemsProperty().addListener((observable, oldValue, newValue) -> {
             root.getChildren().clear();
             if (oldValue != null) {
-                oldValue.removeListener(this::onListContentChange);
+                oldValue.removeListener(onListContentChange);
             }
             if (newValue != null) {
                 newValue.forEach(pair -> root.getChildren().add(createItem(pair)));
-                newValue.addListener(this::onListContentChange);
+                newValue.addListener(onListContentChange);
             }
         });
         model.setItems(FXCollections.observableArrayList());

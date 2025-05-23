@@ -56,30 +56,24 @@ public final class TransactionListController {
         return node;
     }
 
-    private void onListContentChange(ListChangeListener.Change<? extends ImmutablePair<ReferenceItemPair<Transaction>, Entity>> change) {
-        while (change.next()) {
-            if (change.wasAdded()) {
-                int index = 0;
-                for (ImmutablePair<ReferenceItemPair<Transaction>, Entity> pair : change.getAddedSubList()) {
-                    root.getChildren().add(change.getFrom() + (index++), createItem(pair));
-                }
-            } else if (change.wasRemoved()) {
-                root.getChildren().remove(change.getFrom(), change.getFrom() + change.getRemovedSize());
-            }
-        }
+    private final ListChangeListener<ImmutablePair<ReferenceItemPair<Transaction>, Entity>> onListContentChange = change -> rebuildChildren();
+
+    private void rebuildChildren() {
+        root.getChildren().clear();
+        model.getItems().forEach(pair -> root.getChildren().add(createItem(pair)));
     }
 
     public void initialize() {
         model.itemsProperty().addListener((observable, oldValue, newValue) -> {
             root.getChildren().clear();
             if (oldValue != null) {
-                oldValue.removeListener(this::onListContentChange);
+                oldValue.removeListener(onListContentChange);
             }
             if (newValue != null) {
                 originalItems.clear();
                 originalItems.addAll(newValue);
                 newValue.forEach(pair -> root.getChildren().add(createItem(pair)));
-                newValue.addListener(this::onListContentChange);
+                newValue.addListener(onListContentChange);
             }
         });
         model.setItems(FXCollections.observableArrayList());
