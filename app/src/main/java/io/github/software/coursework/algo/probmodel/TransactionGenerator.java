@@ -1,4 +1,4 @@
-package io.github.software.coursework.ProbabilityModel;
+package io.github.software.coursework.algo.probmodel;
 
 import java.time.LocalDate;
 import java.util.ArrayList;

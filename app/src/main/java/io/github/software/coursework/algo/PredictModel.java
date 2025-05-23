@@ -5,8 +5,8 @@ import com.google.common.primitives.ImmutableDoubleArray;
 import com.google.common.primitives.ImmutableIntArray;
 import com.google.common.primitives.ImmutableLongArray;
 import io.github.software.coursework.EntityPrediction;
-import io.github.software.coursework.ProbabilityModel.GMModelCalculation;
-import io.github.software.coursework.ProbabilityModel.GaussMixtureModel;
+import io.github.software.coursework.algo.probmodel.GMModelCalculation;
+import io.github.software.coursework.algo.probmodel.GaussMixtureModel;
 import io.github.software.coursework.data.*;
 import io.github.software.coursework.data.schema.Entity;
 import io.github.software.coursework.data.schema.Transaction;
@@ -21,7 +21,6 @@ import java.util.Date;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 public final class PredictModel implements Model {
