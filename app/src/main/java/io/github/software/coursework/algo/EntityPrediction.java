@@ -1,6 +1,5 @@
-package io.github.software.coursework;
+package io.github.software.coursework.algo;
 
-import com.google.common.collect.ImmutableSet;
 import com.google.common.reflect.ClassPath;
 import org.apache.commons.lang3.tuple.Triple;
 
@@ -44,7 +43,7 @@ public class EntityPrediction {
         listedNames = new HashMap<>();
         nGramsClassification = new HashMap<>();
         nGramsScore = new HashMap<>();
-        urlDataset = EntityClassification.class.getResource(target);
+        urlDataset = EntityClassification.class.getResource("/io/github/software/coursework/" + target);
     }
 
     public boolean hasCategory(String category) {
@@ -52,7 +51,7 @@ public class EntityPrediction {
     }
 
     public void loadNGram() {
-        System.out.println("Loading N-Grams");
+//        System.out.println("Loading N-Grams");
 
         List<Triple<String, Double, String>> nGramMap = EntityClassification.entityClassification(target);
 //        System.out.println(nGramMap);
@@ -77,7 +76,7 @@ public class EntityPrediction {
             }
         }
 
-        System.out.println("listedNames read");
+//        System.out.println("listedNames read");
 
         for (Triple<String, Double, String> triple : nGramMap) {
             nGramsScore.put(triple.getLeft(), triple.getMiddle());
@@ -87,14 +86,14 @@ public class EntityPrediction {
     }
 
     public Triple<String, String, Double> predict(String classificationTarget) {
-        System.out.println("classificationTarget: " + classificationTarget);
+//        System.out.println("classificationTarget: " + classificationTarget);
 
         if (listedNames.containsKey(classificationTarget)) {
-            System.out.println("目标已存在表中，类型为：" + target + " : " + listedNames.get(classificationTarget));
+//            System.out.println("目标已存在表中，类型为：" + target + " : " + listedNames.get(classificationTarget));
 
             return Triple.of(listedNames.get(classificationTarget), classificationTarget, 1.0);
         } else {
-            System.out.println("目标不存在表中。");
+//            System.out.println("目标不存在表中。");
         }
 
         double probability = 0.0;
@@ -137,9 +136,9 @@ public class EntityPrediction {
         }
 
         if (probability == 0.0) {
-            System.out.println("ngram 未匹配到。");
+//            System.out.println("ngram 未匹配到。");
         } else {
-            System.out.println("匹配成功： 最大概率nGram：" + tmp + "，概率：" + probability + ",匹配结果：" + classification);
+//            System.out.println("匹配成功： 最大概率nGram：" + tmp + "，概率：" + probability + ",匹配结果：" + classification);
         }
 
         return Triple.of(classification, tmp, probability);

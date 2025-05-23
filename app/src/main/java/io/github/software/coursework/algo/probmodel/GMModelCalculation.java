@@ -2,6 +2,8 @@ package io.github.software.coursework.algo.probmodel;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
+import org.apache.commons.math3.ml.clustering.*;
+import org.apache.commons.math3.ml.distance.DistanceMeasure;
 
 import java.util.*;
 
@@ -37,14 +39,31 @@ public class GMModelCalculation {
 
 
     public List<List<Double>> GMModelCalculator(List<Pair<Double, Triple<Integer, Integer, Integer>>> params) {
+
+        System.out.println("GMModelCalculator new parameters: " + params.size());
+
+        if (params.isEmpty()) {
+            List<List<Double>> answer = new ArrayList<>();
+            List<Double> temp = new ArrayList<>();
+            temp.add(0.0);
+            temp.add(0.01);
+            for (int i = 1; i < 13; i++)
+                temp.add(0.00000001);
+            for (int i = 1; i < 32; i++)
+                temp.add(0.00000001);
+            for (int i = 1; i < 8; i++)
+                temp.add(0.00000001);
+            answer.add(temp);
+            System.out.println("GMModelCalculator Return 0");
+            return answer;
+        }
+
         p = params;
         t = new ArrayList<>();
 
         for (int i = 0; i < 13; i++) countMonth[i] = 0;
         for (int i = 0; i < 32; i++) countDay[i] = 0;
         for (int i = 0; i < 8; i++) countWeek[i] = 0;
-
-//        int cnt = 0;
 
         for (Pair<Double, Triple<Integer, Integer, Integer>> param : params) {
             countMonth[param.getRight().getLeft()]++;
@@ -53,20 +72,7 @@ public class GMModelCalculation {
 
             t.add(param.getLeft());
 
-//            cnt++;
-//            if (cnt % 100 == 0)
-//                System.out.println(param.getLeft());
         }
-
-//        for (int i = 1; i < 13; i++) {
-//            System.out.println("Month " + i + ": " + countMonth[i]);
-//        }
-//        for (int i = 1; i < 32; i++) {
-//            System.out.println("Day " + i + ": " + countDay[i]);
-//        }
-//        for (int i = 1; i < 8; i++) {
-//            System.out.println("Week " + i + ": " + countWeek[i]);
-//        }
 
         List<List<Double>> answer = new ArrayList<>();
         double Score;
@@ -80,8 +86,6 @@ public class GMModelCalculation {
         List<List<Double>> tmpAnswer = new ArrayList<>();
         double tmpScore;
 
-        System.out.println("params.size() = " + params.size());
-
         for (int k = 2; k <= min(20, params.size()); k++) {
             kMeans = kMeansPlus(k);
 
@@ -92,8 +96,6 @@ public class GMModelCalculation {
                 for (int j : kMeans[i]) {
                     tmpList.add(p.get(j));
                 }
-                System.out.println("kMeans[i]size = " + kMeans[i].size());
-
                 tmpAnswer.add(gaussParamsCalculator(tmpList));
             }
 
@@ -104,117 +106,52 @@ public class GMModelCalculation {
                 Score = tmpScore;
             }
 
-            System.out.println("k = " + k + ", tmpScore = " + tmpScore + ", Score = " + Score);
-
         }
-
-        System.out.println("answer = " + answer);
 
         return answer;
     }
 
+    static class IndexedDoublePoint implements Clusterable {
+        private final double[] point;
+        private final int index;
+
+        public IndexedDoublePoint(double value, int index) {
+            this.point = new double[]{value};
+            this.index = index;
+        }
+
+        @Override
+        public double[] getPoint() {
+            return point;
+        }
+
+        public int getIndex() {
+            return index;
+        }
+    }
+
+    @SuppressWarnings("unchecked")
     public List<Integer>[] kMeansPlus(int k) {
-        System.out.println("k = " + k);
 
-        double[] centers = new double[50];
-        int ctops = 0;
-        centers[ctops++] = t.get(0);
-        for (int i = 0; i < 50; i++) centers[i] = 0.0;
-
-        double[] G = new double[t.size() + 10];
-        for (int i = 1; i < k; i++) {
-            System.out.println("k = " + k + ", centers[" + i + "] = " + centers[i - 1]);
-
-            for (int j = 0; j < t.size() + 5; j++) {
-                G[j] = 0;
-            }
-            double Gsum = 0.0;
-
-            int x = 0;
-            for (double tValue : t) {
-                double maxG = 0.0;
-                for (int j = 0; j < ctops; j++) {
-                    if (maxG < Math.pow(tValue - centers[j], 2)) {
-                        maxG = Math.pow(tValue - centers[j], 2);
-                    }
-                }
-
-                Gsum += maxG;
-                G[x] = maxG;
-                x++;
-            }
-
-            G[0] /= Gsum;
-            for (int j = 1; j < t.size(); j++) {
-                G[j] = G[j - 1] + G[j] / Gsum;
-            }
-
-            System.out.println(G[0] + ", " + G[1] + ", " + G[2]);
-
-            double random = Math.random();
-            for (int j = 0; j < t.size(); j++) {
-                if (G[j] > random) {
-                    centers[ctops++] = t.get(j);
-                    break;
-                }
-            }
-//            System.out.println("k = " + k + ", random = " + random + ", centers[" + (ctops - 1) + "] = " + centers[ctops - 1]);
+        List<IndexedDoublePoint> points = new ArrayList<>();
+        for (int i = 0; i < t.size(); i++) {
+            points.add(new IndexedDoublePoint(t.get(i), i));
         }
 
-        int[] count = new int[50];
-        double[] g = new double[50];
-        while (true) {
-            boolean changed = false;
-
-            for (int i = 0; i < k; i++) {
-                count[i] = 0;
-                g[i] = 0.0;
-            }
-
-            for (double i : t) {
-                int minG = 0;
-                for (int j = 1; j < k; j++) {
-                    if (Math.abs(i - centers[minG]) > Math.abs(i - centers[j])) {
-                        minG = j;
-                    }
-                }
-
-                count[minG]++;
-                g[minG] += i;
-            }
-
-            for (int i = 0; i < k; i++) {
-                if (abs(centers[i] - g[i] / count[i]) > 0.0000001) {
-                    changed = true;
-                    centers[i] = g[i] / count[i];
-                }
-            }
-
-            if (!changed) {
-                break;
-            }
-
-//            System.out.println("changed.");
-        }
-
-//        System.out.println("k = " + k + ", g = " + Arrays.toString(g));
+        KMeansPlusPlusClusterer<IndexedDoublePoint> clusterer = new KMeansPlusPlusClusterer<>(k, 50);
+        List<CentroidCluster<IndexedDoublePoint>> clusters = clusterer.cluster(points);
 
         List<Integer>[] re = new List[50];
 
         for (int i = 0; i < k; i++)
             re[i] = new ArrayList<>();
 
-        for (int x = 0; x < t.size(); x++) {
-            double i = t.get(x);
-
-            int minG = 0;
-            for (int j = 1; j < k; j++) {
-                if (Math.abs(i - centers[minG]) > Math.abs(i - centers[j])) {
-                    minG = j;
-                }
+        int clusterId = 0;
+        for (Cluster<IndexedDoublePoint> cluster : clusters) {
+            for (IndexedDoublePoint p : cluster.getPoints()) {
+                re[clusterId].add(p.getIndex());
             }
-
-            re[minG].add(x);
+            clusterId++;
         }
 
         return re;
@@ -253,10 +190,6 @@ public class GMModelCalculation {
 
     public List<Double> gaussParamsCalculator(List<Pair<Double, Triple<Integer, Integer, Integer>>> params) {
 
-//        if (params.size() < 10) {
-//            System.out.println("ERROR!!!!!! " + params.size() + " params is too short");
-//        }
-
         int[] countMonth1 = new int[13];
         int[] countDay1 = new int[32];
         int[] countWeek1 = new int[8];
@@ -280,40 +213,87 @@ public class GMModelCalculation {
             variance += Math.pow(pair.getLeft() - mean, 2);
         }
         variance /= params.size();
+        variance = Math.sqrt(variance);
 
-        variance = max(variance, 0.001);
+        if (variance < 1e-8) {
+            variance = 1.0 / params.size();
+        }
 
         List<Double> re = new ArrayList<>();
         re.add(mean);
         re.add(variance);
 
+        double[] tmpansMonth = new double[13];
+        double[] tmpansDay = new double[32];
+        double[] tmpansWeek = new double[8];
+
         double tmp1 = 0.0, tmp2 = 0.0;
         for (int i = 1; i < 13; i++) {
             if (countMonth[i] != 0) {
-                re.add(1.0 * countMonth1[i] / countMonth[i]);
-                tmp1 += 1.0 * countMonth1[i] / countMonth[i];
+                tmpansMonth[i] = (1.0 * (countMonth1[i]) / (countMonth[i]));
+                tmp1 += 1.0 * (countMonth1[i]) / (countMonth[i]);
             } else {
-                re.add(1.0);
-                tmp1 += 1.0;
+                tmpansMonth[i] = (0.0000001);
             }
         }
         tmp1 /= 12.0;
+        double tmp1_ = tmp1;
+
         for (int i = 1; i < 32; i++) {
             if (countDay[i] != 0) {
-                re.add(1.0 * countDay1[i] / countDay[i] - tmp1);
-                tmp2 += 1.0 * countDay1[i] / countDay[i] - tmp1;
+                tmp1 = min(tmp1, 1.0 * countDay1[i] / countDay[i]);
+            } else
+                tmp1 = 0.0;
+        }
+        for (int i = 1; i < 13; i++) {
+            tmpansMonth[i] = max(0.0000001, tmpansMonth[i] - (tmp1_ - tmp1));
+        }
+        for (int i = 1; i < 32; i++) {
+            if (countDay[i] != 0) {
+                tmpansDay[i] = (Math.max(1.0 * (countDay1[i]) / (countDay[i]) - tmp1, 0.0000001));
+                tmp2 += Math.max(1.0 * (countDay1[i]) / (countDay[i]) - tmp1, 0.0000001);
             } else {
-                re.add(1.0 - tmp1);
-                tmp2 += 1.0 - tmp1;
+                tmpansDay[i] = (0.0000001);
             }
         }
         tmp2 /= 31.0;
+
+        tmp1_ = tmp1;
+        double tmp2_ = tmp2;
         for (int i = 1; i < 8; i++) {
             if (countWeek[i] != 0) {
-                re.add(1.0 * countWeek1[i] / countWeek[i] - tmp1 - tmp2);
+                tmp1 = min(tmp1, 1.0 * countWeek1[i] / countWeek[i]);
+            } else
+                tmp1 = 0.0;
+        }
+        for (int i = 1; i < 8; i++) {
+            if (countWeek[i] != 0) {
+                tmp2 = min(tmp2, 1.0 * countWeek1[i] / countWeek[i] - tmp1);
+            } else
+                tmp2 = 0.0;
+        }
+        for (int i = 1; i < 13; i++) {
+            tmpansMonth[i] = max(0.0000001, tmpansMonth[i] - (tmp1_ - tmp1));
+        }
+        for (int i = 1; i < 32; i++) {
+            tmpansDay[i] = max(0.0000001, tmpansDay[i] - (tmp2_ - tmp2));
+        }
+        for (int i = 1; i < 8; i++) {
+            if (countWeek[i] != 0) {
+                tmpansWeek[i] = (Math.max(1.0 * (countWeek1[i]) / (countWeek[i]) - tmp1 - tmp2, 0.0000001));
             } else {
-                re.add(1.0 - tmp1 - tmp2);
+                tmpansWeek[i] = (0.0000001);
             }
+        }
+
+        for (int i = 1; i < 13; i++) {
+            re.add(tmpansMonth[i]);
+        }
+        for (int i = 1; i < 32; i++) {
+            re.add(tmpansDay[i]);
+        }
+        for (int i = 1; i < 8; i++) {
+            re.add(tmpansWeek[i]);
         }
 
         return re;
