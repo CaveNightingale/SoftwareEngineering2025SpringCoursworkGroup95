@@ -14,6 +14,7 @@ import io.github.software.coursework.util.XorShift128;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
+import org.checkerframework.framework.qual.IgnoreInWholeProgramInference;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -33,7 +34,6 @@ public final class PredictModel implements Model {
     private static final int montLower = (int) (0.05 * MONT_COUNT);
     private static final int montUpper = (int) (0.95 * MONT_COUNT);
 
-    public GaussMixtureModel gaussMixtureModel;
     public EntityPrediction entityPrediction1;
     public EntityPrediction entityPrediction2;
     public Map<String, double[][]> gMModelBudgetParameters;
@@ -41,9 +41,6 @@ public final class PredictModel implements Model {
     private final AsyncStorage storage;
     public int changedFlag;
     public TagPrediction tagPrediction;
-    private int lockr, lockw;
-    private int lockR, lockW;
-    private int first_lock;
 
     private record Parameters(Map<String, double[][]> parameters) implements Item {
         public static Parameters deserialize(Document.Reader reader) throws IOException {
@@ -94,10 +91,7 @@ public final class PredictModel implements Model {
     }
 
     public PredictModel(AsyncStorage storage) {
-        first_lock = 1;
-
         changedFlag = 0;
-        gaussMixtureModel = new GaussMixtureModel();
         entityPrediction1 = new EntityPrediction("Categories1");
         entityPrediction1.loadNGram();
         entityPrediction2 = new EntityPrediction("Categories2");
@@ -110,10 +104,7 @@ public final class PredictModel implements Model {
     }
 
     public PredictModel(Map<String, double[][]> gMModelBudgetParameters, Map<String, double[][]> gMModelSaveParameters, AsyncStorage storage) {
-        first_lock = 1;
-
         changedFlag = 0;
-        gaussMixtureModel = new GaussMixtureModel();
         entityPrediction1 = new EntityPrediction("Categories1");
         entityPrediction1.loadNGram();
         entityPrediction2 = new EntityPrediction("Categories2");
@@ -143,18 +134,14 @@ public final class PredictModel implements Model {
     ///  not done yet
     @Override
     public void loadParameters(AsyncStorage.ModelDirectory reader) throws IOException {
-
         loadTransactionsAndTrain();
-
     }
 
     public void loadTransactionsAndTrain() {
-        while (lockr != 0 || lockw != 0) ;
-        lockr++;
-        lockw++;
-
         gMModelBudgetParameters.clear();
         gMModelSaveParameters.clear();
+
+        CompletableFuture<Void> loaded = new CompletableFuture<>();
 
         storage.transaction(table -> {
             try {
@@ -209,16 +196,19 @@ public final class PredictModel implements Model {
                                     .map(x -> x.stream().mapToDouble(Double::doubleValue).toArray())
                                     .toArray(double[][]::new)
                     );
+                    loaded.complete(null);
                 }
 
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
         });
-        lockr--;
-        lockw--;
 
-        first_lock = 0;
+        try {
+            loaded.get();
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
@@ -228,27 +218,31 @@ public final class PredictModel implements Model {
 
     @Override
     public CompletableFuture<Void> trainOnUpdate(Update<Entity> entityUpdate, Update<Transaction> transactionUpdate) {
-        if (!transactionUpdate.oldItems().isEmpty() && !transactionUpdate.newItems().isEmpty()) {
-            changedFlag++;
-            if (changedFlag == 2) {
-                loadTransactionsAndTrain();
-                changedFlag = 0;
+        CompletableFuture<Void> future = new CompletableFuture<>();
+        storage.model(entity -> {
+            if (!transactionUpdate.oldItems().isEmpty() && !transactionUpdate.newItems().isEmpty()) {
+                changedFlag++;
+                if (changedFlag == 2) {
+                    loadTransactionsAndTrain();
+                    changedFlag = 0;
+                }
             }
-        }
 
-        for (Map.Entry<Reference<Entity>, Entity> entry : entityUpdate.newItems().entrySet()) {
-            String name = entry.getValue().name();
-            String cate2 = entry.getValue().type().toString();
+            for (Map.Entry<Reference<Entity>, Entity> entry : entityUpdate.newItems().entrySet()) {
+                String name = entry.getValue().name();
+                String cate2 = entry.getValue().type().toString();
 
-            entityPrediction2.setCategory(name, cate2);
-        }
-        return CompletableFuture.completedFuture(null);
+                entityPrediction2.setCategory(name, cate2);
+            }
+            future.complete(null);
+        });
+        return future;
     }
 
     public ImmutablePair<ImmutableDoubleArray, Pair<ImmutableDoubleArray, ImmutableDoubleArray>>
                     predictBudgetUsageAsync(long reference, ImmutableLongArray time) {
-        while (first_lock == 1) ;
 
+        GaussMixtureModel gaussMixtureModel = new GaussMixtureModel();
         double[] budgetMean = new double[time.length()];
         double[] budgetConfidenceLower = new double[time.length()];
         double[] budgetConfidenceUpper = new double[time.length()];
@@ -258,16 +252,10 @@ public final class PredictModel implements Model {
 
         XorShift128 random = new XorShift128();
 
-        while (lockw != 0) ;
-        lockr++;
-
         long i = reference;
         for (int j = 0; j < time.length(); ) {
             Day curDay = Day.of(i);
 
-            while (lockR != 0 || lockW != 0) ;
-            lockR++;
-            lockW++;
             for (double[][] gm : gMModelBudgetParameters.values()) {
 
                 gaussMixtureModel.set(gm, curDay.m, curDay.d, curDay.w);
@@ -278,8 +266,6 @@ public final class PredictModel implements Model {
                 }
 
             }
-            lockR--;
-            lockW--;
 
             if (i >= time.get(j)) {
                 budgetMean[j] = mean;
@@ -298,8 +284,6 @@ public final class PredictModel implements Model {
             i += 24 * 60 * 60 * 1000L;
         }
 
-        lockr--;
-
         return ImmutablePair.of(
                         ImmutableDoubleArray.copyOf(budgetMean),
                         ImmutablePair.of(
@@ -312,13 +296,14 @@ public final class PredictModel implements Model {
     @Override
     public CompletableFuture<ImmutablePair<ImmutableDoubleArray, Pair<ImmutableDoubleArray, ImmutableDoubleArray>>>
                     predictBudgetUsage(long reference, ImmutableLongArray time) {
-        return CompletableFuture.supplyAsync(() -> predictBudgetUsageAsync(reference, time));
+        CompletableFuture<ImmutablePair<ImmutableDoubleArray, Pair<ImmutableDoubleArray, ImmutableDoubleArray>>> future = new CompletableFuture<>();
+        storage.model(ignored -> future.complete(predictBudgetUsageAsync(reference, time)));
+        return future;
     }
 
     public ImmutablePair<ImmutableDoubleArray, Pair<ImmutableDoubleArray, ImmutableDoubleArray>>
                     predictSavedAmountAsync(long reference, ImmutableLongArray time) {
-        while (first_lock == 1) ;
-
+        GaussMixtureModel gaussMixtureModel = new GaussMixtureModel();
         double[] savingMean = new double[time.length()];
         double[] savingConfidenceLower = new double[time.length()];
         double[] savingConfidenceUpper = new double[time.length()];
@@ -328,15 +313,8 @@ public final class PredictModel implements Model {
 
         XorShift128 random1 = new XorShift128();
 
-        while (lockw != 0) ;
-        lockr++;
-
         for (long i = reference, j = 0; j < time.length(); i += 24 * 60 * 60 * 1000L) {
             Day curDay = Day.of(i);
-
-            while (lockR != 0 || lockW != 0) ;
-            lockR++;
-            lockW++;
 
             for (double[][] gm : gMModelSaveParameters.values()) {
 
@@ -359,9 +337,6 @@ public final class PredictModel implements Model {
                 }
 
             }
-            lockR--;
-            lockW--;
-
             if (i >= time.get((int)j)) {
                 savingMean[(int)j] = mean1;
                 savingConfidenceLower[(int)j] = nth(montSum2, montLower);
@@ -370,8 +345,6 @@ public final class PredictModel implements Model {
             }
 
         }
-
-        lockr--;
 
         return ImmutablePair.of(
                         ImmutableDoubleArray.copyOf(savingMean),
@@ -385,7 +358,9 @@ public final class PredictModel implements Model {
     @Override
     public CompletableFuture<ImmutablePair<ImmutableDoubleArray, Pair<ImmutableDoubleArray, ImmutableDoubleArray>>>
                     predictSavedAmount(long reference, ImmutableLongArray time) {
-        return CompletableFuture.supplyAsync(() -> predictSavedAmountAsync(reference, time));
+        CompletableFuture<ImmutablePair<ImmutableDoubleArray, Pair<ImmutableDoubleArray, ImmutableDoubleArray>>> future = new CompletableFuture<>();
+        storage.model(ignored -> future.complete(predictSavedAmountAsync(reference, time)));
+        return future;
     }
 
     public ImmutablePair<ImmutableIntArray, Bitmask.View2D>
@@ -441,9 +416,7 @@ public final class PredictModel implements Model {
         return CompletableFuture.supplyAsync(() -> {
             try {
                 return predictCategoriesAndTagsAsync(transactions, categories, tags);
-            } catch (ExecutionException e) {
-                throw new RuntimeException(e);
-            } catch (InterruptedException e) {
+            } catch (ExecutionException | InterruptedException e) {
                 throw new RuntimeException(e);
             }
         });
@@ -473,11 +446,15 @@ public final class PredictModel implements Model {
 
     @Override
     public CompletableFuture<ImmutableIntArray> predictEntityTypes(ImmutableList<Entity> entities) {
-        return CompletableFuture.supplyAsync(() -> predictEntityTypesAsync(entities));
+        CompletableFuture<ImmutableIntArray> future = new CompletableFuture<>();
+        storage.model(ignored -> future.complete(predictEntityTypesAsync(entities)));
+        return future;
     }
 
     public ImmutablePair<ImmutablePair<Long, ImmutableLongArray>, ImmutablePair<Long, ImmutableLongArray>>
                     predictGoalsAsync(ImmutableList<String> categories, long startTime, long endTime) {
+
+        GaussMixtureModel gaussMixtureModel = new GaussMixtureModel();
         long[] budget = new long[categories.size()];
         long[] saving = new long[categories.size()];
         long overallBudget = 0, overallSaving = 0;
@@ -514,13 +491,19 @@ public final class PredictModel implements Model {
     @Override
     public CompletableFuture<ImmutablePair<ImmutablePair<Long, ImmutableLongArray>, ImmutablePair<Long, ImmutableLongArray>>>
                     predictGoals(ImmutableList<String> categories, long startTime, long endTime) {
-        return CompletableFuture.supplyAsync(() -> predictGoalsAsync(categories, startTime, endTime));
+        CompletableFuture<ImmutablePair<ImmutablePair<Long, ImmutableLongArray>, ImmutablePair<Long, ImmutableLongArray>>> future = new CompletableFuture<>();
+        storage.model(ignored -> future.complete(predictGoalsAsync(categories, startTime, endTime)));
+        return future;
     }
 
-    public static double nth(double[] arr, int n) {
+    private static double nth(double[] arr, int n) {
         return nth(arr, n, 0, arr.length - 1);
     }
 
+    /*
+     * Linear selection algorithm.
+     * It selects the midpoint as the principal component because arr is roughly ordered
+     */
     private static double nth(double[] arr, int n, int l, int r) {
         while (true) {
             int pivot = (l + r) >> 1;
