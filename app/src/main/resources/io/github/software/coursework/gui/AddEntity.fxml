@@ -1,15 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import io.github.software.coursework.gui.AddEntity?>
+<?import io.github.software.coursework.gui.AddEntityController?>
 <?import javafx.collections.FXCollections?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <?import java.lang.*?>
 <?import org.controlsfx.control.SearchableComboBox?>
-<fx:root
+<VBox
         xmlns="http://javafx.com/javafx"
         xmlns:fx="http://javafx.com/fxml"
-        type="io.github.software.coursework.gui.AddEntity"
+        fx:controller="io.github.software.coursework.gui.AddEntityController"
+        fx:id="root"
         styleClass="add-entity"
 >
     <HBox styleClass="add-entity-row">
@@ -59,4 +60,4 @@
         <Region styleClass="space"/>
         <Button text="Add" onAction="#handleMouseClick" fx:id="submit"/>
     </HBox>
-</fx:root>
+</VBox>
