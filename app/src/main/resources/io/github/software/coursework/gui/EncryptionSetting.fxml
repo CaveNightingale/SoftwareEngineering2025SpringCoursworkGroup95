@@ -1,11 +1,11 @@
-<?import io.github.software.coursework.gui.EncryptionSetting?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <?import org.controlsfx.control.ToggleSwitch?>
-<fx:root
+<VBox
         xmlns="http://javafx.com/javafx"
         xmlns:fx="http://javafx.com/fxml"
-        type="io.github.software.coursework.gui.EncryptionSetting"
+        fx:controller="io.github.software.coursework.gui.EncryptionSettingController"
+        fx:id="root"
 >
     <HBox styleClass="setting-title">
         <Label text="Encryption"/>
@@ -122,4 +122,4 @@
             </HBox>
         </VBox>
     </VBox>
-</fx:root>
+</VBox>

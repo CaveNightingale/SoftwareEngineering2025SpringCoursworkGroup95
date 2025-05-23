@@ -1,5 +1,7 @@
 package io.github.software.coursework;
 
+import io.github.software.coursework.algo.EntityClassification;
+import io.github.software.coursework.algo.EntityPrediction;
 import org.apache.commons.lang3.tuple.Triple;
 import org.junit.jupiter.api.Test;
 
@@ -8,12 +10,10 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 public class EntityClassificationTest {
 
@@ -35,7 +35,7 @@ public class EntityClassificationTest {
         Map<String, String> nGramsClassification = new HashMap<>(); /// nGrams 对应的类型。
         Map<String, Double> nGramsScore = new HashMap<>(); /// nGrams 对应的概率。
 
-        URL urlDataset = EntityClassification.class.getResource("Categories1");
+        URL urlDataset = EntityClassification.class.getResource("/io/github/software/coursework/Categories1");
 
         File folder = Paths.get(urlDataset.toURI()).toFile();
 

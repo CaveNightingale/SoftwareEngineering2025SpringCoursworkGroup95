@@ -1,10 +1,11 @@
 package io.github.software.coursework;
 
-import io.github.software.coursework.ProbabilityModel.GMModelCalculation;
+import io.github.software.coursework.algo.probmodel.GMModelCalculation;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Triple;
 import org.apache.commons.lang3.tuple.ImmutableTriple;
+import org.junit.jupiter.api.Test;
 
 import java.util.*;
 
@@ -26,7 +27,8 @@ public class GMModelCalculationTest {
         }
     }
 
-    public static void main(String[] args) {
+    @Test
+    public void gMModelCalculationTest() {
         Random rand = new Random();
         int componentCount = rand.nextInt(21) + 10;  // 10~30
         List<GMMComponent> components = new ArrayList<>();
@@ -112,7 +114,7 @@ public class GMModelCalculationTest {
         System.out.println("Fitted component count: " + modelOutput.size());
         System.out.println("Fitted Model LicklyHood: " + (bicScore - Math.log(samples) * (modelOutput.size() * 3 - 1)));
 
-        Double AnsBICScore = g.BICCalculator(answerGMModel);
+        double AnsBICScore = g.BICCalculator(answerGMModel);
         System.out.println("Ans Model LicklyHood: " + (AnsBICScore - Math.log(samples) * (answerGMModel.size() * 3 - 1)));
     }
 

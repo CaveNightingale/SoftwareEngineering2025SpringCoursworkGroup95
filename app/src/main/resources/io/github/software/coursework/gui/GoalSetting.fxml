@@ -1,12 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import io.github.software.coursework.gui.GoalSetting?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<fx:root
+<VBox
         xmlns="http://javafx.com/javafx"
         xmlns:fx="http://javafx.com/fxml"
-        type="io.github.software.coursework.gui.GoalSetting"
+        fx:controller="io.github.software.coursework.gui.GoalSettingController"
 >
     <HBox styleClass="setting-title">
         <Label text="Goal"/>
@@ -61,4 +60,4 @@
         <Region HBox.hgrow="ALWAYS"/>
         <Button styleClass="setting-field-button" text="Remove Goal" onAction="#handleRemove"/>
     </HBox>
-</fx:root>
+</VBox>
