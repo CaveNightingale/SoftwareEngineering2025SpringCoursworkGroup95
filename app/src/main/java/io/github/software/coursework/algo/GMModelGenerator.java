@@ -34,6 +34,7 @@ public class GMModelGenerator {
         generateComponents();
     }
 
+    @SuppressWarnings("unchecked")
     private void generateComponents() {
         componentCount = rand.nextInt(21) + 10;  // 10~30
         components = new ArrayList<>();

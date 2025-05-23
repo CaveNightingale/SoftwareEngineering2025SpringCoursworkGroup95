@@ -14,7 +14,6 @@ import io.github.software.coursework.util.XorShift128;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
-import org.checkerframework.framework.qual.IgnoreInWholeProgramInference;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -24,9 +23,6 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
-
-import static java.lang.Math.min;
-import static org.apache.commons.lang3.math.NumberUtils.max;
 
 public final class PredictModel implements Model {
 
@@ -364,7 +360,7 @@ public final class PredictModel implements Model {
     }
 
     public ImmutablePair<ImmutableIntArray, Bitmask.View2D>
-                    predictCategoriesAndTagsAsync(ImmutableList<Transaction> transactions, ImmutableList<String> categories, ImmutableList<String> tags) throws ExecutionException, InterruptedException {
+                    predictCategoriesAndTagsAsync(ImmutableList<Transaction> transactions, ImmutableList<String> categories, ImmutableList<String> tags) {
         CompletableFuture<ImmutablePair<ImmutableIntArray, Bitmask.View2D>> future = new CompletableFuture<>();
 
         storage.entity(entity -> {
@@ -407,19 +403,19 @@ public final class PredictModel implements Model {
             }
         });
 
-        return future.get();
+        try {
+            return future.get();
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
     public CompletableFuture<ImmutablePair<ImmutableIntArray, Bitmask.View2D>>
                     predictCategoriesAndTags(ImmutableList<Transaction> transactions, ImmutableList<String> categories, ImmutableList<String> tags) {
-        return CompletableFuture.supplyAsync(() -> {
-            try {
-                return predictCategoriesAndTagsAsync(transactions, categories, tags);
-            } catch (ExecutionException | InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-        });
+        CompletableFuture<ImmutablePair<ImmutableIntArray, Bitmask.View2D>> future = new CompletableFuture<>();
+        storage.model(ignored -> future.complete(predictCategoriesAndTagsAsync(transactions, categories, tags)));
+        return future;
     }
 
     public ImmutableIntArray predictEntityTypesAsync(ImmutableList<Entity> entities) {
