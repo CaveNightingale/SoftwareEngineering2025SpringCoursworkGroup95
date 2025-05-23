@@ -129,6 +129,15 @@ public final class MainPageController {
     @FXML
     private Label festivalReminderLabel;
 
+    @FXML
+    private Tab helpTab;
+
+    @FXML
+    private Node help;
+
+    @FXML
+    private HelpController helpController;
+
     private Tab addTransactionTab;
     private AddTransactionController addTransaction;
 
@@ -258,6 +267,7 @@ public final class MainPageController {
 
         tabPane.setTabDragPolicy(TabPane.TabDragPolicy.REORDER);
         tabPane.getTabs().remove(settingsTab);
+        tabPane.getTabs().remove(helpTab);
 
         // 设置存储设置
         model.storageSettingProperty().addListener((observable, oldValue, newValue) -> {
@@ -615,6 +625,14 @@ public final class MainPageController {
     }
 
     @FXML
+    private void handleHelp() {
+        if (!tabPane.getTabs().contains(helpTab)) {
+            tabPane.getTabs().add(helpTab);
+        }
+        tabPane.getSelectionModel().select(helpTab);
+    }
+
+    @FXML
     private void handleFeedback() {
         MailLauncher.openMailClient(
                 "m.haleem@qmul.ac.uk",
@@ -671,4 +689,5 @@ public final class MainPageController {
     public MainPageModel getModel() {
         return model;
     }
+
 }
