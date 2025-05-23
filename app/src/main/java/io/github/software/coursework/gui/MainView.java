@@ -1009,7 +1009,7 @@ public class MainView extends AnchorPane {
         }
     }
 
-    private Optional<Map.Entry<String, Long>> getClosestFestival() {
+    static final Optional<Map.Entry<String, Long>> getClosestFestival() {
         Map<String, MonthDay> festivals = Map.ofEntries(
                 Map.entry("Chinese New Year", MonthDay.of(2, 10)),
                 Map.entry("Lantern Festival", MonthDay.of(2, 24)),
