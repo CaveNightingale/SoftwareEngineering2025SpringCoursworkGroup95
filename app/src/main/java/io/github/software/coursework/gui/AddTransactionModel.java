@@ -218,6 +218,9 @@ public final class AddTransactionModel {
     }
 
     public void setCategoryPresent(boolean categoryPresent) {
+        if (suppressUpdate) {
+            return;
+        }
         this.categoryPresent.set(categoryPresent);
     }
 
@@ -232,6 +235,9 @@ public final class AddTransactionModel {
     }
 
     public void setTagPresent(boolean tagPresent) {
+        if (suppressUpdate) {
+            return;
+        }
         this.tagPresent.set(tagPresent);
     }
 
@@ -327,7 +333,7 @@ public final class AddTransactionModel {
     }
 
     private boolean validatePredictor() {
-        return !getTitle().isEmpty() && !getCategory().isEmpty() && getEntity() != null &&
+        return !getTitle().isEmpty() && getEntity() != null &&
                 parseDate() != null && getAmount().matches("[+\\-]?\\d+\\.?\\d{0,2}");
     }
 
@@ -345,16 +351,15 @@ public final class AddTransactionModel {
             );
             task.thenAccept(result -> Platform.runLater(() -> {
                 if (predictionTask == task) {
+                    suppressUpdate = true;
                     if (!isCategoryPresent()) {
-                        suppressUpdate = true;
                         setCategory(getAvailableCategories().get(result.getLeft().get(0)));
-                        suppressUpdate = false;
                     }
                     if (!isTagPresent()) {
                         Bitmask.View2D mask = result.getRight();
                         getTags().clear();
                         ArrayList<String> newTags = new ArrayList<>();
-                        ObservableList<String> availableTags = getTags();
+                        ObservableList<String> availableTags = getAvailableTags();
                         for (int i = 0; i < availableTags.size(); i++) {
                             if (mask.get(i, 0)) {
                                 newTags.add(availableTags.get(i));
@@ -362,6 +367,7 @@ public final class AddTransactionModel {
                         }
                         getTags().addAll(newTags);
                     }
+                    suppressUpdate = false;
                 }
             }));
         }

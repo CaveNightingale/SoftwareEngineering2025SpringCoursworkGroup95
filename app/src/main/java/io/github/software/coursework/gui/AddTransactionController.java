@@ -93,7 +93,9 @@ public final class AddTransactionController {
     private void bindErrorProperty(Node node, StringProperty error) {
         error.addListener((observable, oldValue, newValue) -> {
             if (!newValue.isBlank()) {
-                node.getStyleClass().add("error");
+                if (!node.getStyleClass().contains("error")) {
+                    node.getStyleClass().add("error");
+                }
             } else {
                 node.getStyleClass().remove("error");
             }
@@ -105,6 +107,7 @@ public final class AddTransactionController {
         bindErrorProperty(title, titleError.textProperty());
         bindErrorProperty(time, timeError.textProperty());
         bindErrorProperty(amount, amountError.textProperty());
+        bindErrorProperty(entity, entityError.textProperty());
 
         title.textProperty().bindBidirectional(model.titleProperty());
         time.getEditor().textProperty().bindBidirectional(model.timeProperty());
@@ -153,14 +156,21 @@ public final class AddTransactionController {
                 updateTagItems();
             }
         });
+        model.getTags().addListener(tagItemsListener);
 
         note.textProperty().addListener((observable, oldValue, newValue) -> {
             updateMarkdownPreview(newValue);
         });
 
         amount.textProperty().addListener((observable, oldValue, newValue) -> model.validateAmount());
-        time.setOnAction(event -> model.validateTime());
-        time.getEditor().setOnAction(event -> model.validateTime());
+        time.setOnAction(event -> {
+            model.validateTime();
+            model.runPrediction();
+        });
+        time.getEditor().setOnAction(event -> {
+            model.validateTime();
+            model.runPrediction();
+        });
         title.textProperty().addListener((observable, oldValue, newValue) -> model.validateTitle());
         entity.valueProperty().addListener((observable, oldValue, newValue) -> model.validateEntity());
 
