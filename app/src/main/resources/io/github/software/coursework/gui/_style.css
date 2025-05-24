@@ -9,8 +9,8 @@
 }
 
 .entity-item {
-    -fx-pref-width: 20em;
-    -fx-max-width: 20em;
+    -fx-pref-width: 30em;
+    -fx-max-width: 30em;
 }
 
 .edit-item {
@@ -76,9 +76,9 @@
 
 .add-transaction-note {
     -fx-pref-width: 30em;
-    -fx-pref-height: 16em;
-    -fx-min-height: 16em;
-    -fx-max-height: 16em;
+    -fx-pref-height: 14em;
+    -fx-min-height: 14em;
+    -fx-max-height: 14em;
 }
 
 .add-transaction-message, .add-entity-message {
