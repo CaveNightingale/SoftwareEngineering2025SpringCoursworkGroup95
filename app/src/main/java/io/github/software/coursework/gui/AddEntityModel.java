@@ -161,6 +161,9 @@ public final class AddEntityModel {
     }
 
     public void setTypePresent(boolean typePresent) {
+        if (suppressUpdate) {
+            return;
+        }
         this.typePresent.set(typePresent);
     }
 
