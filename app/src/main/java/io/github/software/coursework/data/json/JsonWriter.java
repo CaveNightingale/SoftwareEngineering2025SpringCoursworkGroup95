@@ -1,6 +1,7 @@
 package io.github.software.coursework.data.json;
 
 import com.fasterxml.jackson.core.JsonGenerator;
+import com.google.common.annotations.VisibleForTesting;
 import io.github.software.coursework.data.Document;
 import io.github.software.coursework.data.Reference;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -11,6 +12,7 @@ import java.util.ArrayList;
 import java.util.logging.Logger;
 import java.util.stream.IntStream;
 
+@VisibleForTesting
 @ParametersAreNonnullByDefault
 public final class JsonWriter implements Document.Writer {
     private record Entry(String key, @Nullable Object value) {}

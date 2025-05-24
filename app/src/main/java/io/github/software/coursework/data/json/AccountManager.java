@@ -2,6 +2,7 @@ package io.github.software.coursework.data.json;
 
 import com.fasterxml.jackson.core.JsonEncoding;
 import com.fasterxml.jackson.core.JsonFactory;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import io.github.software.coursework.data.Deserialize;
 import io.github.software.coursework.data.Document;
@@ -15,8 +16,20 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.logging.Logger;
 
+/**
+ * This class manages the accounts of the user.
+ * An account manager manages the accounts of a user.
+ * A user will see same list regardless of which working directory they are in.
+ * Only access this class in Decryption related GUI classes.
+ */
 @ParametersAreNonnullByDefault
 public final class AccountManager {
+    /**
+     * This class represents an account.
+     * @param name the name of the account, displayed in the decryption GUI
+     * @param path the path of the account, used to store the files
+     * @param key the path of the key file, used to decrypt the files
+     */
     public record Account(String name, String path, String key) implements Item, Comparable<Account> {
 
         @Override
@@ -28,6 +41,9 @@ public final class AccountManager {
             writer.writeEnd();
         }
 
+        /**
+         * @see Deserialize#deserialize(Document.Reader)
+         */
         public static Account deserialize(Document.Reader reader) throws IOException {
             long schema = reader.readInteger("schema");
             if (schema != 1) {
@@ -68,9 +84,10 @@ public final class AccountManager {
         }
     }
 
-    private AccountManager() {}
+    private static final String accountList = ".config/BUPT-QMUL_2025_Spring_Software_Engineering_Coursework_Group_95_Submission/accounts.json";
 
-    public static final String ACCOUNTS_LIST = ".config/BUPT-QMUL_2025_Spring_Software_Engineering_Coursework_Group_95_Submission/accounts.json";
+    @VisibleForTesting
+    public AccountManager() {}
 
     private Account defaultAccount = null;
     private static final File home = new File(System.getProperty("user.home"));
@@ -78,16 +95,32 @@ public final class AccountManager {
     private static final Logger logger = Logger.getLogger("AccountManager");
 
     private final ArrayList<Account> accounts = new ArrayList<>();
-    private final File accountsFile = new File(home, ACCOUNTS_LIST);
+    private static File accountsFile = new File(home, accountList);
 
+    @VisibleForTesting
+    public static void setAccountList(File accountList) {
+        AccountManager.accountsFile = accountList;
+    }
+
+    /**
+     * Get the default account.
+     * @return the default account
+     */
     public Account getDefaultAccount() {
         return defaultAccount;
     }
 
+    /**
+     * Set the default account.
+     * @param defaultAccount the default account
+     */
     public void setDefaultAccount(@Nullable Account defaultAccount) {
         this.defaultAccount = defaultAccount;
     }
 
+    /**
+     * Loads the accounts from the accounts.json file.
+     */
     public void loadAccounts() {
         accounts.clear();
         if (accountsFile.exists()) {
@@ -109,6 +142,9 @@ public final class AccountManager {
         }
     }
 
+    /**
+     * Save the list of accounts to the accounts.json file.
+     */
     public void saveAccounts() {
         accountsFile.getParentFile().mkdirs();
         try (Document.Writer writer = JsonWriter.createWriter(jsonFactory.createGenerator(accountsFile, JsonEncoding.UTF8))) {
@@ -120,14 +156,30 @@ public final class AccountManager {
         }
     }
 
+    /**
+     * Add an account to the list of accounts.
+     * Notice this will not flush the changes to the file.
+     * @param account the account to add
+     */
     public void addAccount(Account account) {
         accounts.add(account);
     }
 
+    /**
+     * Remove an account from the list of accounts.
+     * Notice this will not flush the changes to the file.
+     * @param account the account to remove
+     */
     public void removeAccount(Account account) {
         accounts.remove(account);
     }
 
+    /**
+     * Create a new account.
+     * @param name the name of the account
+     * @param password the password of the account
+     * @return the account created
+     */
     public @Nullable Account makeAccount(String name, String password) {
         File workingDir = accountsFile.getParentFile();
         if (!workingDir.exists()) {
@@ -147,6 +199,14 @@ public final class AccountManager {
         return makeAccount(name, new File(workingDir, pathName + "." + i), new File(workingDir, pathName + "." + i + "/secret.key"), password);
     }
 
+    /**
+     * Create a new account.
+     * @param name the name of the account
+     * @param directory the directory of the account
+     * @param key the key file of the account
+     * @param password the password of the account
+     * @return the account created
+     */
     public @Nullable Account makeAccount(String name, File directory, File key, String password) {
         try {
             directory.mkdirs();
@@ -163,12 +223,20 @@ public final class AccountManager {
         }
     }
 
+    /**
+     * Get the list of accounts.
+     * @return the list of accounts
+     */
     public ImmutableList<Account> getAccounts() {
         return ImmutableList.copyOf(accounts);
     }
 
     private static AccountManager manager;
 
+    /**
+     * Get the singleton instance of the AccountManager.
+     * @return the singleton instance of the AccountManager
+     */
     public static AccountManager getManager() {
         if (manager == null) {
             manager = new AccountManager();

@@ -1,5 +1,7 @@
 package io.github.software.coursework.data.json;
 
+import com.google.common.annotations.VisibleForTesting;
+
 import javax.annotation.ParametersAreNonnullByDefault;
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
@@ -15,6 +17,7 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 
+@VisibleForTesting
 @ParametersAreNonnullByDefault
 public final class EncryptingOutputStream extends OutputStream {
     private final OutputStream backing;

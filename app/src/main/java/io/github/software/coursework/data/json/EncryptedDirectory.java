@@ -1,6 +1,7 @@
 package io.github.software.coursework.data.json;
 
 import com.fasterxml.jackson.core.JsonFactory;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import io.github.software.coursework.data.Deserialize;
@@ -20,6 +21,7 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+@VisibleForTesting
 public final class EncryptedDirectory implements Directory {
     private static final Logger logger = Logger.getLogger("EncryptedDirectory");
     private final Object none = new Object();

@@ -69,6 +69,10 @@ tasks.named('test') {
     useJUnitPlatform()
 }
 
+tasks.javadoc {
+    options.addStringOption('Xdoclint:all,-missing', '-quiet')
+}
+
 tasks.register('bench', JavaExec) {
     group = 'verification'
     description = 'Run the benchmarks and assert reaching the minimum throughput requirements'

@@ -1,5 +1,6 @@
 package io.github.software.coursework.data.json;
 
+import com.google.common.annotations.VisibleForTesting;
 import io.github.software.coursework.data.*;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
@@ -8,8 +9,20 @@ import java.util.ArrayList;
 import java.util.Comparator;
 
 /**
- * A set, stored in chunks, that supports adding, removing, and querying elements.
- * @param <T> The type of the elements in the set.
+ * A chunked, sorted set implementation that manages elements in memory and persists them
+ * to a directory. This structure supports efficient addition, removal, and range-based
+ * queries while dynamically managing chunk sizes based on thresholds.
+ *
+ * <p>This class is intended for internal use in the file-saving module and is not thread-safe.</p>
+ *
+ * <p>Key features:
+ * <ul>
+ *   <li>Elements are stored in chunks, each of which is serialized/deserialized as needed.</li>
+ *   <li>Chunks are automatically split or merged based on configurable thresholds.</li>
+ *   <li>Range queries are optimized using binary search over chunk descriptions.</li>
+ * </ul>
+ *
+ * @param <T> The type of elements stored in the index. Must implement {@code Item}.
  */
 public final class ChunkedIndex<T extends Item> implements AutoCloseable {
     private int splitThreshold = 512;
@@ -37,6 +50,14 @@ public final class ChunkedIndex<T extends Item> implements AutoCloseable {
         return comparator.compare((T) a, (T) b);
     }
 
+    /**
+     * Creates a new chunked index backed by the specified directory.
+     *
+     * @param directory The directory used to store chunk data and metadata.
+     * @param comparator A comparator to maintain the order of elements.
+     * @param deserializationConstructor A function to deserialize elements from storage.
+     * @throws IOException If the directory cannot be accessed or initialized.
+     */
     public ChunkedIndex(Directory directory, Comparator<T> comparator, Deserialize<T> deserializationConstructor) throws IOException {
         this.directory = directory;
         this.comparator = comparator;
@@ -45,15 +66,17 @@ public final class ChunkedIndex<T extends Item> implements AutoCloseable {
         chunkDescriptions = wrapper == null ? new ArrayList<>() : wrapper.chunkDescriptions;
     }
 
+    @VisibleForTesting
     public void setSplitThreshold(int splitThreshold) {
         this.splitThreshold = splitThreshold;
     }
 
+    @VisibleForTesting
     public void setMergeThreshold(int mergeThreshold) {
         this.mergeThreshold = mergeThreshold;
     }
 
-    public int lookForChunk(Object item) {
+    private int lookForChunk(Object item) {
         int left = 0;
         int right = chunkDescriptions.size() - 1;
         while (left < right) {
@@ -67,6 +90,13 @@ public final class ChunkedIndex<T extends Item> implements AutoCloseable {
         return left;
     }
 
+    /**
+     * Adds an element to the index. If the chunk containing the element exceeds the split threshold,
+     * it will be split into two chunks.
+     *
+     * @param item The element to add.
+     * @throws IOException If the underlying directory cannot be accessed or modified.
+     */
     public void addSample(T item) throws IOException {
         if (chunkDescriptions.isEmpty()) {
             Reference<Chunk<T>> reference = new Reference<>();
@@ -135,6 +165,16 @@ public final class ChunkedIndex<T extends Item> implements AutoCloseable {
         }
     }
 
+    /**
+     * Queries the index for elements within the specified range.
+     *
+     * @param min1 The minimum value in the range (inclusive). If {@code null}, the range is unbounded below.
+     * @param max1 The maximum value in the range (exclusive). If {@code null}, the range is unbounded above.
+     * @param skip The number of elements to skip before adding to the result.
+     * @param limit The maximum number of elements to include in the result.
+     * @return A list of elements within the specified range.
+     * @throws IOException If the underlying directory cannot be accessed.
+     */
     public ArrayList<T> querySamples(@Nullable T min1, @Nullable T max1, int skip, int limit) throws IOException {
         Object min = min1 == null ? Sentinel.NEGATIVE_INFINITY : min1;
         Object max = max1 == null ? Sentinel.POSITIVE_INFINITY : max1;

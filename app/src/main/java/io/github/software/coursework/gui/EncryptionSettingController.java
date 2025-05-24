@@ -14,6 +14,9 @@ import javax.annotation.ParametersAreNonnullByDefault;
 import java.io.File;
 import java.io.IOException;
 
+/**
+ * Controller for the encryption setting page.
+ */
 @ParametersAreNonnullByDefault
 public final class EncryptionSettingController {
 
@@ -66,16 +69,25 @@ public final class EncryptionSettingController {
 
     private final EncryptionSettingModel model;
 
+    /**
+     * Get the model of the encryption setting.
+     * @return the model of the encryption setting
+     */
     public EncryptionSettingModel getModel() {
         return model;
     }
 
+    /**
+     * Create a new encryption setting controller.
+     * @param account the account to be used
+     * @param password the password to be used
+     */
     public EncryptionSettingController(AccountManager.Account account, String password) {
         this.model = new EncryptionSettingModel(account, password);
     }
 
     @FXML
-    public void initialize() {
+    private void initialize() {
         this.path.setText(model.getAccount().path());
         this.newPath.setText(model.getAccount().path());
         this.key.setText(model.getAccount().key());

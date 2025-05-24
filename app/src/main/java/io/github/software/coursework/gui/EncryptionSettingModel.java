@@ -21,6 +21,9 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.Objects;
 
+/**
+ * Model for the encryption settings.
+ */
 @ParametersAreNonnullByDefault
 public final class EncryptionSettingModel {
     private AccountManager.Account account;
@@ -29,43 +32,86 @@ public final class EncryptionSettingModel {
     private final ObjectProperty<EventHandler<RequestRestartEvent>> onRequestRestart = new SimpleObjectProperty<>();
     private final ObjectProperty<EventHandler<RequestOpenLogEvent>> onRequestOpenLog = new SimpleObjectProperty<>();
 
+    /**
+     * Constructor for the EncryptionSettingModel.
+     * @param account the account to be used
+     * @param password the password for the account
+     */
     public EncryptionSettingModel(AccountManager.Account account, String password) {
         this.account = account;
         this.password = password;
     }
 
+    /**
+     * Get current account.
+     * @return the current account
+     */
     public AccountManager.Account getAccount() {
         return account;
     }
 
+    /**
+     * Get the password for the account.
+     * @return the password for the account
+     */
     public String getPassword() {
         return password;
     }
 
+    /**
+     * Get the event handler property for request restart.
+     * @return the event handler property for request restart
+     */
     public ObjectProperty<EventHandler<RequestRestartEvent>> onRequestRestartProperty() {
         return onRequestRestart;
     }
 
+    /**
+     * Get the event handler for request restart.
+     * @return the event handler for request restart
+     */
     public EventHandler<RequestRestartEvent> getOnRequestRestart() {
         return onRequestRestartProperty().get();
     }
 
+    /**
+     * Set the event handler for request restart.
+     * @param value the event handler for request restart
+     */
     public void setOnRequestRestart(EventHandler<RequestRestartEvent> value) {
         onRequestRestartProperty().set(value);
     }
 
+    /**
+     * Get the event handler property for request open log.
+     * @return the event handler property for request open log
+     */
     public ObjectProperty<EventHandler<RequestOpenLogEvent>> onRequestOpenLogProperty() {
         return onRequestOpenLog;
     }
 
+    /**
+     * Get the event handler for request open log.
+     * @return the event handler for request open log
+     */
     public EventHandler<RequestOpenLogEvent> getOnRequestOpenLog() {
         return onRequestOpenLogProperty().get();
     }
 
+    /**
+     * Set the event handler for request open log.
+     * @param value the event handler for request open log
+     */
     public void setOnRequestOpenLog(EventHandler<RequestOpenLogEvent> value) {
         onRequestOpenLogProperty().set(value);
     }
 
+    /**
+     * Delete the current account.
+     * @param purgeFiles false if the files should be kept but the account should be removed from the manager,
+     *                   true if the files should be deleted as well
+     * @throws IOException if an I/O error occurs
+     */
     public void deleteAccount(boolean purgeFiles) throws IOException {
         AccountManager.getManager().removeAccount(account);
         AccountManager.getManager().setDefaultAccount(null);
@@ -98,6 +144,10 @@ public final class EncryptionSettingModel {
         }
     }
 
+    /**
+     * Backup the current account.
+     * @throws IOException if an I/O error occurs
+     */
     public void backupAccount() throws IOException {
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(new Date());
@@ -124,6 +174,12 @@ public final class EncryptionSettingModel {
         }
     }
 
+    /**
+     * Export the current account.
+     * @param directory the directory to export to
+     * @param exportKey true if the key should be exported, false otherwise
+     * @throws IOException if an I/O error occurs
+     */
     public void exportAccount(File directory, boolean exportKey) throws IOException {
         for (File child : Objects.requireNonNull(new File(account.path()).listFiles())) {
             if (child.isDirectory() || !child.getName().endsWith(".txt")) {
@@ -136,6 +192,10 @@ public final class EncryptionSettingModel {
         }
     }
 
+    /**
+     * Rename the current account.
+     * @param newName the new name for the account
+     */
     public void renameAccount(String newName) {
         AccountManager manager = AccountManager.getManager();
         AccountManager.Account newAccount = account.withName(newName);
@@ -146,6 +206,13 @@ public final class EncryptionSettingModel {
         account = newAccount;
     }
 
+    /**
+     * Move the current account to a new directory.
+     * @param newPath the new path for the account
+     * @param moveKey true if the key should be moved, false otherwise
+     * @param moveBackup true if the backup files should be moved, false otherwise
+     * @throws IOException if an I/O error occurs
+     */
     public void moveData(String newPath, boolean moveKey, boolean moveBackup) throws IOException {
         Path newDirectory = Path.of(newPath);
         if (!Files.exists(newDirectory)) {
@@ -185,6 +252,12 @@ public final class EncryptionSettingModel {
         manager.saveAccounts();
     }
 
+    /**
+     * Re-encrypt the current account with a new key.
+     * @param newKeyPath the path to the new key
+     * @param newKeyPassword the password for the new key
+     * @throws IOException if an I/O error occurs
+     */
     public void reencrypt(String newKeyPath, String newKeyPassword) throws IOException {
         byte[] newKey;
         if (Files.exists(Path.of(newKeyPath))) {
@@ -207,12 +280,20 @@ public final class EncryptionSettingModel {
         manager.saveAccounts();
     }
 
+    /**
+     * Change the password for the current key. (Not the account)
+     * @param newPassword the new password for the key
+     * @throws IOException if an I/O error occurs
+     */
     public void changePassword(String newPassword) throws IOException {
         Path key = Path.of(account.key());
         byte[] keyBytes = Encryption.readKeyFile(password, Files.readString(key));
         Files.writeString(key, Encryption.writeKeyFile(newPassword, keyBytes));
     }
 
+    /**
+     * Request a restart of the application.
+     */
     public static class RequestRestartEvent extends Event {
         public static final EventType<RequestRestartEvent> REQUEST_RESTART = new EventType<>(Event.ANY, "REQUEST_RESTART");
         public final Runnable actionDuringRestart;
@@ -223,6 +304,9 @@ public final class EncryptionSettingModel {
         }
     }
 
+    /**
+     * Request to open a log file.
+     */
     public static class RequestOpenLogEvent extends Event {
         public static final EventType<RequestOpenLogEvent> REQUEST_OPEN_LOG = new EventType<>(Event.ANY, "REQUEST_OPEN_LOG");
         public final File file;

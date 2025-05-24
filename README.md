@@ -31,4 +31,46 @@ The built artifacts will be in the `app/build` directory. If you want to distrib
 ```
 
 ## Task Assignment
-- [Demo 1 Tasks](https://github.com/CaveNightingale/SoftwareEngineering2025SpringCoursworkGroup95/issues/1)
+
+Our team is composed of 6 members, and divided into 3 sub-teams.
+- **Team 1**: Huabin Yuan, Peidong Jia
+  - Data Storage
+  - ML Model GUI
+  - Code Review
+- **Team 2**: Xingzhou Zeng, Yingjie Huang
+  - ML Model Dataset Preparation
+  - ML Model Algorithm Implementation
+- **Team 3**: Langdeng Tang, Zhongyuan Xu 
+  - Miscellaneous GUI
+  - Importing Data from Bank
+
+Currently, the contribution of each member is as follows:
+
+- **Huabin Yuan**:
+    - Designed and implemented the data storage system to support efficient data management.
+    - Developed data visualization features, providing users with insights into spending trends and categories.
+    - Added auto-completion functionality to form fields to enhance user experience.
+
+- **Peidong Jia**:
+    - Collected and refined user stories to ensure clear and actionable requirements.
+    - Revised and improved parts of the user interface for better usability and aesthetics.
+    - Authored the user manual and conducted comprehensive application testing.
+
+- **Yingjie Huang**:
+    - Prepared and cleaned the dataset for the machine learning model to ensure data accuracy.
+    - Applied data synthesis techniques to expand the variety of model training data.
+    - Tested and fine-tuned the machine learning model to ensure reliable predictions.
+
+- **Xingzhou Zeng**:
+    - Designed and implemented algorithms for budgeting and savings analysis, providing personalized recommendations.
+    - Developed logic for transaction classification and integrated it into the machine learning module.
+    - Completed the core implementation of the machine learning model and ensured its functionality.
+
+- **Langdeng Tang**:
+    - Implemented the data importing feature to process bank-provided CSV files with error handling.
+    - Developed real-time input validation for form fields, providing immediate feedback to users on errors.
+    - Developed the transaction search functionality, allowing users to filter transactions by title.
+
+- **Zhongyuan Xu**:
+    - Added Markdown support for the user interface, enabling users to view and format content effectively.
+    - Assisted in testing and debugging the application to ensure a smooth user experience.
