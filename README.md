@@ -28,7 +28,13 @@ The built artifacts will be in the `app/build` directory. If you want to distrib
 
 ```bash
 ./gradlew test
+./gradlew bench
 ```
+
+## How to use
+You can click the `Help` button on the top right corner of the main page or `What is this?` hyperlink on the top right corner of the decryption page see the manual.
+
+Or you can find it [here](app/src/main/resources/io/github/software/coursework/gui/_help.md). But remember that since we use base64 url, **Github will not render the images in that file and you will have to download the file**.
 
 ## Task Assignment
 
